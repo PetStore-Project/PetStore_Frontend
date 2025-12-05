@@ -1,16 +1,18 @@
 <template>
   <div class="nav_display">
-    <Navigation />
+    <RouterView/>
   </div>
   
 </template>
 
 <script lang="ts">
   import Navigation from './components/navigation.vue'
+  import ProductCard from './components/ProductCard.vue';
   export default {
     name: 'App',
     components: {
-      Navigation
+      Navigation,
+      ProductCard
     }
   }
 </script>
