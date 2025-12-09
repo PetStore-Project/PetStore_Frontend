@@ -1,6 +1,6 @@
 <template>
   <div class="nav_display">
-    <RouterView/>
+    <Navigation/>
   </div>
   
 </template>

@@ -16,6 +16,7 @@ const hover = ref(false);
 </script>
 
 <template>
+  
   <div class="w-[200px] border border-[#8A8A8A] rounded-sm overflow-hidden shadow-sm bg-white
          transition-all duration-300 hover:scale-101 hover:shadow-2xl hover:border-transparent">
     
@@ -33,7 +34,7 @@ const hover = ref(false);
         <font-awesome-icon
           v-if="liked || hover"
           icon="fa-solid fa-heart"
-          class="text-[#008C00] text-2xl transition"
+          class="text-red-500 text-2xl transition"
         />
         <font-awesome-icon
           v-else
