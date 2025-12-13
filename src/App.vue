@@ -1,7 +1,8 @@
 <template>
-  <div class="nav_display">
+  <div class="nav_display h-[120px]">
     <Navigation />
   </div>
+  <RouterView/>
   
  
 </template>
@@ -11,13 +12,7 @@
   export default {
     name: 'App',
     components: {
-      Navigation
+      Navigation,
     }
   }
 </script>
-
-<style scoped>
-  .nav_display {
-    width: 100%;
-  }
-</style>

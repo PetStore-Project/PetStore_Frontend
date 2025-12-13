@@ -47,7 +47,15 @@
 
       <main class="flex-1">
         <div class="py-20 text-center text-gray-600">
-            Product Card section
+            <div class="flex justify-center items-center">
+              <ProductCard 
+                productName="Product"
+                :rating="3"
+                 description="This toy also has an attractive design and cute features, such as spikes on its back and embroidered detail. "
+                 :price="66.77"
+                 :image="toy"
+              />
+          </div>
         </div>
       </main>
     </div>
