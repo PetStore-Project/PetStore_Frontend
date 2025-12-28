@@ -1,9 +1,5 @@
 <template>
   <div class="login-container">
-    <div class="logo-header">
-      <img :src="petstoreLogo" alt="PetStore Logo" class="petstore-logo" />
-    </div>
-
     <div class="card-wrapper">
       <div class="theme-banner">
         <div class="slogan-content">
@@ -170,20 +166,6 @@ export default defineComponent({
   position: relative;
   overflow: hidden;
 }
-
-.logo-header {
-  position: absolute;
-  top: 30px;
-  left: 50px;
-  z-index: 100;
-}
-
-.petstore-logo {
-  max-width: 160px;
-  height: auto;
-  display: block;
-}
-
 
 .card-wrapper {
   display: flex;

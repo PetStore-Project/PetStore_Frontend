@@ -1,9 +1,5 @@
     <template>
       <div class="register-container">
-        <div class="logo-header">
-          <img :src="petstoreLogo" alt="PetStore Logo" class="petstore-logo" />
-        </div>
-
         <div class="card-wrapper">
           <div class="theme-banner">
             <div class="slogan-content">
@@ -189,7 +185,6 @@
       box-sizing: border-box;
     }
 
-    /* --- GLOBAL CONTAINER --- */
     .register-container {
       display: flex;
       height: 100vh;
@@ -202,37 +197,21 @@
       overflow: hidden;
     }
 
-    /* --- LOGO HEADER --- */
-    .logo-header {
-      position: absolute;
-      top: 30px;
-      left: 50px;
-      z-index: 100;
-    }
-
-    .petstore-logo {
-      max-width: 160px;
-      height: auto;
-      display: block;
-    }
-
-    /* --- CARD WRAPPER --- */
     .card-wrapper {
       display: flex;
       width: 90%;
       max-width: 1100px;
-      min-height: 600px; /* Allows growth */
-      height: auto;      /* Prevents cutting off content */
+      min-height: 600px;
+      height: auto;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
       border-radius: 30px;
       overflow: hidden;
       background-color: #fff;
     }
 
-    /* --- LEFT BANNER (BLUE THEME) --- */
     .theme-banner {
       flex: 0 0 45%;
-      background-color: #AEE2E8; /* Light Blue */
+      background-color: #AEE2E8;
       padding: 50px 40px 0 40px;
       display: flex;
       flex-direction: column;
@@ -240,19 +219,19 @@
       overflow: hidden;
     }
 
-    /* --- RIGHT FORM AREA --- */
+
     .register-form-area {
       flex: 0 0 55%;
       background-color: #fff;
-      padding: 40px 70px; /* Reduced padding to fit content */
+      padding: 40px 70px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      align-items: center; /* Center contents horizontally */
+      align-items: center;
       position: relative;
     }
 
-    /* --- SLOGAN & VISUAL ELEMENTS --- */
+
     .slogan-content {
       flex-grow: 1;
       position: relative;
@@ -340,14 +319,14 @@
       font-size: 2rem;
       font-weight: 700;
       margin-bottom: 20px;
-      margin-top: 10px; /* Reduced margin to pull it up */
+      margin-top: 10px;
       text-align: center;
       color: #000;
     }
 
-    /* --- INPUT FIELDS --- */
+
     .input-group {
-      margin-bottom: 18px; /* Slightly tighter spacing for register form */
+      margin-bottom: 18px;
     }
 
     .input-group label {
@@ -369,7 +348,7 @@
       background-color: #fff;
     }
 
-    /* Green border on focus/email */
+
     .email-wrapper, .input-wrapper:focus-within {
       border-color: #009200;
     }
@@ -386,7 +365,6 @@
       font-weight: 500;
     }
 
-    /* --- ICONS --- */
     .input-wrapper .icon {
       font-size: 1.2rem;
       color: #000;
@@ -401,11 +379,10 @@
       cursor: pointer;
     }
 
-    /* --- REGISTER BUTTON --- */
     .register-button {
       width: 100%;
       padding: 16px;
-      background-color: #009200; /* Green */
+      background-color: #009200;
       color: #fff;
       border: none;
       border-radius: 10px;
@@ -424,7 +401,6 @@
       box-shadow: 0 4px 12px rgba(0, 146, 0, 0.3);
     }
 
-    /* --- SEPARATOR --- */
     .separator {
       display: flex;
       align-items: center;
@@ -446,12 +422,11 @@
       white-space: nowrap;
     }
 
-    /* --- SOCIAL LOGIN BUTTONS --- */
     .social-login {
       display: flex;
       justify-content: center;
       gap: 20px;
-      margin-bottom: 25px; /* Reduced to fit bottom link */
+      margin-bottom: 25px;
     }
 
     .social-button {
@@ -474,7 +449,6 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
-    /* --- LOGIN LINK --- */
     .login-link {
       text-align: center;
       font-size: 0.85rem;
@@ -493,14 +467,12 @@
       text-decoration: underline;
     }
 
-    /* --- ERROR MESSAGE --- */
     .error-message {
       color: #ff0000;
       font-size: 0.8rem;
       margin-top: 5px;
     }
 
-    /* --- RESPONSIVE ADJUSTMENTS --- */
     @media (max-width: 1200px) {
       .card-wrapper {
         width: 95%;
