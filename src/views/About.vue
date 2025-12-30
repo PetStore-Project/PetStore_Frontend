@@ -230,7 +230,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import logo from '../assets/photos/Logo_PetStore.png';
-import heroImage from '../assets/photos/pets2.png';
+import heroImage from '../assets/photos/Pets2.png';
 import storyImage from '../assets/photos/shop.png';
 import userImage from '../assets/photos/paws.png';
 
