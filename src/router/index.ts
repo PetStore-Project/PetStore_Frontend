@@ -26,6 +26,10 @@ const router = createRouter({
       component: Login
     },
     {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('../views/UserProfile.vue')
+    },
       path: '/',
       component: CustomerLayout,
       children: [
