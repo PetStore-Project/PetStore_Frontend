@@ -4,7 +4,7 @@
 
         <div class="nav_links">
             <ul class="nav_items">
-                <li><RouterLink to="/">Home</RouterLink></li>
+                <li><RouterLink to="/home">Home</RouterLink></li>
                 <li><RouterLink to="/shop">Shop</RouterLink></li>
                 <li><RouterLink to="/about">About</RouterLink></li>
                 <li><RouterLink to="/contact">Contact</RouterLink></li>
@@ -34,7 +34,6 @@
         </div>
     </div>
 
-    <RouterView />
 </template>
 
 <script lang="ts">
@@ -56,7 +55,7 @@
 
     .nav_links {
         font-family:'Poppins', sans-serif;
-        font-size: 21px;
+        font-size: 18px;
         font-weight: 600;
     }
 
@@ -125,6 +124,7 @@
         padding-left: 40px;
         opacity: 0;
         transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        color: #000000;
     }
 
     .searchWrapper:hover .Search {
