@@ -121,7 +121,7 @@
                 <div class="relative h-[300px] w-full flex items-center justify-center">
                     <div class="absolute left-10 md:left-20 top-0 w-64 bg-white p-5 rounded-2xl shadow-2xl transform -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-500 cursor-pointer border-l-4 border-[#009200]">
                         <div class="h-40 rounded-xl overflow-hidden mb-4 bg-gray-50">
-                            <img :src="petCategory[1].img" class="w-full h-full object-cover">
+                            <img :src="petCategory[1]?.img" class="w-full h-full object-cover">
                         </div>
                         <div class="flex justify-between items-center">
                             <p class="font-bold text-gray-900">Jade Collar</p>
@@ -131,7 +131,7 @@
 
                     <div class="absolute right-10 md:right-20 bottom-0 w-64 bg-white p-5 rounded-2xl shadow-2xl transform rotate-6 hover:rotate-0 hover:z-20 transition-all duration-500 cursor-pointer border-l-4 border-[#D00000]">
                         <div class="h-40 rounded-xl overflow-hidden mb-4 bg-gray-50">
-                            <img :src="petCategory[0].img" class="w-full h-full object-cover">
+                            <img :src="petCategory[0]?.img" class="w-full h-full object-cover">
                         </div>
                         <div class="flex justify-between items-center">
                             <p class="font-bold text-gray-900">Lucky Chews</p>
