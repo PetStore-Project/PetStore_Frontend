@@ -36,6 +36,11 @@ const router = createRouter({
 
     // 3. Main Application Routes
     {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('../views/UserProfile.vue')
+    },
+    {
       path: '/',
       component: CustomerLayout,
       // ❌ REMOVED "meta: { requiresAuth: true }" from here.

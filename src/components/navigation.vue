@@ -53,6 +53,7 @@
 
         </div>
     </div>
+
 </template>
 
 
@@ -96,7 +97,7 @@ export default defineComponent({
 
     .nav_links {
         font-family:'Poppins', sans-serif;
-        font-size: 21px;
+        font-size: 18px;
         font-weight: 600;
     }
 
@@ -160,7 +161,7 @@ export default defineComponent({
         padding-left: 40px;
         opacity: 0;
         transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-        color:#000000;
+        color: #000000;
     }
 
     .searchWrapper:hover .Search {
