@@ -146,17 +146,18 @@ export default defineComponent({
       if (!email.value || !password.value) { showNotification('Please fill in all fields.', 'error'); return; }
 
       isLoading.value = true;
+
       try {
         // Changed to port 5000 to match your server logs
         const response = await axios.post('http://localhost:5000/api/register', {
           email: email.value,
-          password: password.value
+          password: password.value,
         });
 
         if (response.status === 201) {
-          showNotification('Registration Successful! Redirecting...', 'success');
+          showNotification("Registration Successful! Redirecting...", "success");
           setTimeout(() => {
-            router.push('/login');
+            router.push("/login");
           }, 1500);
         }
       } catch (error: any) {
@@ -172,6 +173,7 @@ export default defineComponent({
         isLoading.value = false;
       }
     };
+
 
     return {
       email,
