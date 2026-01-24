@@ -141,9 +141,21 @@
                   </td>
 
                   <td class="py-4 px-6 text-right">
-                    <button class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 hover:text-slate-900 transition-colors" @click.stop="openDetails(o)">
-                      View Details
-                    </button>
+                    <div class="flex gap-2 justify-end">
+                      <button
+                        class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                        @click.stop="openDetails(o)"
+                      >
+                        View Details
+                      </button>
+                      <button
+                        class="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                        @click.stop="generateInvoice(o)"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Invoice
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -226,7 +238,14 @@
 
             </div>
 
-            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-between gap-3">
+               <button
+                 @click="generateInvoice(selected)"
+                 class="px-6 py-3 bg-white border-2 border-slate-900 text-slate-900 rounded-xl font-bold shadow-lg hover:bg-slate-900 hover:text-white transition flex items-center gap-2"
+               >
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                 Invoice
+               </button>
                <button @click="closeDetails" class="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-slate-800 transition transform hover:-translate-y-0.5">
                   Done
                </button>
@@ -332,6 +351,56 @@ export default defineComponent({
       return { headers: { Authorization: `Bearer ${token}` } };
     },
 
+    // --- Helper Methods for Template ---
+    formatMoney(amount: number) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(amount || 0);
+    },
+
+    formatDate(dateString: string) {
+      if (!dateString) return 'N/A';
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    },
+
+    initials(name: string) {
+      if (!name) return '??';
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    },
+
+    statusPill(status: string) {
+      const map: Record<string, string> = {
+        Paid: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        Pending: "bg-amber-50 text-amber-700 border-amber-100",
+        Shipped: "bg-blue-50 text-blue-700 border-blue-100",
+        Delivered: "bg-emerald-100 text-emerald-800 border-emerald-200",
+        Cancelled: "bg-rose-50 text-rose-700 border-rose-100",
+        Processing: "bg-indigo-50 text-indigo-700 border-indigo-100"
+      };
+      return map[status] || "bg-slate-50 text-slate-700 border-slate-100";
+    },
+
+    showToast(msg: string) {
+      this.toast = msg;
+      setTimeout(() => { this.toast = ""; }, 3000);
+    },
+
+    openDetails(order: OrderRow) {
+      this.selected = { ...order };
+      this.showDetails = true;
+    },
+
+    closeDetails() {
+      this.showDetails = false;
+      this.selected = null;
+    },
+
+    // --- API & Logic Methods ---
     async fetchOrders() {
       this.isLoading = true;
       try {
@@ -360,8 +429,6 @@ export default defineComponent({
 
     async updateStatus(order: OrderRow, event: any) {
        const newStatus = event.target ? event.target.value : event;
-
-       // Optimistic UI Update (Update screen instantly)
        const oldStatus = order.status;
        order.status = newStatus;
 
@@ -370,35 +437,173 @@ export default defineComponent({
           this.showToast(`Order updated to ${newStatus}`);
        } catch (error) {
           console.error(error);
-          order.status = oldStatus; // Revert if failed
-          this.showToast("Failed to update status. Check connection.");
+          order.status = oldStatus;
+          this.showToast("Failed to update status.");
        }
     },
 
-    formatMoney(n: number) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n); },
-    formatDate(iso: string) { if(!iso) return '-'; return new Date(iso).toLocaleDateString(); },
-    initials(name: string) { return (name || 'G').slice(0, 2).toUpperCase(); },
-
-    statusPill(status: string) {
-      const map: any = {
-        'Paid': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        'Pending': 'bg-amber-50 text-amber-700 border-amber-200',
-        'Processing': 'bg-blue-50 text-blue-700 border-blue-200',
-        'Shipped': 'bg-purple-50 text-purple-700 border-purple-200',
-        'Delivered': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-        'Cancelled': 'bg-rose-50 text-rose-700 border-rose-200'
-      };
-      return map[status] || 'bg-slate-50 text-slate-700 border-slate-200';
+    async generateInvoice(order: OrderRow) {
+      try {
+        this.showToast("Preparing invoice...");
+        const { data } = await axios.get(`${API_BASE}/orders/${order.id}`, this.getAuthHeader());
+        this.downloadInvoicePDF(data);
+      } catch (error) {
+        console.error('Invoice error:', error);
+        this.showToast("Failed to generate invoice");
+      }
     },
 
-    openDetails(o: OrderRow) { this.selected = o; this.showDetails = true; },
-    closeDetails() { this.showDetails = false; },
-    showToast(msg: string) { this.toast = msg; setTimeout(() => this.toast = "", 3000); }
+    downloadInvoicePDF(order: any) {
+      const formatCurrency = (amount: number) => this.formatMoney(amount);
+      const formatDateStr = (date: string) => this.formatDate(date);
+
+      const invoiceHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Invoice #${order._id.slice(-6).toUpperCase()}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Segoe UI', sans-serif; padding: 40px; background: #f8fafc; }
+            .invoice { max-width: 800px; margin: 0 auto; background: white; padding: 60px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.07); }
+            .header { display: flex; justify-content: space-between; margin-bottom: 50px; padding-bottom: 30px; border-bottom: 3px solid #0f172a; }
+            .logo { font-size: 32px; font-weight: 900; color: #0f172a; }
+            .logo-sub { font-size: 12px; color: #64748b; font-weight: 600; margin-top: 4px; }
+            .invoice-details { text-align: right; }
+            .section-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 15px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+            .info-value { font-size: 14px; color: #0f172a; font-weight: 600; line-height: 1.6; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            thead { background: #f8fafc; }
+            th { text-align: left; padding: 14px 16px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+            td { padding: 16px; font-size: 14px; color: #0f172a; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
+            .text-right { text-align: right; }
+            .totals { margin-top: 30px; }
+            .total-row { display: flex; justify-content: space-between; padding: 12px 16px; font-size: 14px; font-weight: 600; color: #64748b; }
+            .total-row.grand { background: #0f172a; color: white; font-size: 16px; font-weight: 700; border-radius: 8px; margin-top: 8px; }
+            .footer { margin-top: 60px; padding-top: 30px; border-top: 2px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; }
+            .status-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: #d1fae5; color: #065f46; margin-top: 8px; }
+            @media print { body { padding: 0; background: white; } .invoice { box-shadow: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="invoice">
+            <div class="header">
+              <div>
+                <div class="logo">PetStore+</div>
+                <div class="logo-sub">Premium Pet Supplies</div>
+              </div>
+              <div class="invoice-details">
+                <div style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">INVOICE #${order._id.slice(-6).toUpperCase()}</div>
+                <div style="font-size: 13px; color: #64748b;">${formatDateStr(order.createdAt)}</div>
+                ${order.isPaid ? '<div class="status-badge">PAID</div>' : ''}
+              </div>
+            </div>
+
+            <div class="info-grid">
+              <div>
+                <div class="section-title">Bill To</div>
+                <div class="info-value">
+                  ${order.user.firstName} ${order.user.lastName}<br>
+                  ${order.user.email}<br>
+                  ${order.user.phone || order.shippingAddress.phone || 'N/A'}
+                </div>
+              </div>
+              <div>
+                <div class="section-title">Shipping Address</div>
+                <div class="info-value">
+                  ${order.shippingAddress.address}<br>
+                  ${order.shippingAddress.city}, ${order.shippingAddress.postalCode}<br>
+                  ${order.shippingAddress.country}
+                </div>
+              </div>
+            </div>
+
+            <div class="section-title">Order Items</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th class="text-right">Qty</th>
+                  <th class="text-right">Price</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${order.orderItems.map((item: any) => `
+                  <tr>
+                    <td style="font-weight: 600;">${item.name}</td>
+                    <td class="text-right">${item.quantity}</td>
+                    <td class="text-right">${formatCurrency(item.price)}</td>
+                    <td class="text-right">${formatCurrency(item.price * item.quantity)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="totals">
+              <div class="total-row">
+                <span>Subtotal</span>
+                <span>${formatCurrency(order.itemsPrice)}</span>
+              </div>
+              <div class="total-row">
+                <span>Tax</span>
+                <span>${formatCurrency(order.taxPrice)}</span>
+              </div>
+              <div class="total-row">
+                <span>Shipping</span>
+                <span>${formatCurrency(order.shippingPrice)}</span>
+              </div>
+              <div class="total-row grand">
+                <span>Total Amount</span>
+                <span>${formatCurrency(order.totalPrice)}</span>
+              </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+              <div class="info-grid">
+                <div>
+                  <div class="section-title">Payment Method</div>
+                  <div class="info-value">${order.paymentMethod}</div>
+                </div>
+                <div>
+                  <div class="section-title">Payment Date</div>
+                  <div class="info-value">${order.paidAt ? formatDateStr(order.paidAt) : 'Pending'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer">
+              Thank you for your purchase!<br>
+              Questions? Contact us at support@petstore.com<br>
+              <strong>PetStore+</strong> • Phnom Penh, Cambodia
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Download
+      const blob = new Blob([invoiceHTML], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice-${order._id.slice(-6).toUpperCase()}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Print
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(invoiceHTML);
+        printWindow.document.close();
+      }
+
+      this.showToast("Invoice generated successfully!");
+    }
   }
 });
 </script>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>
