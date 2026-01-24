@@ -18,7 +18,7 @@ import Checkout from '@/views/Checkout.vue'
 import OrderHistory from '@/views/OrderHistory.vue'
 import UserProfile from '@/views/UserProfile.vue'
 import ForgotPassword from '@/views/ForgotPassword.vue'
-import ResetPassword from '../views/ResetPassword.vue';
+import ResetPassword from '../views/ResetPassword.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,20 +26,26 @@ const router = createRouter({
     // 1. Root Redirect
     {
       path: '/',
-      redirect: '/home'
+      redirect: '/home',
     },
 
-    // 2. Auth Pages
-    { path: '/register', name: 'register', component: Register },
-    { path: '/login', name: 'login', component: Login },
-    { path: '/forgot-password', name: 'forgot-password', component: ForgotPassword },
-    { path: '/reset-password', name: 'reset-password', component: ResetPassword },
+    // 2. Auth Pages with AuthLayout
+    {
+      path: '/',
+      component: () => import('@/layouts/AuthLayout.vue'),
+      children: [
+        { path: 'register', name: 'register', component: Register },
+        { path: 'login', name: 'login', component: Login },
+        { path: 'forgot-password', name: 'forgot-password', component: ForgotPassword },
+        { path: 'reset-password', name: 'reset-password', component: ResetPassword },
+      ],
+    },
 
     // 3. Main Application Routes
     {
-    path: '/profile',
-    name: 'profile',
-    component: () => import('../views/UserProfile.vue')
+      path: '/profile',
+      name: 'profile',
+      component: () => import('../views/UserProfile.vue'),
     },
     {
       path: '/',
@@ -57,39 +63,37 @@ const router = createRouter({
           path: '/profile',
           name: 'profile',
           component: UserProfile,
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true },
         },
         {
           path: '/cart',
           name: 'cart',
           component: Cart,
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true },
         },
         {
           path: '/wishlist',
           name: 'wishlist',
           component: Wishlist,
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true },
         },
         {
           path: '/checkout',
           name: 'checkout',
           component: Checkout,
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true },
         },
         {
           path: '/order-history',
           name: 'order-history',
           component: OrderHistory,
-          meta: { requiresAuth: true }
-        }
-      ]
+          meta: { requiresAuth: true },
+        },
+      ],
     },
 
     // Admin routes
-    {path: '/admin',
-      redirect: '/admin/dashboard'
-    },
+    { path: '/admin', redirect: '/admin/dashboard' },
     {
       path: '/admin',
       component: () => import('@/layouts/AdminLayout.vue'),
@@ -97,47 +101,48 @@ const router = createRouter({
         {
           path: 'dashboard',
           name: 'admin-dashboard',
-          component: () => import('@/views/Admin/Dashboard.vue')
-        }, 
+          component: () => import('@/views/Admin/Dashboard.vue'),
+        },
         {
           path: 'products',
           name: 'admin-products',
-          component: () => import('@/views/Admin/Products.vue')
+          component: () => import('@/views/Admin/Products.vue'),
         },
         {
           path: 'orders',
           name: 'admin-orders',
-          component: () => import('@/views/Admin/Orders.vue')
-        }, 
+          component: () => import('@/views/Admin/Orders.vue'),
+        },
         {
           path: 'customers',
           name: 'admin-customers',
-          component: () => import('@/views/Admin/Customers.vue')
+          component: () => import('@/views/Admin/Customers.vue'),
         },
         {
           path: 'promotions',
           name: 'admin-promotions',
-          component: () => import('@/views/Admin/Promotions.vue')
-        }
-      ]
+          component: () => import('@/views/Admin/Promotions.vue'),
+        },
+      ],
     },
   ],
 })
 
 // 4. Global Guard Logic
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
-  const loggedIn = authStore.isAuthenticated;
+  const authStore = useAuthStore()
+  const loggedIn = authStore.isAuthenticated
 
   if (to.meta.requiresAuth && !loggedIn) {
-    next('/login');
+    next('/login')
+  } else if (
+    (to.name === 'login' || to.name === 'register' || to.name === 'forgot-password') &&
+    loggedIn
+  ) {
+    next('/profile')
+  } else {
+    next()
   }
-  else if ((to.name === 'login' || to.name === 'register' || to.name === 'forgot-password') && loggedIn) {
-    next('/profile');
-  }
-  else {
-    next();
-  }
-});
+})
 
 export default router
