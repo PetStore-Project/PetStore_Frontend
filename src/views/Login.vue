@@ -100,7 +100,7 @@ import { defineComponent, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
-// Images (Restored Original)
+// Images
 import sloganImage from '../assets/photos/texts.png';
 import birdhouseImage from '../assets/photos/birdhouse.png';
 import pawsImage from '../assets/photos/paws.png';
@@ -132,9 +132,30 @@ export default defineComponent({
       }
       isLoading.value = true;
       try {
+        // 1. Wait for login to complete
         await authStore.login(email.value, password.value);
         showNotification('Login Successful!', 'success');
-        setTimeout(() => { router.push('/shop'); }, 1000);
+
+        // 2. Get User Role safely (Check Store OR LocalStorage)
+        // This ensures we get the latest data immediately
+        let user = authStore.user;
+
+        if (!user) {
+           const stored = localStorage.getItem('userInfo');
+           if (stored) user = JSON.parse(stored);
+        }
+
+        console.log("LOGIN CHECK:", user); // Check Console F12 if issues persist
+
+        // 3. Redirect based on Role
+        setTimeout(() => {
+          if (user && user.role === 'admin') {
+            router.push('/admin/dashboard');
+          } else {
+            router.push('/shop');
+          }
+        }, 500);
+
       } catch (error: any) {
         showNotification(error.response?.data?.message || 'Login failed.', 'error');
       } finally {
