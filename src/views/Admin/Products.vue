@@ -28,8 +28,9 @@
         <option value="">All Categories</option>
         <option value="Food">Food</option>
         <option value="Toys">Toys</option>
+        <option value="Furniture">Furniture</option>
         <option value="Accessories">Accessories</option>
-        <option value="Health">Health</option>
+        <option value="Treats">Treats</option>
       </select>
 
       <select v-model="filters.stock" class="w-full md:w-48 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer">
@@ -127,8 +128,9 @@
                 <select v-model="form.category" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition appearance-none">
                   <option>Food</option>
                   <option>Toys</option>
+                  <option>Furniture</option>
                   <option>Accessories</option>
-                  <option>Health</option>
+                  <option>Treats</option>
                 </select>
               </div>
 
