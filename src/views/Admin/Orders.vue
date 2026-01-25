@@ -175,12 +175,20 @@
       <transition name="fade">
         <div v-if="showDetails && selected" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closeDetails"></div>
-          <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] scale-100 transition-transform">
+          <div class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] scale-100 transition-transform">
 
             <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
               <div>
                 <h3 class="text-xl font-black text-slate-900">Order Details</h3>
-                <p class="text-xs font-bold text-slate-400 font-mono mt-1">ID: #{{ selected.id.slice(-8).toUpperCase() }}</p>
+                <div class="flex items-center gap-3 mt-1">
+                  <p class="text-xs font-bold text-slate-400 font-mono">ID: #{{ selected.id.slice(-8).toUpperCase() }}</p>
+                  <span 
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    :class="selected.isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'"
+                  >
+                    {{ selected.isPaid ? 'PAID' : 'UNPAID' }}
+                  </span>
+                </div>
               </div>
               <button @click="closeDetails" class="p-2 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -189,64 +197,129 @@
 
             <div class="p-8 overflow-y-auto flex flex-col gap-6">
 
-              <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-4">Customer Information</h4>
-                <div class="flex items-center gap-4 mb-4">
-                   <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-lg font-black text-slate-700 border border-slate-200 shadow-sm">
-                      {{ initials(selected.customer) }}
-                   </div>
-                   <div>
-                      <p class="font-bold text-slate-900">{{ selected.customer }}</p>
-                      <p class="text-sm text-slate-500">{{ selected.email }}</p>
-                   </div>
+              <!-- Customer & Shipping Info -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                  <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Customer</h4>
+                  <div class="flex items-center gap-3">
+                     <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-sm font-black text-slate-700 border border-slate-200 shadow-sm">
+                        {{ initials(selected.customer) }}
+                     </div>
+                     <div>
+                        <p class="font-bold text-slate-900 text-sm">{{ selected.customer }}</p>
+                        <p class="text-xs text-slate-500">{{ selected.email }}</p>
+                     </div>
+                  </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-200/50">
-                   <div>
-                      <p class="text-[10px] font-bold text-slate-400 uppercase">Date Placed</p>
-                      <p class="text-sm font-bold text-slate-900">{{ formatDate(selected.date) }}</p>
-                   </div>
-                   <div>
-                      <p class="text-[10px] font-bold text-slate-400 uppercase">Total Amount</p>
-                      <p class="text-lg font-black text-emerald-600">{{ formatMoney(selected.total) }}</p>
-                   </div>
+                <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                  <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Shipping Address</h4>
+                  <p class="text-sm font-medium text-slate-700 leading-relaxed">
+                    {{ selected.shippingAddress?.address || 'N/A' }}<br>
+                    {{ selected.shippingAddress?.city }}, {{ selected.shippingAddress?.postalCode }}<br>
+                    {{ selected.shippingAddress?.country }}
+                  </p>
                 </div>
               </div>
 
-              <div class="space-y-3">
-                <label class="text-xs font-bold text-slate-500 uppercase">Order Status</label>
-                <div class="relative">
-                   <select
-                      v-model="selected.status"
-                      @change="updateStatus(selected, $event)"
-                      class="w-full px-4 py-3 rounded-xl text-sm font-bold border outline-none cursor-pointer appearance-none"
-                      :class="statusPill(selected.status)"
-                    >
-                       <option value="Pending">Pending - Order Received</option>
-                       <option value="Processing">Processing - Packing Items</option>
-                       <option value="Shipped">Shipped - Out for Delivery</option>
-                       <option value="Delivered">Delivered - Completed</option>
-                       <option value="Cancelled">Cancelled - Refunded</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-current opacity-50">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </div>
+              <!-- Order Items -->
+              <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div class="px-5 py-3 bg-slate-50 border-b border-slate-100">
+                  <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wide">Order Items ({{ selected.orderItems?.length || 0 }})</h4>
                 </div>
-                <p class="text-xs text-slate-400 px-1">
-                   Changing to <b>Delivered</b> will automatically mark COD orders as paid.
-                </p>
+                <div class="divide-y divide-slate-100">
+                  <div v-if="!selected.orderItems || selected.orderItems.length === 0" class="p-6 text-center text-slate-400 text-sm">
+                    No items data available
+                  </div>
+                  <div v-for="(item, idx) in selected.orderItems" :key="idx" class="flex items-center gap-4 p-4 hover:bg-slate-50 transition">
+                    <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 flex-shrink-0 overflow-hidden">
+                      <img v-if="item.image" :src="item.image" :alt="item.name" class="w-full h-full object-cover">
+                      <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="font-bold text-slate-900 text-sm truncate">{{ item.name }}</p>
+                      <p class="text-xs text-slate-500">Qty: {{ item.quantity }} × {{ formatMoney(item.price) }}</p>
+                    </div>
+                    <p class="font-bold text-slate-900 text-sm">{{ formatMoney(item.price * item.quantity) }}</p>
+                  </div>
+                </div>
+                <div class="px-5 py-3 bg-slate-900 text-white flex justify-between items-center">
+                  <span class="font-bold text-sm">Total</span>
+                  <span class="font-black text-lg">{{ formatMoney(selected.total) }}</span>
+                </div>
+              </div>
+
+              <!-- Payment & Status -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Payment Status -->
+                <div class="space-y-3">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Payment Status</label>
+                  <div class="flex items-center gap-3">
+                    <div 
+                      class="flex-1 px-4 py-3 rounded-xl text-sm font-bold border"
+                      :class="selected.isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+                    >
+                      <div class="flex items-center gap-2">
+                        <svg v-if="selected.isPaid" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        {{ selected.isPaid ? 'Paid' : 'Awaiting Payment' }}
+                      </div>
+                      <p v-if="selected.isPaid && selected.paidAt" class="text-xs mt-1 opacity-75">{{ formatDate(selected.paidAt) }}</p>
+                    </div>
+                    <button 
+                      v-if="!selected.isPaid"
+                      @click="markAsPaid(selected)"
+                      class="px-4 py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition"
+                    >
+                      Mark Paid
+                    </button>
+                  </div>
+                  <p class="text-xs text-slate-400">Method: {{ selected.paymentMethod }}</p>
+                </div>
+
+                <!-- Order Status -->
+                <div class="space-y-3">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Order Status</label>
+                  <div class="relative">
+                     <select
+                        v-model="selected.status"
+                        @change="updateStatus(selected, $event)"
+                        class="w-full px-4 py-3 rounded-xl text-sm font-bold border outline-none cursor-pointer appearance-none"
+                        :class="statusPill(selected.status)"
+                      >
+                         <option value="Pending">Pending</option>
+                         <option value="Processing">Processing</option>
+                         <option value="Shipped">Shipped</option>
+                         <option value="Delivered">Delivered</option>
+                         <option value="Cancelled">Cancelled</option>
+                      </select>
+                      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-current opacity-50">
+                          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                      </div>
+                  </div>
+                </div>
               </div>
 
             </div>
 
-            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-between gap-3">
-               <button
-                 @click="generateInvoice(selected)"
-                 class="px-6 py-3 bg-white border-2 border-slate-900 text-slate-900 rounded-xl font-bold shadow-lg hover:bg-slate-900 hover:text-white transition flex items-center gap-2"
-               >
-                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                 Invoice
-               </button>
-               <button @click="closeDetails" class="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-slate-800 transition transform hover:-translate-y-0.5">
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex flex-wrap justify-between gap-3">
+               <div class="flex gap-2">
+                 <button
+                   @click="generateInvoice(selected)"
+                   class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2"
+                 >
+                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                   Invoice
+                 </button>
+                 <button
+                   v-if="selected.status !== 'Cancelled'"
+                   @click="handleRefund(selected)"
+                   class="px-5 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold hover:bg-rose-100 transition flex items-center gap-2"
+                 >
+                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                   Refund
+                 </button>
+               </div>
+               <button @click="closeDetails" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-slate-800 transition">
                   Done
                </button>
             </div>
@@ -282,6 +355,17 @@ interface OrderRow {
   date: string;
   total: number;
   status: Status;
+  orderItems: Array<{ name: string; quantity: number; price: number; image?: string }>;
+  isPaid: boolean;
+  paidAt?: string;
+  paymentMethod: string;
+  shippingAddress: {
+    address: string;
+    city: string;
+    postalCode: string;
+    country: string;
+    phone?: string;
+  };
 }
 
 export default defineComponent({
@@ -412,7 +496,17 @@ export default defineComponent({
           email: o.user ? o.user.email : (o.paymentResult?.email_address || 'N/A'),
           date: o.createdAt,
           total: o.totalPrice,
-          status: o.status || 'Pending'
+          status: o.status || 'Pending',
+          orderItems: o.orderItems || [],
+          isPaid: o.isPaid || false,
+          paidAt: o.paidAt,
+          paymentMethod: o.paymentMethod || 'N/A',
+          shippingAddress: o.shippingAddress || {
+            address: 'N/A',
+            city: 'N/A',
+            postalCode: 'N/A',
+            country: 'N/A'
+          }
         }));
       } catch (err: any) {
         if (err.response && err.response.status === 401) {
@@ -440,6 +534,45 @@ export default defineComponent({
           order.status = oldStatus;
           this.showToast("Failed to update status.");
        }
+    },
+
+    async markAsPaid(order: OrderRow) {
+      try {
+        await axios.put(`${API_BASE}/orders/${order.id}/pay`, {}, this.getAuthHeader());
+        order.isPaid = true;
+        order.paidAt = new Date().toISOString();
+        // Also update in main orders array
+        const idx = this.orders.findIndex(o => o.id === order.id);
+        if (idx !== -1 && this.orders[idx]) {
+          this.orders[idx]!.isPaid = true;
+          this.orders[idx]!.paidAt = order.paidAt;
+        }
+        this.showToast("Order marked as paid!");
+      } catch (error) {
+        console.error(error);
+        this.showToast("Failed to update payment status.");
+      }
+    },
+
+    async handleRefund(order: OrderRow) {
+      if (!confirm(`Are you sure you want to refund order #${order.id.slice(-6).toUpperCase()}? This action cannot be undone.`)) {
+        return;
+      }
+      
+      try {
+        // Update status to Cancelled (which implies refunded)
+        await axios.put(`${API_BASE}/orders/${order.id}/status`, { status: 'Cancelled' }, this.getAuthHeader());
+        order.status = 'Cancelled' as Status;
+        // Update in main orders array
+        const idx = this.orders.findIndex(o => o.id === order.id);
+        if (idx !== -1 && this.orders[idx]) {
+          this.orders[idx].status = 'Cancelled' as Status;
+        }
+        this.showToast("Order has been refunded and cancelled.");
+      } catch (error) {
+        console.error(error);
+        this.showToast("Failed to process refund.");
+      }
     },
 
     async generateInvoice(order: OrderRow) {

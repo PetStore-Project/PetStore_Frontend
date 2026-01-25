@@ -12,6 +12,49 @@
       </button>
     </div>
 
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Active</p>
+          <p class="text-2xl font-black text-slate-900">{{ activeCount }}</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Scheduled</p>
+          <p class="text-2xl font-black text-slate-900">{{ scheduledCount }}</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-purple-50 text-purple-600 rounded-2xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+        </div>
+        <div>
+          <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Total Redemptions</p>
+          <p class="text-2xl font-black text-slate-900">{{ totalRedemptions }}</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Est. Savings Given</p>
+          <p class="text-2xl font-black text-slate-900">{{ formatMoney(estimatedSavings) }}</p>
+        </div>
+      </div>
+    </div>
+
     <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       <div v-for="n in 6" :key="n" class="h-48 bg-white rounded-3xl border border-slate-100 shadow-sm animate-pulse"></div>
     </div>
@@ -49,7 +92,7 @@
           </div>
         </div>
 
-        <div class="space-y-3 mb-6">
+        <div class="space-y-3 mb-4">
           <div class="flex justify-between items-center text-sm">
             <span class="text-slate-500 font-medium">Discount Value</span>
             <span class="font-bold text-slate-900">
@@ -58,11 +101,28 @@
           </div>
           <div class="flex justify-between items-center text-sm">
             <span class="text-slate-500 font-medium">Redemptions</span>
-            <span class="font-bold text-slate-900">{{ promo.usageCount }} / {{ promo.usageLimit || '∞' }}</span>
+            <span class="font-bold text-slate-900">{{ promo.usageCount || 0 }} / {{ promo.usageLimit || '∞' }}</span>
           </div>
           <div class="flex justify-between items-center text-sm">
-            <span class="text-slate-500 font-medium">Expires</span>
-            <span class="font-bold text-slate-900">{{ formatDate(promo.endDate) }}</span>
+            <span class="text-slate-500 font-medium">Valid Period</span>
+            <span class="font-bold text-slate-900 text-xs">{{ formatDateShort(promo.startDate) }} - {{ formatDateShort(promo.endDate) }}</span>
+          </div>
+          <!-- Applicable Products -->
+          <div v-if="promo.applicableProducts && promo.applicableProducts.length > 0" class="flex justify-between items-center text-sm">
+            <span class="text-slate-500 font-medium">Applies To</span>
+            <span class="font-bold text-purple-600 text-xs">{{ promo.applicableProducts.length }} products</span>
+          </div>
+          <div v-else class="flex justify-between items-center text-sm">
+            <span class="text-slate-500 font-medium">Applies To</span>
+            <span class="font-bold text-emerald-600 text-xs">All Products</span>
+          </div>
+        </div>
+
+        <!-- Est. Savings -->
+        <div class="bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-slate-500 font-medium">Est. Savings Given</span>
+            <span class="font-black text-emerald-600">{{ formatMoney(calculatePromoSavings(promo)) }}</span>
           </div>
         </div>
 
@@ -82,17 +142,18 @@
       </div>
     </div>
 
+    <!-- Create/Edit Modal -->
     <transition name="modal">
       <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showModal = false"></div>
-        <div class="relative bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden flex flex-col">
+        <div class="relative bg-white w-full max-w-xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
 
-          <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
+          <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
             <h3 class="text-xl font-black text-slate-900">New Campaign</h3>
             <button @click="showModal = false" class="p-2 bg-slate-50 rounded-full hover:bg-slate-100 text-slate-500">✕</button>
           </div>
 
-          <div class="p-8 space-y-5 overflow-y-auto max-h-[70vh]">
+          <div class="p-8 space-y-5 overflow-y-auto">
             <div>
               <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Discount Code</label>
               <input v-model="form.code" type="text" placeholder="e.g. WELCOME20" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 uppercase" />
@@ -127,6 +188,50 @@
               <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Usage Limit (0 = Unlimited)</label>
               <input v-model.number="form.usageLimit" type="number" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none" />
             </div>
+
+            <!-- Applicable Products (Multi-select) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Applicable Products</label>
+              <div class="relative">
+                <button 
+                  @click="showProductDropdown = !showProductDropdown"
+                  type="button"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-900 focus:outline-none text-left flex justify-between items-center"
+                >
+                  <span v-if="form.applicableProducts.length === 0" class="text-slate-400">All products (no restriction)</span>
+                  <span v-else>{{ form.applicableProducts.length }} products selected</span>
+                  <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                
+                <div v-if="showProductDropdown" class="absolute z-20 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  <div v-if="products.length === 0" class="p-4 text-center text-slate-400 text-sm">
+                    Loading products...
+                  </div>
+                  <label 
+                    v-for="product in products" 
+                    :key="product._id" 
+                    class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition"
+                  >
+                    <input 
+                      type="checkbox" 
+                      :value="product._id"
+                      v-model="form.applicableProducts"
+                      class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    >
+                    <span class="text-sm font-medium text-slate-700 truncate">{{ product.name }}</span>
+                    <span class="text-xs text-slate-400 ml-auto">{{ formatMoney(product.price) }}</span>
+                  </label>
+                </div>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Leave empty to apply to all products.</p>
+            </div>
+
+            <!-- Minimum Purchase -->
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Minimum Purchase Amount</label>
+              <input v-model.number="form.minPurchase" type="number" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 focus:outline-none" />
+              <p class="text-xs text-slate-400 mt-1">Set to 0 for no minimum requirement.</p>
+            </div>
           </div>
 
           <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
@@ -141,7 +246,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, onMounted } from 'vue';
+import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
@@ -154,8 +259,10 @@ export default defineComponent({
     const authStore = useAuthStore();
     const toast = useToast();
     const promotions = ref<any[]>([]);
+    const products = ref<any[]>([]);
     const isLoading = ref(true);
     const showModal = ref(false);
+    const showProductDropdown = ref(false);
 
     const form = reactive({
       code: '',
@@ -163,7 +270,9 @@ export default defineComponent({
       value: 0,
       startDate: new Date().toISOString().slice(0, 10),
       endDate: '',
-      usageLimit: 0
+      usageLimit: 0,
+      applicableProducts: [] as string[],
+      minPurchase: 0
     });
 
     const getAuthHeader = () => {
@@ -187,18 +296,68 @@ export default defineComponent({
       }
     };
 
+    const fetchProducts = async () => {
+      try {
+        const { data } = await axios.get(`${API_BASE}/products`);
+        products.value = data;
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    // Stats computed
+    const activeCount = computed(() => {
+      const now = new Date();
+      return promotions.value.filter(p => 
+        new Date(p.startDate) <= now && new Date(p.endDate) >= now
+      ).length;
+    });
+
+    const scheduledCount = computed(() => {
+      const now = new Date();
+      return promotions.value.filter(p => new Date(p.startDate) > now).length;
+    });
+
+    const totalRedemptions = computed(() => {
+      return promotions.value.reduce((sum, p) => sum + (p.usageCount || 0), 0);
+    });
+
+    const estimatedSavings = computed(() => {
+      return promotions.value.reduce((sum, p) => sum + calculatePromoSavings(p), 0);
+    });
+
+    const calculatePromoSavings = (promo: any) => {
+      // Estimate based on usage count and average order value ($50)
+      const avgOrderValue = 50;
+      const usageCount = promo.usageCount || 0;
+      if (promo.type === 'percent') {
+        return (promo.value / 100) * avgOrderValue * usageCount;
+      } else {
+        return promo.value * usageCount;
+      }
+    };
+
     const savePromotion = async () => {
       if(!form.code || !form.value || !form.endDate) {
-        toast.error("Please fill all fields");
+        toast.error("Please fill all required fields");
         return;
       }
       try {
-        await axios.post(`${API_BASE}/promotions`, form, getAuthHeader());
+        const payload = {
+          ...form,
+          applicableProducts: form.applicableProducts.length > 0 ? form.applicableProducts : undefined,
+          minPurchase: form.minPurchase > 0 ? form.minPurchase : undefined
+        };
+        await axios.post(`${API_BASE}/promotions`, payload, getAuthHeader());
         toast.success("Campaign Created!");
         showModal.value = false;
         fetchPromotions();
         // Reset form
-        form.code = ''; form.value = 0; form.endDate = '';
+        form.code = '';
+        form.value = 0;
+        form.endDate = '';
+        form.applicableProducts = [];
+        form.minPurchase = 0;
       } catch (error: any) {
         toast.error(error.response?.data?.message || "Failed to create");
       }
@@ -216,6 +375,14 @@ export default defineComponent({
 
     const formatDate = (iso: string) => {
       return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const formatDateShort = (iso: string) => {
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const formatMoney = (n: number) => {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
     };
 
     const getStatusText = (p: any) => {
@@ -237,14 +404,21 @@ export default defineComponent({
       toast.info("Copied!");
     };
 
-    const openModal = () => { showModal.value = true; };
+    const openModal = () => { 
+      showModal.value = true;
+      showProductDropdown.value = false;
+    };
 
-    onMounted(fetchPromotions);
+    onMounted(() => {
+      fetchPromotions();
+      fetchProducts();
+    });
 
     return {
-      promotions, isLoading, showModal, form,
+      promotions, products, isLoading, showModal, form, showProductDropdown,
       openModal, savePromotion, deletePromo,
-      formatDate, getStatusText, getStatusClass, copyCode
+      formatDate, formatDateShort, formatMoney, getStatusText, getStatusClass, copyCode,
+      activeCount, scheduledCount, totalRedemptions, estimatedSavings, calculatePromoSavings
     };
   }
 });

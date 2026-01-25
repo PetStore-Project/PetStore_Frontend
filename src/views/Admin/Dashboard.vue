@@ -198,6 +198,59 @@
         </div>
       </div>
 
+      <!-- Promotion Effectiveness Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-[32px] p-8 text-white shadow-lg">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-black">Promotion Summary</h3>
+            <router-link to="/admin/promotions" class="text-xs font-bold bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition">Manage</router-link>
+          </div>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-purple-200 text-xs font-bold uppercase mb-1">Active Campaigns</p>
+              <p class="text-3xl font-black">{{ promoStats.active }}</p>
+            </div>
+            <div>
+              <p class="text-purple-200 text-xs font-bold uppercase mb-1">Total Redemptions</p>
+              <p class="text-3xl font-black">{{ promoStats.totalRedemptions }}</p>
+            </div>
+            <div class="col-span-2 pt-4 border-t border-white/20">
+              <p class="text-purple-200 text-xs font-bold uppercase mb-1">Est. Savings Given</p>
+              <p class="text-2xl font-black">{{ formatMoney(promoStats.estimatedSavings) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
+          <h3 class="text-lg font-black text-slate-900 mb-6">Top Performing Promos</h3>
+          <div class="space-y-4 flex-1">
+            <div v-for="(promo, i) in topPromos" :key="i" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm"
+                  :class="promo.type === 'percent' ? 'bg-purple-500' : 'bg-emerald-500'">
+                  {{ promo.type === 'percent' ? '%' : '$' }}
+                </div>
+                <div>
+                  <p class="font-mono font-black text-slate-900">{{ promo.code }}</p>
+                  <p class="text-xs text-slate-500">{{ promo.type === 'percent' ? promo.value + '% Off' : '$' + promo.value + ' Off' }}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-black text-slate-900">{{ promo.usageCount || 0 }}</p>
+                <p class="text-xs text-slate-500">redemptions</p>
+              </div>
+            </div>
+            <div v-if="topPromos.length === 0" class="flex flex-col items-center justify-center py-8 text-center">
+              <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+              </div>
+              <p class="text-slate-400 text-sm font-medium">No promotions created yet</p>
+              <router-link to="/admin/promotions" class="text-purple-600 text-sm font-bold mt-2 hover:underline">Create your first campaign →</router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </template>
@@ -232,6 +285,14 @@ export default defineComponent({
     // 👇 FIXED: Typed explicitly as any[] to solve TypeScript error
     const recentOrders = ref<any[]>([]);
     const topProducts = ref<{name: string, qty: number, percent: number}[]>([]);
+    const topPromos = ref<any[]>([]);
+
+    // Promotion Stats
+    const promoStats = ref({
+      active: 0,
+      totalRedemptions: 0,
+      estimatedSavings: 0
+    });
 
     // Revenue Data for Chart (12 months)
     const revenueSeries = ref(new Array(12).fill(0));
@@ -249,15 +310,17 @@ export default defineComponent({
       isLoading.value = true;
       try {
         // 1. Fetch ALL Data
-        const [ordersRes, productsRes, usersRes] = await Promise.all([
+        const [ordersRes, productsRes, usersRes, promosRes] = await Promise.all([
           axios.get(`${API_BASE}/orders`, getAuthHeader()),
           axios.get(`${API_BASE}/products`),
-          axios.get(`${API_BASE}/auth/users`, getAuthHeader())
+          axios.get(`${API_BASE}/auth/users`, getAuthHeader()),
+          axios.get(`${API_BASE}/promotions`, getAuthHeader()).catch(() => ({ data: [] }))
         ]);
 
         const orders = ordersRes.data;
         const products = productsRes.data;
         const users = usersRes.data;
+        const promos = promosRes.data || [];
 
         // --- CALCULATE KPI ---
         const totalRev = orders.filter((o: any) => o.status !== 'Cancelled').reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
@@ -306,7 +369,7 @@ export default defineComponent({
           .sort((a, b) => b.qty - a.qty)
           .slice(0, 5);
 
-        const maxQty = sortedItems.length ? sortedItems[0].qty : 1;
+        const maxQty = sortedItems.length && sortedItems[0] ? sortedItems[0].qty : 1;
         topProducts.value = sortedItems.map(i => ({
           ...i,
           percent: Math.round((i.qty / maxQty) * 100)
@@ -314,6 +377,33 @@ export default defineComponent({
 
         // Recent Orders
         recentOrders.value = orders.slice(0, 5);
+
+        // --- CALCULATE PROMO STATS ---
+        const now = new Date();
+        const activePromos = promos.filter((p: any) => 
+          new Date(p.startDate) <= now && new Date(p.endDate) >= now
+        );
+        
+        const totalRedemptions = promos.reduce((sum: number, p: any) => sum + (p.usageCount || 0), 0);
+        const avgOrderValue = 50; // Estimate
+        const estSavings = promos.reduce((sum: number, p: any) => {
+          const uses = p.usageCount || 0;
+          if (p.type === 'percent') {
+            return sum + (p.value / 100) * avgOrderValue * uses;
+          }
+          return sum + p.value * uses;
+        }, 0);
+
+        promoStats.value = {
+          active: activePromos.length,
+          totalRedemptions,
+          estimatedSavings: estSavings
+        };
+
+        // Top performing promos (by usage count)
+        topPromos.value = [...promos]
+          .sort((a: any, b: any) => (b.usageCount || 0) - (a.usageCount || 0))
+          .slice(0, 3);
 
       } catch (error) {
         console.error("Dashboard Load Error", error);
@@ -363,7 +453,8 @@ export default defineComponent({
     return {
       isLoading, stats, recentOrders, topProducts, loadData, revenueSeries,
       formatMoney, formatDate, statusClass, currentDate,
-      points, linePath, areaPath
+      points, linePath, areaPath,
+      promoStats, topPromos
     };
   }
 });
