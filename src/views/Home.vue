@@ -1,7 +1,8 @@
 <template>
   <div class="home-wrapper font-poppins overflow-x-hidden bg-[#F9FDF9]">
     <div class="lantern-container pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <div v-for="i in 8" :key="i" class="lantern" :style="getLanternStyle(i)"></div>
+      <!-- 🟢 UPDATED: Realistic Lantern Image -->
+      <img v-for="i in 8" :key="i" :src="lanternImg" class="lantern" :style="getLanternStyle(i)" />
     </div>
 
     <section
@@ -231,58 +232,57 @@
       </div>
     </section>
 
+    <div class="lantern-container pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <!-- 🟢 UPDATED: Realistic Lantern Image -->
+      <img v-for="i in 8" :key="i" :src="lanternImg" class="lantern" :style="getLanternStyle(i)" />
+    </div>
+
+    <!-- ... (Hero and Categories sections unchanged) ... -->
+    <!-- I will use a multi-replace or start further down to keep file content clean, but the user requested 'lantern' change too -->
+
+    <!-- SKIPPING HERO SECTION IN THIS REPLACEMENT BLOCK, TARGETING SECTION START BELOW -->
+
     <section class="max-w-[1400px] mx-auto px-6 pb-32 relative z-10">
       <div class="flex justify-between items-end mb-12">
         <h2 class="text-4xl font-extrabold text-[#1a1a1a]">Trending Now 🔥</h2>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <!-- 🟢 UPDATED: Dynamic Trending Products -->
+      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-4 gap-8">
+         <div v-for="n in 4" :key="n" class="h-[400px] bg-gray-100 rounded-[32px] animate-pulse"></div>
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div
-          v-for="i in 4"
-          :key="i"
-          class="group bg-white rounded-[32px] p-4 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-gray-100"
+          v-for="product in trendingProducts"
+          :key="product._id"
+          class="group bg-white rounded-[32px] p-4 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-gray-100 cursor-pointer"
+          @click="router.push(`/product/${product._id}`)"
         >
           <div
-            class="relative h-[280px] bg-[#f8f8f8] rounded-[24px] mb-5 overflow-hidden flex items-center justify-center"
+            class="relative h-[250px] bg-[#f8f8f8] rounded-[24px] mb-5 overflow-hidden flex items-center justify-center"
           >
-            <button
-              class="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-400 hover:text-[#009200] hover:scale-110 transition-all shadow-sm z-20"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                ></path>
-              </svg>
-            </button>
-
             <span
-              class="absolute top-4 left-4 bg-[#FFD700] text-[#004d29] text-[10px] font-bold px-3 py-1 rounded-full z-20"
-              >LUCKY FIND</span
+              class="absolute top-4 left-4 bg-[#FFD700] text-[#004d29] text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-md"
+              >BEST SELLER</span
             >
 
             <img
-              src="https://images.unsplash.com/photo-1585499193151-0f51d6d3b698?q=80&w=600"
-              class="h-[75%] object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+              :src="product.imageUrl || product.image"
+              class="h-[80%] w-[80%] object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
             />
           </div>
 
           <div class="px-2 pb-2">
             <h3
-              class="text-lg font-bold text-gray-900 mb-1 group-hover:text-[#009200] transition-colors"
+              class="text-lg font-bold text-gray-900 mb-1 group-hover:text-[#009200] transition-colors line-clamp-1"
             >
-              Royal Canin Premium
+              {{ product.name }}
             </h3>
-            <p class="text-sm text-gray-400 mb-4">Dog Food • 4kg</p>
+            <p class="text-sm text-gray-400 mb-4 line-clamp-1">{{ product.category }}</p>
 
             <div class="flex items-center justify-between">
-              <span class="text-2xl font-extrabold text-[#1a1a1a]">$45.99</span>
+              <span class="text-2xl font-extrabold text-[#1a1a1a]">${{ product.price }}</span>
               <button
                 class="w-12 h-12 bg-[#009200] text-white rounded-2xl flex items-center justify-center hover:bg-[#007a00] transition-colors shadow-lg shadow-green-200"
               >
@@ -306,8 +306,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, ref, onMounted } from 'vue' // 🟢 Added onMounted, ref
 import { useRouter } from 'vue-router'
+import api from '@/services/api' // 🟢 Import API
 
 // Images
 import petImg1 from '@/assets/petImage/Rectangle 131.png'
@@ -315,11 +316,14 @@ import petImg2 from '@/assets/petImage/Rectangle 131 (1).png'
 import petImg3 from '@/assets/petImage/Rectangle 131 (2).png'
 import petImg4 from '@/assets/petImage/Rectangle 131 (3).png'
 import petImg5 from '@/assets/petImage/Rectangle 131 (4).png'
+import lanternImg from '@/assets/lantern.png' // 🟢 Realistic Lantern
 
 export default defineComponent({
   name: 'Home',
   setup() {
     const router = useRouter()
+    const trendingProducts = ref<any[]>([]) // 🟢 Fixed TS Error: Typed as any[]
+    const loading = ref(true)
 
     const petCategory = [
       { img: petImg1, name: 'Cat' },
@@ -328,6 +332,17 @@ export default defineComponent({
       { img: petImg4, name: 'Bird' },
       { img: petImg5, name: 'Fish' },
     ]
+
+    const fetchTrending = async () => {
+      try {
+        const { data } = await api.get('/products/top');
+        trendingProducts.value = data;
+      } catch (error) {
+        console.error("Failed to load trending products", error);
+      } finally {
+        loading.value = false;
+      }
+    }
 
     const goToCategory = (name: string) => {
       router.push({ name: 'shop', query: { category: name } })
@@ -345,48 +360,48 @@ export default defineComponent({
       }
     }
 
-    return { petCategory, goToCategory, router, getLanternStyle }
+    onMounted(() => {
+      fetchTrending()
+    })
+
+    return {
+      petCategory,
+      goToCategory,
+      router,
+      getLanternStyle,
+      trendingProducts, // 🟢 Return data
+      loading,
+      lanternImg
+    }
   },
 })
 </script>
 
-<style scoped>
+  <style scoped>
 /* BACKGROUND ANIMATION: Floating Lanterns */
 .lantern {
   position: absolute;
-  bottom: -100px;
-  width: 30px;
-  height: 45px;
-  background: #ffd700; /* GOLD */
-  border-radius: 8px;
-  opacity: 0.15;
+  bottom: -150px;
+  width: 60px; /* Increased size */
+  height: auto;
+  opacity: 0.8; /* More visible */
   animation: floatUp linear infinite;
+  background: transparent; /* Remove CSS color */
 }
 
-/* Lantern Lines */
-.lantern::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.3);
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-  margin: 0 auto;
-  width: 60%;
-}
+/* Remove CSS Lantern Lines */
+.lantern::before { display: none; }
 
 @keyframes floatUp {
   0% {
     transform: translateY(0) rotate(0deg);
     opacity: 0;
   }
-  10% {
-    opacity: 0.2;
+  15% {
+    opacity: 0.9;
   }
-  90% {
-    opacity: 0.2;
+  85% {
+    opacity: 0.9;
   }
   100% {
     transform: translateY(-110vh) rotate(10deg);
