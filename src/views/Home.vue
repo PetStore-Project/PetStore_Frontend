@@ -243,8 +243,22 @@
     <!-- SKIPPING HERO SECTION IN THIS REPLACEMENT BLOCK, TARGETING SECTION START BELOW -->
 
     <section class="max-w-[1400px] mx-auto px-6 pb-32 relative z-10">
-      <div class="flex justify-between items-end mb-12">
-        <h2 class="text-4xl font-extrabold text-[#1a1a1a]">Trending Now 🔥</h2>
+      <div class="flex items-center gap-3 mb-12">
+        <h2 class="text-4xl font-extrabold text-[#1a1a1a]">Trending Now</h2>
+        <svg
+          class="w-8 h-8 text-orange-500 animate-pulse"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M13.5 3C16.5 5.5 18 8.5 18 11.5C18 14.5 15.5 17 12.5 17H11.5C8.5 17 6 14.5 6 11.5C6 10.5 6.2 9.5 6.6 8.6C4.6 10.1 3.5 12.4 3.5 15C3.5 19.1 6.9 22.5 11 22.5C15.1 22.5 18.5 19.1 18.5 15C18.5 12.7 17.5 10.6 15.8 9.2C15.8 9.2 13.5 3 13.5 3Z"
+          />
+          <path
+            d="M12.5 6C14.5 7.5 15.5 9.5 15.5 11.5C15.5 13.5 13.5 15 11.5 15H10.5C8.5 15 7 13.5 7 11.5C7 10.5 7.2 9.5 7.6 8.6C5.6 10.1 4.5 12.4 4.5 15C4.5 19.1 7.9 22.5 12 22.5C16.1 22.5 19.5 19.1 19.5 15C19.5 12.7 18.5 10.6 16.8 9.2C16.8 9.2 14.5 3 12.5 6Z"
+            fill="orange"
+            opacity="0.6"
+          />
+        </svg>
       </div>
 
       <!-- 🟢 UPDATED: Dynamic Trending Products -->
@@ -253,53 +267,11 @@
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div
+        <ProductCard
           v-for="product in trendingProducts"
           :key="product._id"
-          class="group bg-white rounded-[32px] p-4 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-gray-100 cursor-pointer"
-          @click="router.push(`/product/${product._id}`)"
-        >
-          <div
-            class="relative h-[250px] bg-[#f8f8f8] rounded-[24px] mb-5 overflow-hidden flex items-center justify-center"
-          >
-            <span
-              class="absolute top-4 left-4 bg-[#FFD700] text-[#004d29] text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-md"
-              >BEST SELLER</span
-            >
-
-            <img
-              :src="product.imageUrl || product.image"
-              class="h-[80%] w-[80%] object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
-            />
-          </div>
-
-          <div class="px-2 pb-2">
-            <h3
-              class="text-lg font-bold text-gray-900 mb-1 group-hover:text-[#009200] transition-colors line-clamp-1"
-            >
-              {{ product.name }}
-            </h3>
-            <p class="text-sm text-gray-400 mb-4 line-clamp-1">{{ product.category }}</p>
-
-            <div class="flex items-center justify-between">
-              <span class="text-2xl font-extrabold text-[#1a1a1a]">${{ product.price }}</span>
-              <button
-                class="w-12 h-12 bg-[#009200] text-white rounded-2xl flex items-center justify-center hover:bg-[#007a00] transition-colors shadow-lg shadow-green-200"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+          :product="product"
+        />
       </div>
     </section>
   </div>
@@ -309,6 +281,7 @@
 import { defineComponent, ref, onMounted } from 'vue' // 🟢 Added onMounted, ref
 import { useRouter } from 'vue-router'
 import api from '@/services/api' // 🟢 Import API
+import ProductCard from '@/components/ProductCard.vue' // 🟢 Import ProductCard
 
 // Images
 import petImg1 from '@/assets/petImage/Rectangle 131.png'
@@ -320,6 +293,7 @@ import lanternImg from '@/assets/lantern.png' // 🟢 Realistic Lantern
 
 export default defineComponent({
   name: 'Home',
+  components: { ProductCard }, // 🟢 Register Component
   setup() {
     const router = useRouter()
     const trendingProducts = ref<any[]>([]) // 🟢 Fixed TS Error: Typed as any[]
