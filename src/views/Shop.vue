@@ -204,8 +204,8 @@ export default defineComponent({
                 ])
              ]),
              h('div', { class: 'flex-1 min-w-0' }, [
-                h('h4', { class: 'font-extrabold text-white text-lg leading-tight drop-shadow-sm' }, 'Flash Sale Alert! ⚡'),
-                h('p', { class: 'text-green-50 text-sm mt-1 font-medium' }, '20% off all Dog Food today.')
+                h('h4', { class: 'font-extrabold text-white text-lg leading-tight drop-shadow-sm' }, 'Lunar New Year Deal 🧧'),
+                h('p', { class: 'text-green-50 text-sm mt-1 font-medium' }, 'Free shipping over 50$')
              ]),
              h('button', {
                 class: 'bg-white text-[#009200] text-sm font-extrabold px-4 py-2 rounded-full shadow-md hover:bg-green-50 hover:scale-105 transition-all cursor-pointer'
