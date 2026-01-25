@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-auto w-full flex items-center justify-center bg-white px-4 py-10 sm:px-6 lg:px-8"
+    class="min-h-screen w-full flex items-start md:items-center justify-center bg-white px-4 py-10 sm:px-6 lg:px-8"
   >
     <transition name="fade">
       <div

@@ -17,13 +17,19 @@
         <li v-for="link in links" :key="link.path" class="relative group">
           <RouterLink
             :to="link.path"
-            active-class="text-[#009200] font-bold"
-            class="text-gray-600 font-medium text-sm xl:text-[15px] transition-colors duration-300 hover:text-[#009200] py-2"
+            :class="[
+              'font-medium text-sm xl:text-[15px] transition-colors duration-300 hover:text-[#009200] py-2',
+              isActive(link.path) ? 'text-[#009200] font-bold' : 'text-gray-600',
+            ]"
           >
             {{ link.name }}
           </RouterLink>
           <span
-            class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#009200] transition-all duration-300 ease-out group-hover:w-full rounded-full"
+            :class="[
+              'absolute bottom-0 left-0 h-0.5 bg-[#009200] transition-all duration-300 ease-out rounded-full',
+              isActive(link.path) ? 'w-full' : 'w-0',
+              'group-hover:w-full',
+            ]"
           ></span>
         </li>
       </ul>
@@ -272,8 +278,10 @@
             :key="link.path"
             :to="link.path"
             @click="closeMobileMenu"
-            active-class="text-[#009200] bg-green-50 font-bold"
-            class="block px-4 py-3 text-gray-600 font-medium rounded-lg hover:bg-gray-50 hover:text-[#009200] transition-colors"
+            :class="[
+              'block px-4 py-3 font-medium rounded-lg hover:bg-gray-50 hover:text-[#009200] transition-colors',
+              isActive(link.path) ? 'text-[#009200] bg-green-50 font-bold' : 'text-gray-600',
+            ]"
           >
             {{ link.name }}
           </RouterLink>
@@ -332,7 +340,7 @@
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
-          
+
           <div class="flex-1 relative">
             <input
               ref="mobileSearchInput"
@@ -395,7 +403,7 @@
             <p class="text-lg font-medium">Search for products</p>
             <p class="text-sm mt-2">Start typing to find what you're looking for</p>
           </div>
-          
+
           <div v-else class="space-y-2">
             <p class="text-sm text-gray-500 mb-4">Searching for "{{ searchQuery }}"</p>
             <!-- Search results would go here -->
@@ -421,7 +429,7 @@
 import { defineComponent, ref } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth' // 1. Import Auth Store
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 export default defineComponent({
   name: 'Navigation',
@@ -429,6 +437,7 @@ export default defineComponent({
     const cartStore = useCartStore()
     const authStore = useAuthStore() // 2. Initialize Auth Store
     const router = useRouter()
+    const route = useRoute()
 
     const searchQuery = ref('')
     const isSearchOpen = ref(false)
@@ -487,6 +496,10 @@ export default defineComponent({
       }
     }
 
+    const isActive = (path: string) => {
+      return route.path === path || route.path.startsWith(`${path}/`)
+    }
+
     return {
       cartStore,
       authStore, // 3. Return authStore so template can check isAuthenticated
@@ -504,6 +517,7 @@ export default defineComponent({
       closeMobileSearch,
       handleMobileSearch,
       links,
+      isActive,
     }
   },
 })
