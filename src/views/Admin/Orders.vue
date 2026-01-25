@@ -73,21 +73,21 @@
             <div class="flex items-center gap-3">
               <!-- Payment Status Filter -->
               <div class="flex bg-slate-100 rounded-xl p-1 gap-1">
-                <button 
+                <button
                   @click="activePaymentFilter = 'all'; page = 1"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition"
                   :class="activePaymentFilter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
                 >
                   All Payment
                 </button>
-                <button 
+                <button
                   @click="activePaymentFilter = 'paid'; page = 1"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition"
                   :class="activePaymentFilter === 'paid' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'"
                 >
                   Paid
                 </button>
-                <button 
+                <button
                   @click="activePaymentFilter = 'unpaid'; page = 1"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition"
                   :class="activePaymentFilter === 'unpaid' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'"
@@ -229,7 +229,7 @@
                 <h3 class="text-xl font-black text-slate-900">Order Details</h3>
                 <div class="flex items-center gap-3 mt-1">
                   <p class="text-xs font-bold text-slate-400 font-mono">ID: #{{ selected.id.slice(-8).toUpperCase() }}</p>
-                  <span 
+                  <span
                     class="px-2 py-0.5 rounded-full text-[10px] font-bold"
                     :class="selected.isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'"
                   >
@@ -301,7 +301,7 @@
                 <div class="space-y-3">
                   <label class="text-xs font-bold text-slate-500 uppercase">Payment Status</label>
                   <div class="flex items-center gap-3">
-                    <div 
+                    <div
                       class="flex-1 px-4 py-3 rounded-xl text-sm font-bold border"
                       :class="selected.isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
                     >
@@ -312,7 +312,7 @@
                       </div>
                       <p v-if="selected.isPaid && selected.paidAt" class="text-xs mt-1 opacity-75">{{ formatDate(selected.paidAt) }}</p>
                     </div>
-                    <button 
+                    <button
                       v-if="!selected.isPaid"
                       @click="markAsPaid(selected)"
                       class="px-4 py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition"
@@ -623,13 +623,13 @@ export default defineComponent({
 
     async updateStatus(order: OrderRow, event: any) {
        const newStatus = event.target ? event.target.value : event;
-       
+
        // If order is already cancelled, prevent any changes
        if (order.status === 'Cancelled') {
          this.showToast("Cannot modify a cancelled order.");
          return;
        }
-       
+
        // If changing to Cancelled, show confirmation modal
        if (newStatus === 'Cancelled') {
          this.pendingCancelOrder = order;
@@ -639,7 +639,7 @@ export default defineComponent({
          if (event.target) event.target.value = order.status;
          return;
        }
-       
+
        const oldStatus = order.status;
        order.status = newStatus;
 
@@ -661,11 +661,11 @@ export default defineComponent({
 
     async confirmCancelOrder() {
       if (!this.pendingCancelOrder) return;
-      
+
       const order = this.pendingCancelOrder;
       const oldStatus = order.status;
       order.status = 'Cancelled' as Status;
-      
+
       try {
         await axios.put(`${API_BASE}/orders/${order.id}/status`, { status: 'Cancelled' }, this.getAuthHeader());
         this.showToast("Order has been cancelled.");
@@ -702,32 +702,35 @@ export default defineComponent({
     },
 
     async handleRefund(order: OrderRow) {
+      if (!confirm(`Are you sure you want to refund order #${order.id.slice(-6).toUpperCase()}? This action cannot be undone.`)) {
+        return;
+      }
       const oldStatus = order.status;
-      
+
       try {
         // Cancel the order
         await axios.put(`${API_BASE}/orders/${order.id}/status`, { status: 'Cancelled' }, this.getAuthHeader());
-        
+
         // Update local state
         order.status = 'Cancelled' as Status;
-        
+
         // Update in main orders array
         const idx = this.orders.findIndex(o => o.id === order.id);
         if (idx !== -1 && this.orders[idx]) {
           this.orders[idx].status = 'Cancelled' as Status;
         }
-        
+
         // If in detail view, update selected
         if (this.selected && this.selected.id === order.id) {
           this.selected.status = 'Cancelled' as Status;
         }
-        
+
         // Show success
         this.showToast(`Order cancelled. Refund ${this.formatMoney(order.total)} to ${order.customer}`);
-        
+
         // Close the details modal
         this.closeDetails();
-        
+
       } catch (error: any) {
         console.error('Refund error:', error);
         order.status = oldStatus;
@@ -941,11 +944,11 @@ export default defineComponent({
       const paidOrders = this.orders.filter(o => o.isPaid);
       const paidRevenue = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
       const pendingRevenue = totalRevenue - paidRevenue;
-      
+
       const cancelledOrders = this.orders.filter(o => o.status === 'Cancelled');
       const refundedOrders = this.orders.filter(o => o.status === 'Refunded');
       const deliveredOrders = this.orders.filter(o => o.status === 'Delivered');
-      
+
       const avgOrderValue = this.orders.length > 0 ? totalRevenue / this.orders.length : 0;
 
       // Group by month

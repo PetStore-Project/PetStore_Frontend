@@ -3,33 +3,24 @@
 
     <transition name="modal-fade">
       <div v-if="showBakongModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-
         <div class="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" @click="closeBakongModal"></div>
 
         <div class="relative bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden transform transition-all scale-100">
-
           <div class="bg-[#E60000] p-6 text-white text-center relative overflow-hidden">
              <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-
              <button @click="closeBakongModal" class="absolute top-4 right-4 text-white/80 hover:text-white hover:bg-white/20 rounded-full p-2 transition z-20">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
              </button>
-
              <h3 class="text-xl font-bold tracking-wide relative z-10">KHQR PAYMENT</h3>
              <p class="text-white/80 text-sm relative z-10">Scan with any Mobile Banking App</p>
           </div>
 
           <div class="p-8 flex flex-col items-center">
-
              <div class="flex items-center justify-center gap-6 mb-8 opacity-90">
                 <img src="/src/assets/aba_logo.png" class="h-8 object-contain" alt="ABA">
-
                 <div class="w-px h-6 bg-gray-200"></div>
-
                 <img src="/src/assets/acleda_logo.png" class="h-8 object-contain" alt="Acleda">
-
                 <div class="w-px h-6 bg-gray-200"></div>
-
                 <img src="/src/assets/bakong_logo.png" class="h-8 object-contain" alt="Bakong">
              </div>
 
@@ -42,7 +33,6 @@
                 <div class="absolute -inset-1 bg-gradient-to-r from-red-500 to-blue-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                 <div class="relative bg-white p-3 rounded-xl border-2 border-gray-100 shadow-inner">
                     <img :src="dynamicQR" alt="Dynamic KHQR" class="w-64 h-64 object-contain mix-blend-multiply rounded-lg" />
-
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-1.5 rounded-full shadow-md border border-gray-100">
                         <img src="https://bakong.nbc.gov.kh/images/logo.svg" class="w-8 h-8" alt="KHQR">
                     </div>
@@ -58,7 +48,6 @@
                 <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                 Waiting for payment confirmation...
              </div>
-
           </div>
         </div>
       </div>
@@ -231,7 +220,7 @@ export default defineComponent({
     const showBakongModal = ref(false);
     const dynamicQR = ref('');
     const currentOrderId = ref('');
-    const timeLeft = ref(900); // 15 minutes in seconds
+    const timeLeft = ref(900); // 15 minutes
     let pollingInterval: any = null;
     let timerInterval: any = null;
 
@@ -270,7 +259,6 @@ export default defineComponent({
 
     const setPaymentMethod = (method: string) => { form.paymentMethod = method; };
 
-    // Format seconds into MM:SS
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
@@ -278,7 +266,7 @@ export default defineComponent({
     };
 
     const startTimer = () => {
-        timeLeft.value = 900; // Reset to 15 mins
+        timeLeft.value = 900;
         timerInterval = setInterval(() => {
             if (timeLeft.value > 0) timeLeft.value--;
             else {
@@ -289,7 +277,7 @@ export default defineComponent({
     };
 
     const startPolling = (orderId: string) => {
-        startTimer(); // Start visual countdown
+        startTimer();
         pollingInterval = setInterval(async () => {
             try {
                 const res = await api.get(`/orders/${orderId}/payment`);
@@ -313,10 +301,7 @@ export default defineComponent({
     const handleCheckout = async () => {
       if (cartStore.items.length === 0) return toast.error("Your cart is empty!");
 
-      // 🟢 ADDED 'postalCode' to validation list
       const requiredFields = ['firstName', 'lastName', 'address', 'city', 'phone', 'postalCode'];
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (requiredFields.some((f) => !form[f as keyof typeof form])) {
         return toast.warning("Please fill in all shipping details, including Postal Code.");
       }
@@ -326,13 +311,30 @@ export default defineComponent({
       try {
         let paymentInfo = { isPaid: false, paidAt: null };
 
-        // 1. STRIPE FLOW
+        // 🛡️ 1. SECURE STRIPE FLOW (Updated)
         if (form.paymentMethod === 'Card') {
-            const amountInCents = Math.round(totalCost.value * 100);
-            const { data: { clientSecret } } = await api.post('/payment/create-payment-intent', { amount: amountInCents });
+
+            // 🔒 SECURITY FIX: Send ITEMS, not AMOUNT
+            // We map the cart items so the backend can verify prices from the DB.
+            const paymentItems = cartStore.items.map(item => ({
+                _id: item._id,
+                qty: item.quantity
+            }));
+
+            // Call backend to get clientSecret (Backend calculates real total)
+            const { data: { clientSecret } } = await api.post('/payment/create-payment-intent', { items: paymentItems });
+
+            // Confirm payment with Stripe
             const result = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: { card: cardElement, billing_details: { name: `${form.firstName} ${form.lastName}`, address: { line1: form.address, city: form.city, country: 'US' } } }
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: `${form.firstName} ${form.lastName}`,
+                        address: { line1: form.address, city: form.city, country: 'US' }
+                    }
+                }
             });
+
             if (result.error) throw new Error(result.error.message);
             if (result.paymentIntent.status === 'succeeded') paymentInfo = { isPaid: true, paidAt: new Date() as any };
         }
@@ -363,7 +365,7 @@ export default defineComponent({
             return;
         }
 
-        // 4. OTHER METHODS
+        // 4. FINISH
         cartStore.clearCart();
         orderSuccess.value = true;
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -394,8 +396,6 @@ export default defineComponent({
 .input-modern:focus { background: white; border-color: #009200; box-shadow: 0 0 0 4px rgba(0, 146, 0, 0.1); }
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e5e5; border-radius: 20px; }
-
-/* Modal Animation */
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>

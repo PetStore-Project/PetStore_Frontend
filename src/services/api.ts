@@ -3,7 +3,7 @@ import router from '@/router';
 
 // Create Axios instance
 const api = axios.create({
-  baseURL: 'https://petstore-backend-api.onrender.com/api', // Make sure this matches your backend
+  baseURL: 'https://petstore-backend-api.onrender.com/api', // Production backend on Render
   headers: {
     'Content-Type': 'application/json',
   },
