@@ -2,11 +2,22 @@
   <div class="product-card group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-4 transition-all duration-300 hover:shadow-xl hover:border-green-500 hover:-translate-y-1">
 
     <!-- Discount Badge -->
-    <div 
-      v-if="hasProductDiscount" 
+    <div
+      v-if="hasProductDiscount"
       class="absolute top-3 left-3 z-20 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-black shadow-lg"
     >
       {{ discountLabel }}
+    </div>
+
+    <!-- Low Stock Badge -->
+    <div
+      v-else-if="isLowStock"
+      class="absolute top-3 left-3 z-20 bg-amber-500 text-white px-2 py-1 rounded-lg text-xs font-black shadow-lg flex items-center gap-1"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+      </svg>
+      Low {{ product.stockQuantity }}
     </div>
 
     <button
@@ -35,7 +46,7 @@
     <div class="flex flex-col flex-grow">
 
       <div class="flex gap-1 mb-2">
-        <span v-for="i in 5" :key="i" class="text-sm" :class="i <= (product.rating || 5) ? 'text-yellow-400' : 'text-gray-200'">★</span>
+        <span v-for="i in 5" :key="i" class="text-sm" :class="i <= (product.rating || 0) ? 'text-yellow-400' : 'text-gray-200'">★</span>
       </div>
 
       <h3 class="font-bold text-lg text-gray-900 mb-1 leading-tight">{{ product.name }}</h3>
@@ -108,6 +119,11 @@ export default defineComponent({
       return discountStore.getDiscountLabel(props.product._id);
     });
 
+    // Check for Low Stock (e.g., <= 5 items)
+    const isLowStock = computed(() => {
+      return (props.product.stockQuantity || 0) > 0 && (props.product.stockQuantity || 0) <= 5;
+    });
+
     // Original price formatted
     const formattedOriginalPrice = computed(() => {
       return Number(props.product.price).toFixed(2);
@@ -133,10 +149,10 @@ export default defineComponent({
 
     const addToCart = () => {
       // Pass the discounted price if applicable
-      const finalPrice = hasProductDiscount.value 
+      const finalPrice = hasProductDiscount.value
         ? discountStore.getDiscountedPrice(props.product._id, props.product.price)
         : props.product.price;
-      
+
       cartStore.addToCart({
         ...props.product,
         image: resolvedImage.value,
@@ -158,7 +174,8 @@ export default defineComponent({
       toggleWishlist,
       resolvedImage,
       hasProductDiscount,
-      discountLabel
+      discountLabel,
+      isLowStock
     };
   }
 });

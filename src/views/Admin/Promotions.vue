@@ -142,12 +142,32 @@
             >
               Edit
             </button>
-            <button
-              @click="deletePromo(promo._id)"
-              class="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-xl transition"
-            >
-              Delete
-            </button>
+            <!-- Actions -->
+            <div class="flex gap-2">
+              <button
+                @click="broadcastPromo(promo._id)"
+                :disabled="sendingPromoId === promo._id"
+                class="flex-1 text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-xl transition flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg v-if="sendingPromoId === promo._id" class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </svg>
+                <span v-if="sendingPromoId === promo._id">Sending...</span>
+                <span v-else>Email Alert</span>
+              </button>
+
+              <button
+                @click="deletePromo(promo._id)"
+                class="text-xs font-bold text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-xl transition"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -169,7 +189,7 @@
             <div>
               <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Campaign Type</label>
               <div class="grid grid-cols-2 gap-3">
-                <button 
+                <button
                   type="button"
                   @click="form.campaignType = 'promo_code'"
                   class="p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2"
@@ -182,7 +202,7 @@
                   <span class="text-sm font-bold" :class="form.campaignType === 'promo_code' ? 'text-emerald-700' : 'text-slate-600'">Promo Code</span>
                   <span class="text-[10px] text-slate-400">User enters code at checkout</span>
                 </button>
-                <button 
+                <button
                   type="button"
                   @click="form.campaignType = 'product_discount'"
                   class="p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2"
@@ -240,7 +260,7 @@
             <div>
               <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Applicable Products</label>
               <div class="relative">
-                <button 
+                <button
                   @click="showProductDropdown = !showProductDropdown"
                   type="button"
                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-900 focus:outline-none text-left flex justify-between items-center"
@@ -249,18 +269,18 @@
                   <span v-else>{{ form.applicableProducts.length }} products selected</span>
                   <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
-                
+
                 <div v-if="showProductDropdown" class="absolute z-20 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                   <div v-if="products.length === 0" class="p-4 text-center text-slate-400 text-sm">
                     Loading products...
                   </div>
-                  <label 
-                    v-for="product in products" 
-                    :key="product._id" 
+                  <label
+                    v-for="product in products"
+                    :key="product._id"
                     class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition"
                   >
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       :value="product._id"
                       v-model="form.applicableProducts"
                       class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
@@ -351,6 +371,7 @@ export default defineComponent({
 
     const isEditing = ref(false);
     const editingId = ref<string | null>(null);
+    const sendingPromoId = ref<string | null>(null); // Track which promo is sending
 
     const getAuthHeader = () => {
       let token = authStore.token;
@@ -385,7 +406,7 @@ export default defineComponent({
     // Stats computed
     const activeCount = computed(() => {
       const now = new Date();
-      return promotions.value.filter(p => 
+      return promotions.value.filter(p =>
         new Date(p.startDate) <= now && new Date(p.endDate) >= now
       ).length;
     });
@@ -414,25 +435,40 @@ export default defineComponent({
       }
     };
 
+    const broadcastPromo = async (id: string) => {
+      try {
+        if (!confirm("Are you sure you want to email this promotion to ALL users?")) return;
+
+        sendingPromoId.value = id;
+        const { data } = await axios.post(`${API_BASE}/promotions/${id}/broadcast`, {}, getAuthHeader());
+        toast.info(data.message || "Broadcast started!");
+      } catch (error: any) {
+        console.error("Broadcast failed", error);
+        toast.error(error.response?.data?.message || "Failed to start broadcast");
+      } finally {
+        sendingPromoId.value = null;
+      }
+    };
+
     const savePromotion = async () => {
       if(!form.code || !form.value || !form.endDate) {
         toast.error("Please fill all required fields");
         return;
       }
-      
+
       // For product_discount, must have at least one product selected
       if(form.campaignType === 'product_discount' && form.applicableProducts.length === 0) {
         toast.error("Please select at least one product for Product Discount");
         return;
       }
-      
+
       try {
         const payload = {
           ...form,
           applicableProducts: form.applicableProducts.length > 0 ? form.applicableProducts : undefined,
           minPurchase: form.campaignType === 'promo_code' && form.minPurchase > 0 ? form.minPurchase : undefined
         };
-        
+
         if (isEditing.value && editingId.value) {
           // UPDATE
           await axios.put(`${API_BASE}/promotions/${editingId.value}`, payload, getAuthHeader());
@@ -442,7 +478,7 @@ export default defineComponent({
           await axios.post(`${API_BASE}/promotions`, payload, getAuthHeader());
           toast.success("Campaign Created!");
         }
-        
+
         closeModal();
         fetchPromotions();
       } catch (error: any) {
@@ -495,13 +531,13 @@ export default defineComponent({
 
     const confirmDelete = async () => {
       if (!pendingDeleteId.value) return;
-      
+
       try {
         await axios.delete(`${API_BASE}/promotions/${pendingDeleteId.value}`, getAuthHeader());
         toast.success("Deleted");
         fetchPromotions();
-      } catch (e) { 
-        toast.error("Delete failed"); 
+      } catch (e) {
+        toast.error("Delete failed");
       } finally {
         showDeleteConfirm.value = false;
         pendingDeleteId.value = null;
@@ -544,7 +580,7 @@ export default defineComponent({
       toast.info("Copied!");
     };
 
-    const openModal = () => { 
+    const openModal = () => {
       resetForm();
       showModal.value = true;
       showProductDropdown.value = false;
@@ -560,7 +596,9 @@ export default defineComponent({
       openModal, closeModal, savePromotion, editPromo, deletePromo,
       formatDate, formatDateShort, formatMoney, getStatusText, getStatusClass, copyCode,
       activeCount, scheduledCount, totalRedemptions, estimatedSavings, calculatePromoSavings,
-      showDeleteConfirm, confirmDelete, cancelDelete
+      showDeleteConfirm, confirmDelete, cancelDelete,
+      broadcastPromo,
+      sendingPromoId
     };
   }
 });
