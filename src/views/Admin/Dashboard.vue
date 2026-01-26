@@ -77,8 +77,8 @@
             <h3 class="text-lg font-black text-slate-900">Revenue Analytics</h3>
             <!-- Period Toggle -->
             <div class="flex bg-slate-100 rounded-xl p-1 gap-1">
-              <button 
-                v-for="mode in (['daily', 'monthly', 'yearly'] as const)" 
+              <button
+                v-for="mode in (['daily', 'monthly', 'yearly'] as const)"
                 :key="mode"
                 @click="chartMode = mode"
                 class="px-3 py-1.5 text-xs font-bold rounded-lg capitalize transition-all"
@@ -101,7 +101,7 @@
             </div>
 
             <!-- Chart Area -->
-            <div 
+            <div
               class="relative h-64 w-full overflow-hidden"
               @mousemove="handleChartHover"
               @mouseleave="chartHoverIndex = -1"
@@ -122,45 +122,45 @@
                 <path :d="areaPath" fill="url(#chartGradient)" />
                 <path :d="linePath" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke" />
               </svg>
-              
+
               <!-- Circle marker - placed OUTSIDE SVG to maintain perfect circle shape -->
-              <div 
+              <div
                 v-if="chartHoverIndex >= 0 && peakValleyIndices.includes(chartHoverIndex) && points[chartHoverIndex]"
                 class="absolute w-4 h-4 bg-white border-[3px] border-emerald-500 rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
-                :style="{ 
-                  left: `${points[chartHoverIndex]?.x}%`, 
-                  top: `${points[chartHoverIndex]?.y}%` 
+                :style="{
+                  left: `${points[chartHoverIndex]?.x}%`,
+                  top: `${points[chartHoverIndex]?.y}%`
                 }"
               ></div>
 
               <!-- Visible Data Points (Always visible) -->
-               <div 
-                 v-for="(point, i) in points" 
+               <div
+                 v-for="(point, i) in points"
                  :key="i"
                  class="absolute w-2 h-2 bg-emerald-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                 :style="{ 
-                   left: `${point.x}%`, 
-                   top: `${point.y}%` 
+                 :style="{
+                   left: `${point.x}%`,
+                   top: `${point.y}%`
                  }"
                ></div>
 
               <!-- Hover Vertical Line & Tooltip -->
-              <div 
+              <div
                 v-if="chartHoverIndex >= 0"
                 class="absolute top-0 bottom-0 pointer-events-none z-10"
                 :style="{ left: `${(chartHoverIndex * (100 / Math.max(chartLabels.length, 1))) + (100 / Math.max(chartLabels.length, 1) / 2)}%` }"
               >
                 <!-- Vertical Line -->
                 <div class="h-full w-px bg-emerald-500 mx-auto"></div>
-                
+
                 <!-- Tooltip -->
                  <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap">
                   {{ formatMoney(currentRevenueSeries[chartHoverIndex] || 0) }}
                   <div class="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
                 </div>
-                
+
                 <!-- Date Label -->
-                <div 
+                <div
                   class="absolute -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow"
                   :style="{ bottom: '-28px' }"
                 >
@@ -174,9 +174,9 @@
           <div class="flex gap-4 mt-4">
             <div class="w-16"></div>
             <div class="flex-1 flex text-xs font-semibold text-slate-400">
-              <span 
-                v-for="(label, idx) in chartLabels" 
-                :key="idx" 
+              <span
+                v-for="(label, idx) in chartLabels"
+                :key="idx"
                 class="text-center flex-1"
               >{{ label }}</span>
             </div>
@@ -423,9 +423,9 @@ export default defineComponent({
         // Real Money Flow: Paid, Processing, Shipped, Delivered
         // Unpaid/Pending: Pending, Cancelled (Cancelled is technicaly unpaid)
         const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered'];
-        
+
         const totalRev = orders.filter((o: any) => paidStatuses.includes(o.status)).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
-        
+
         const paidCount = orders.filter((o: any) => paidStatuses.includes(o.status)).length;
         const unpaidCount = orders.length - paidCount; // Everything else (Pending, Cancelled)
 
@@ -568,13 +568,13 @@ export default defineComponent({
         // My EndLine is 608 (finally block).
         // I need to be careful not to delete Promo Stats logic.
         // I will copy the Promo Stats logic from the previous view (Lines 546-602).
-        
+
         const now = new Date();
-        const activePromos = promos.filter((p: any) => 
+        const activePromos = promos.filter((p: any) =>
           new Date(p.startDate) <= now && new Date(p.endDate) >= now
         );
 
-        const ordersWithDiscount = orders.filter((o: any) => 
+        const ordersWithDiscount = orders.filter((o: any) =>
           (o.discountAmount && o.discountAmount > 0) || o.promoCode
         );
 
@@ -629,14 +629,14 @@ export default defineComponent({
     const currentRevenueSeries = computed(() => {
       const today = new Date();
       const currentMonth = today.getMonth();
-      
+
       switch (chartMode.value) {
-        case 'daily': 
+        case 'daily':
           return dailyRevenue.value; // Already shows last 7 days
-        case 'yearly': 
+        case 'yearly':
           return yearlyRevenue.value; // 5 years
         case 'monthly':
-        default: 
+        default:
           // Only show up to current month (slice from Jan to current month inclusive)
           // Future months will be empty in the series, so no line is drawn
           const sliced = revenueSeries.value.slice(0, currentMonth + 1);
@@ -649,7 +649,7 @@ export default defineComponent({
     const chartLabels = computed(() => {
       const today = new Date();
       const allMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      
+
       switch (chartMode.value) {
         case 'daily':
           // Last 7 days
@@ -685,7 +685,7 @@ export default defineComponent({
       const max = chartMaxValue.value; // Use chartMaxValue for consistent scaling with Y-axis
       const count = chartLabels.value.length;
       const slotWidth = 100 / count;
-      
+
       return series.map((val, i) => ({
         x: (i * slotWidth) + (slotWidth / 2),  // Center in slot
         y: 100 - (val / max) * 100  // 100 = bottom ($0), 0 = top (max)
@@ -697,7 +697,7 @@ export default defineComponent({
       const max = chartMaxValue.value; // Use chartMaxValue for consistent scaling
       const count = chartLabels.value.length;
       const slotWidth = 100 / count;
-      
+
       const data = series.map((val, i) => {
         const x = (i * slotWidth) + (slotWidth / 2);
         const y = 100 - (val / max) * 100;
@@ -705,7 +705,7 @@ export default defineComponent({
       });
 
       if (data.length === 0) return '';
-      
+
       // Anchor to bottom-left (0,100) to ensure line is visible even for single point
       return `M 0,100 L ${data.join(" L ")}`;
     });
@@ -715,6 +715,7 @@ export default defineComponent({
       const data = points.value;
       if (!data.length) return "";
       const last = data[data.length - 1];
+      if (!last) return ""; // Check if last exists
       // Close the area: Start 0,100 -> LinePath (which starts 0,100) -> LastPoint -> LastPointX,100 -> Close
       // Since linePath already starts with M 0,100, we just append the close
       return `${linePath.value} L ${last.x},100 Z`;
@@ -724,26 +725,26 @@ export default defineComponent({
     const peakValleyIndices = computed(() => {
       const series = currentRevenueSeries.value;
       const indices: number[] = [];
-      
+
       // Always include first and last points
       if (series.length > 0) indices.push(0);
-      
+
       // Find peaks and valleys
       for (let i = 1; i < series.length - 1; i++) {
         const prev = series[i - 1];
         const curr = series[i];
         const next = series[i + 1];
-        
+
         // Peak: current is higher than both neighbors
         // Valley: current is lower than both neighbors
         if ((curr > prev && curr > next) || (curr < prev && curr < next)) {
           indices.push(i);
         }
       }
-      
+
       // Always include last point if series has items
       if (series.length > 1) indices.push(series.length - 1);
-      
+
       return indices;
     });
 
@@ -762,11 +763,11 @@ export default defineComponent({
       const rect = target.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const percentage = x / rect.width;
-      
+
       // Calculate index based on equal slots
       const count = chartLabels.value.length;
       const index = Math.floor(percentage * count);
-      
+
       // Allow hovering valid label indices
       chartHoverIndex.value = Math.max(0, Math.min(index, count - 1));
     };
