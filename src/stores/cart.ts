@@ -4,6 +4,8 @@ export const useCartStore = defineStore('cart', {
   state: () => ({
     // Load from local storage if available, otherwise start empty
     items: JSON.parse(localStorage.getItem('cartItems') || '[]') as any[],
+    promoCode: localStorage.getItem('cartPromoCode') || '',
+    discountAmount: Number(localStorage.getItem('cartDiscountAmount')) || 0,
   }),
 
   getters: {
@@ -52,12 +54,27 @@ export const useCartStore = defineStore('cart', {
 
     clearCart() {
       this.items = [];
+      this.clearPromo();
+      this.saveToLocalStorage();
+    },
+
+    applyPromo(code: string, amount: number) {
+      this.promoCode = code;
+      this.discountAmount = amount;
+      this.saveToLocalStorage();
+    },
+
+    clearPromo() {
+      this.promoCode = '';
+      this.discountAmount = 0;
       this.saveToLocalStorage();
     },
 
     // Manual saving function (Works without plugins)
     saveToLocalStorage() {
       localStorage.setItem('cartItems', JSON.stringify(this.items));
+      localStorage.setItem('cartPromoCode', this.promoCode);
+      localStorage.setItem('cartDiscountAmount', this.discountAmount.toString());
     }
   },
 });

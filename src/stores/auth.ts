@@ -72,10 +72,10 @@ export const useAuthStore = defineStore('auth', {
       try {
         // 1. Create Account
         await api.post('/auth/register', {
-            email,
-            password,
-            firstName: 'Member',
-            lastName: 'User'
+          email,
+          password,
+          firstName: 'Member',
+          lastName: 'User'
         });
 
         // 2. REAL WORLD UX: Clean up the "Guest" session
@@ -106,6 +106,9 @@ export const useAuthStore = defineStore('auth', {
 
       // 3. Clear Cart (Optional: Keep this if you want shared carts, remove if you want privacy)
       localStorage.removeItem('cartItems');
+
+      // 4. Reset Session Flags (e.g. Free Shipping Popup)
+      sessionStorage.removeItem('hasSeenPromo');
 
       // 4. Redirect
       router.push('/login');

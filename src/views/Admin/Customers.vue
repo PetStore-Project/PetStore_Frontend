@@ -262,7 +262,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
@@ -270,12 +270,18 @@ const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: 'Customers',
-  setup() {
+  props: ['globalSearch'],
+  setup(props) {
     const authStore = useAuthStore();
     const customers = ref<any[]>([]);
     const loading = ref(true);
     const search = ref('');
     const toast = ref('');
+
+    // Watch global search
+    watch(() => props.globalSearch, (newVal) => {
+      search.value = newVal || '';
+    });
 
     // Modal state
     const showModal = ref(false);

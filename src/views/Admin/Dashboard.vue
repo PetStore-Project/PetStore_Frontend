@@ -101,8 +101,8 @@
             </div>
 
             <!-- Chart Area -->
-            <div
-              class="relative h-64 w-full overflow-hidden"
+            <div 
+              class="relative h-64 w-full"
               @mousemove="handleChartHover"
               @mouseleave="chartHoverIndex = -1"
             >
@@ -186,33 +186,72 @@
         <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
           <h3 class="text-lg font-black text-slate-900 mb-6">Order Status</h3>
 
-          <div class="relative flex-1 flex items-center justify-center">
-            <svg viewBox="0 0 36 36" class="w-48 h-48 transform -rotate-90">
-              <path class="text-slate-100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.8" />
-              <path class="text-emerald-500 drop-shadow-md transition-all duration-1000"
-                :stroke-dasharray="`${stats.paidPercent}, 100`"
+          <div class="relative flex-1 flex items-center justify-center min-h-[220px]">
+            <svg viewBox="0 0 36 36" class="w-48 h-48 transform -rotate-90 overflow-visible">
+              <!-- Background Ring -->
+              <path class="text-slate-100" 
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="3.8" 
+              />
+              
+              <!-- Completed Segment (Green) -->
+              <path class="text-emerald-500 drop-shadow-lg transition-all duration-1000"
+                :stroke-dasharray="`${stats.completedPercent}, 100`"
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none" stroke="currentColor" stroke-width="3.8" />
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="3.8" 
+              />
+              
+              <!-- To Process Segment (Blue) -->
+              <path class="text-blue-500 transition-all duration-1000"
+                :stroke-dasharray="`${stats.processPercent}, 100`"
+                :stroke-dashoffset="`-${stats.completedPercent}`"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="3.8" 
+              />
+
+              <!-- Pending Segment (Amber) -->
               <path class="text-amber-400 transition-all duration-1000"
                 :stroke-dasharray="`${stats.pendingPercent}, 100`"
-                :stroke-dashoffset="`-${stats.paidPercent}`"
+                :stroke-dashoffset="`-${stats.completedPercent + stats.processPercent}`"
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none" stroke="currentColor" stroke-width="3.8" />
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="3.8" 
+              />
             </svg>
-            <div class="absolute text-center">
+            <div class="absolute text-center z-10">
               <span class="block text-3xl font-black text-slate-900">{{ stats.orders }}</span>
               <span class="text-xs font-bold text-slate-400 uppercase">Total</span>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4 mt-8">
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-              <span class="text-sm font-bold text-slate-600">Paid ({{ stats.paidPercent }}%)</span>
+          <div class="grid grid-cols-1 gap-3 mt-8">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                <span class="text-sm font-bold text-slate-600">Completed</span>
+              </div>
+              <span class="text-xs font-bold text-slate-400">{{ stats.completedPercent }}%</span>
             </div>
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full bg-amber-400"></div>
-              <span class="text-sm font-bold text-slate-600">Unpaid ({{ stats.pendingPercent }}%)</span>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span class="text-sm font-bold text-slate-600">To Process (Action)</span>
+              </div>
+              <span class="text-xs font-bold text-slate-400">{{ stats.processPercent }}%</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                <span class="text-sm font-bold text-slate-600">Pending Payment</span>
+              </div>
+              <span class="text-xs font-bold text-slate-400">{{ stats.pendingPercent }}%</span>
             </div>
           </div>
         </div>
@@ -364,7 +403,8 @@ export default defineComponent({
       newCustomers: 0,
       lowStock: 0,
       pendingOrders: 0,
-      paidPercent: 0,
+      completedPercent: 0,
+      processPercent: 0,
       pendingPercent: 0,
       trend: 0
     });
@@ -419,15 +459,35 @@ export default defineComponent({
         const promos = promosRes.data || [];
 
         // --- CALCULATE KPI ---
-        // --- CALCULATE KPI ---
-        // Real Money Flow: Paid, Processing, Shipped, Delivered
-        // Unpaid/Pending: Pending, Cancelled (Cancelled is technicaly unpaid)
-        const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered'];
+        // New Strategy: Action-Oriented Buckets
+        // 1. Completed: Delivered, Shipped, Refunded (Done)
+        // 2. To Process (Action Needed): Paid, Processing
+        // 3. Pending (Opportunity): Pending
+        // 4. Dead: Cancelled (Excluded from chart usually or lumped into Pending logic slightly difference)
 
+        // Let's define the buckets
+        const completedStatuses = ['Delivered', 'Shipped', 'Refunded'];
+        const processStatuses = ['Paid', 'Processing']; // You have money, now do the work!
+        const pendingStatuses = ['Pending']; // Waiting for money
+
+        // Counts
+        const completedCount = orders.filter((o: any) => completedStatuses.includes(o.status)).length;
+        const processCount = orders.filter((o: any) => processStatuses.includes(o.status)).length;
+        const pendingCount = orders.filter((o: any) => pendingStatuses.includes(o.status)).length;
+        
+        // Total valid orders for chart (excluding cancelled to make the chart meaningful "Active Pipeline")
+        // Or keep Total = All Orders. Let's use All Orders for percentage to sum to < 100 if cancelled exists, 
+        // OR normalize to (Total - Cancelled).
+        // Let's us Total Orders (including Cancelled) as the base denominator so percentages add up to <= 100.
+        // Remainder is Cancelled.
+        const totalBase = orders.length || 1;
+
+        // Calculate dynamic trend (this month vs last month) - Real Revenue
+        const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered']; // Money Exists
+        
         const totalRev = orders.filter((o: any) => paidStatuses.includes(o.status)).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
-
-        const paidCount = orders.filter((o: any) => paidStatuses.includes(o.status)).length;
-        const unpaidCount = orders.length - paidCount; // Everything else (Pending, Cancelled)
+        
+        const unpaidCount = orders.length - orders.filter((o: any) => paidStatuses.includes(o.status)).length;
 
         // Calculate dynamic trend (this month vs last month) - Real Revenue
         const trendNow = new Date();
@@ -446,13 +506,11 @@ export default defineComponent({
           return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear && paidStatuses.includes(o.status);
         }).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
 
-        // Calculate percentage change (avoid division by zero)
-        let trend = 0;
-        if (lastMonthRev > 0) {
-          trend = ((thisMonthRev - lastMonthRev) / lastMonthRev) * 100;
-        } else if (thisMonthRev > 0) {
-          trend = 100; // 100% growth from zero
-        }
+        // Calculate percentage change
+        // If lastMonthRev is 0, we treat it as 1 to allow calculating a "growth" percentage 
+        // rather than capping at 100%, satisfying the user request "do not limit".
+        const prevRev = lastMonthRev || 1;
+        const trend = ((thisMonthRev - prevRev) / prevRev) * 100;
 
         stats.value = {
           revenue: totalRev,
@@ -460,10 +518,14 @@ export default defineComponent({
           products: products.length,
           customers: users.length,
           newCustomers: users.filter((u: any) => new Date(u.createdAt).toDateString() === new Date().toDateString()).length,
-          lowStock: products.filter((p: any) => p.stockQuantity < 5).length,
-          pendingOrders: unpaidCount, // Renaming logically to Unpaid/Pending
-          paidPercent: orders.length ? Math.round((paidCount / orders.length) * 100) : 0,
-          pendingPercent: orders.length ? Math.round((unpaidCount / orders.length) * 100) : 0,
+          lowStock: products.filter((p: any) => (p.stockQuantity || p.stock || 0) < 5).length,
+          pendingOrders: processCount, // "Pending" in the top card context usually means "Pending Action" (To Process)
+          
+          // Chart Data
+          completedPercent: Math.round((completedCount / totalBase) * 100),
+          processPercent: Math.round((processCount / totalBase) * 100),
+          pendingPercent: Math.round((pendingCount / totalBase) * 100),
+          
           trend: Math.round(trend * 10) / 10 // Round to 1 decimal place
         };
 
@@ -718,7 +780,7 @@ export default defineComponent({
       if (!last) return ""; // Check if last exists
       // Close the area: Start 0,100 -> LinePath (which starts 0,100) -> LastPoint -> LastPointX,100 -> Close
       // Since linePath already starts with M 0,100, we just append the close
-      return `${linePath.value} L ${last.x},100 Z`;
+      return `${linePath.value} L ${last?.x},100 Z`;
     });
 
     // Detect peaks and valleys (trend change points)

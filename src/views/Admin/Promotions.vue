@@ -108,7 +108,7 @@
           </div>
           <div class="flex justify-between items-center text-sm">
             <span class="text-slate-500 font-medium">Valid Period</span>
-            <span class="font-bold text-slate-900 text-xs">{{ formatDateShort(promo.startDate) }} - {{ formatDateShort(promo.endDate) }}</span>
+            <span class="font-bold text-slate-900 text-xs">{{ formatDate(promo.startDate) }} - {{ formatDate(promo.endDate) }}</span>
           </div>
           <!-- Applicable Products -->
           <div v-if="promo.applicableProducts && promo.applicableProducts.length > 0" class="flex justify-between items-center text-sm">
@@ -553,9 +553,7 @@ export default defineComponent({
       return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
-    const formatDateShort = (iso: string) => {
-      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    };
+
 
     const formatMoney = (n: number) => {
       return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
@@ -594,7 +592,7 @@ export default defineComponent({
     return {
       promotions, products, isLoading, showModal, form, showProductDropdown, isEditing,
       openModal, closeModal, savePromotion, editPromo, deletePromo,
-      formatDate, formatDateShort, formatMoney, getStatusText, getStatusClass, copyCode,
+      formatDate, formatMoney, getStatusText, getStatusClass, copyCode,
       activeCount, scheduledCount, totalRedemptions, estimatedSavings, calculatePromoSavings,
       showDeleteConfirm, confirmDelete, cancelDelete,
       broadcastPromo,

@@ -15,14 +15,49 @@
                 <svg v-if="isLoading" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 <span v-else>Refresh</span>
               </button>
-              <button @click="exportCSV" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Export CSV
-              </button>
-              <button @click="generateFinancialReport" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Revenue Report
-              </button>
+              
+              <!-- Export CSV Dropdown -->
+              <div class="relative">
+                <button @click="showExportMenu = !showExportMenu" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md transition flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                  Export CSV
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div v-if="showExportMenu" class="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 overflow-hidden">
+                  <button 
+                    v-for="opt in exportOptions" 
+                    :key="opt"
+                    @click="exportCSV(opt); showExportMenu = false"
+                    class="w-full text-left px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition"
+                  >
+                    {{ opt }}
+                  </button>
+                </div>
+                <!-- Backdrop to close -->
+                <div v-if="showExportMenu" @click="showExportMenu = false" class="fixed inset-0 z-40 cursor-default"></div>
+              </div>
+
+              <!-- Revenue Report Dropdown -->
+              <div class="relative">
+                <button @click="showReportMenu = !showReportMenu" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  Revenue Report
+                </button>
+                 <!-- Dropdown Menu -->
+                <div v-if="showReportMenu" class="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 overflow-hidden">
+                  <button 
+                    v-for="opt in exportOptions" 
+                    :key="opt"
+                    @click="generateFinancialReport(opt); showReportMenu = false"
+                    class="w-full text-left px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
+                  >
+                    {{ opt }}
+                  </button>
+                </div>
+                <!-- Backdrop to close -->
+                <div v-if="showReportMenu" @click="showReportMenu = false" class="fixed inset-0 z-40 cursor-default"></div>
+              </div>
             </div>
           </div>
 
@@ -425,8 +460,10 @@ import { defineComponent } from "vue";
 import axios from "axios";
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { jsPDF } from 'jspdf';
 
 const API_BASE = "https://petstore-backend-api.onrender.com/api";
+
 
 type Status = "Paid" | "Pending" | "Shipped" | "Cancelled" | "Processing" | "Delivered" | "Refunded";
 
@@ -452,6 +489,7 @@ interface OrderRow {
 
 export default defineComponent({
   name: "Orders",
+  props: ['globalSearch'],
   data() {
     return {
       orders: [] as OrderRow[],
@@ -467,7 +505,15 @@ export default defineComponent({
       pendingCancelOrder: null as OrderRow | null,
       pendingCancelEvent: null as any,
       activePaymentFilter: 'all' as 'all' | 'paid' | 'unpaid',
+      showExportMenu: false,
+      showReportMenu: false,
+      exportOptions: ['All Time', 'Today', 'This Week', 'This Month', 'This Year'],
     };
+  },
+  watch: {
+    globalSearch(newVal) {
+      this.q = newVal || "";
+    }
   },
   setup() {
     const router = useRouter();
@@ -633,6 +679,21 @@ export default defineComponent({
        // If order is already cancelled, prevent any changes
        if (order.status === 'Cancelled') {
          this.showToast("Cannot modify a cancelled order.");
+         return;
+       }
+
+       // ENFORCE: Must be Paid to Process (unless Cash/COD)
+       const restrictedStatuses = ['Processing', 'Shipped', 'Delivered'];
+       const isCashOrCOD = ['Cash', 'COD'].includes(order.paymentMethod);
+       
+       if (restrictedStatuses.includes(newStatus) && !order.isPaid && !isCashOrCOD) {
+         this.showToast("Order must be PAID before processing!");
+         // Reset UI select
+         if (event.target) event.target.value = order.status;
+         // Reset v-model if selected
+         if (this.selected && this.selected.id === order.id) {
+            this.selected.status = order.status;
+         }
          return;
        }
 
@@ -907,209 +968,285 @@ export default defineComponent({
       this.showToast("Invoice generated successfully!");
     },
 
-    // Export all orders to CSV
-    exportCSV() {
-      if (this.orders.length === 0) {
-        this.showToast("No orders to export.");
+    // Helper to filter orders by range
+    filterOrdersByRange(range: string) {
+      const now = new Date();
+      return this.orders.filter(o => {
+        const d = new Date(o.date);
+        
+        switch (range) {
+          case 'Today':
+            return d.toDateString() === now.toDateString();
+          case 'This Week': {
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+            startOfWeek.setHours(0, 0, 0, 0);
+            return d >= startOfWeek;
+          }
+          case 'This Month':
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          case 'This Year':
+            return d.getFullYear() === now.getFullYear();
+          case 'All Time':
+          default:
+            return true;
+        }
+      });
+    },
+
+    // Export all orders to CSV - using data URI for reliable download
+    exportCSV(range: string = 'All Time') {
+      const filtered = this.filterOrdersByRange(range);
+      
+      if (filtered.length === 0) {
+        this.showToast(`No orders found for ${range}.`);
         return;
       }
 
-      const headers = ['Order ID', 'Customer', 'Email', 'Date', 'Total', 'Status', 'Payment Status', 'Payment Method'];
-      const rows = this.orders.map(o => [
-        o.id,
-        o.customer,
-        o.email,
-        this.formatDate(o.date),
-        o.total.toFixed(2),
-        o.status,
-        o.isPaid ? 'Paid' : 'Unpaid',
-        o.paymentMethod
-      ]);
+      try {
+        const headers = ['Order ID', 'Customer', 'Email', 'Date', 'Total', 'Status', 'Payment Status', 'Payment Method'];
+        const rows = filtered.map(o => [
+          o.id,
+          `"${o.customer.replace(/"/g, '""')}"`,
+          `"${o.email.replace(/"/g, '""')}"`,
+          this.formatDate(o.date),
+          o.total.toFixed(2),
+          o.status,
+          o.isPaid ? 'Paid' : 'Unpaid',
+          o.paymentMethod
+        ]);
 
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
+        let csvContent = headers.join(',') + '\r\n';
+        rows.forEach(row => {
+          csvContent += row.join(',') + '\r\n';
+        });
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Orders_Export_${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+        // Create download using data URI with explicit filename
+        const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `PetStore_Orders_${range.replace(/ /g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-      this.showToast("Orders exported to CSV!");
+        this.showToast(`CSV exported for ${range}!`);
+      } catch (error) {
+        console.error('CSV Export Error:', error);
+        this.showToast("Failed to export CSV.");
+      }
     },
 
-    // Generate simple financial report
-    generateFinancialReport() {
-      const totalRevenue = this.orders.reduce((sum, o) => sum + (o.total || 0), 0);
-      const paidOrders = this.orders.filter(o => o.isPaid);
-      const paidRevenue = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-      const pendingRevenue = totalRevenue - paidRevenue;
+    // Generate financial report - direct PDF download using jsPDF
+    generateFinancialReport(range: string = 'All Time') {
+      const filtered = this.filterOrdersByRange(range);
 
-      const cancelledOrders = this.orders.filter(o => o.status === 'Cancelled');
-      const refundedOrders = this.orders.filter(o => o.status === 'Refunded');
-      const deliveredOrders = this.orders.filter(o => o.status === 'Delivered');
-
-      const avgOrderValue = this.orders.length > 0 ? totalRevenue / this.orders.length : 0;
-
-      // Group by month
-      const byMonth: Record<string, { count: number; revenue: number }> = {};
-      this.orders.forEach(o => {
-        const month = new Date(o.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-        if (!byMonth[month]) byMonth[month] = { count: 0, revenue: 0 };
-        byMonth[month].count++;
-        byMonth[month].revenue += o.total || 0;
-      });
-
-      const reportHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Financial Report - PetStore+</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', sans-serif; padding: 40px; background: #f8fafc; }
-            .report { max-width: 900px; margin: 0 auto; background: white; padding: 50px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-            .header { text-align: center; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 3px solid #0f172a; }
-            .logo { font-size: 28px; font-weight: 900; color: #0f172a; }
-            .date { color: #64748b; font-size: 12px; margin-top: 8px; }
-            .section { margin-bottom: 40px; }
-            .section-title { font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-            .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-            .stat-card { background: #f8fafc; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; }
-            .stat-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
-            .stat-value { font-size: 28px; font-weight: 900; color: #0f172a; }
-            .stat-value.green { color: #059669; }
-            .stat-value.amber { color: #d97706; }
-            .stat-value.red { color: #dc2626; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th { text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; background: #f8fafc; border-bottom: 2px solid #e2e8f0; }
-            td { padding: 14px 16px; font-size: 14px; color: #0f172a; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
-            .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px; }
-            @media print { body { padding: 0; background: white; } .report { box-shadow: none; } }
-          </style>
-        </head>
-        <body>
-          <div class="report">
-            <div class="header">
-              <div class="logo">PetStore+ Financial Report</div>
-              <div class="date">Generated on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            </div>
-
-            <div class="section">
-              <div class="section-title">Revenue Summary</div>
-              <div class="stats-grid">
-                <div class="stat-card">
-                  <div class="stat-label">Total Revenue</div>
-                  <div class="stat-value">${this.formatMoney(totalRevenue)}</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label">Collected (Paid)</div>
-                  <div class="stat-value green">${this.formatMoney(paidRevenue)}</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label">Pending Collection</div>
-                  <div class="stat-value amber">${this.formatMoney(pendingRevenue)}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="section">
-              <div class="section-title">Order Statistics</div>
-              <div class="stats-grid">
-                <div class="stat-card">
-                  <div class="stat-label">Total Orders</div>
-                  <div class="stat-value">${this.orders.length}</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label">Avg. Order Value</div>
-                  <div class="stat-value">${this.formatMoney(avgOrderValue)}</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label">Delivered Orders</div>
-                  <div class="stat-value green">${deliveredOrders.length}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="section">
-              <div class="section-title">Order Status Breakdown</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Status</th>
-                    <th>Count</th>
-                    <th>Percentage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>Pending</td><td>${this.orders.filter(o => o.status === 'Pending').length}</td><td>${(this.orders.filter(o => o.status === 'Pending').length / this.orders.length * 100).toFixed(1)}%</td></tr>
-                  <tr><td>Processing</td><td>${this.orders.filter(o => o.status === 'Processing').length}</td><td>${(this.orders.filter(o => o.status === 'Processing').length / this.orders.length * 100).toFixed(1)}%</td></tr>
-                  <tr><td>Shipped</td><td>${this.orders.filter(o => o.status === 'Shipped').length}</td><td>${(this.orders.filter(o => o.status === 'Shipped').length / this.orders.length * 100).toFixed(1)}%</td></tr>
-                  <tr><td>Delivered</td><td>${deliveredOrders.length}</td><td>${(deliveredOrders.length / this.orders.length * 100).toFixed(1)}%</td></tr>
-                  <tr><td>Cancelled</td><td>${cancelledOrders.length}</td><td>${(cancelledOrders.length / this.orders.length * 100).toFixed(1)}%</td></tr>
-                  <tr><td>Refunded</td><td>${refundedOrders.length}</td><td>${(refundedOrders.length / this.orders.length * 100).toFixed(1)}%</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="section">
-              <div class="section-title">Revenue by Month</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Orders</th>
-                    <th>Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${Object.entries(byMonth).map(([month, data]) => `
-                    <tr>
-                      <td>${month}</td>
-                      <td>${data.count}</td>
-                      <td>${this.formatMoney(data.revenue)}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
-
-            <div class="footer">
-              This report was automatically generated by PetStore+ Admin Dashboard<br>
-              © ${new Date().getFullYear()} PetStore+ • All Rights Reserved
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      // Download
-      const blob = new Blob([reportHTML], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Financial_Report_${new Date().toISOString().slice(0, 10)}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      // Open in new window
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(reportHTML);
-        printWindow.document.close();
+      if (filtered.length === 0) {
+        this.showToast(`No data to generate report for ${range}.`);
+        return;
       }
 
-      this.showToast("Financial report generated!");
+      try {
+        // Calculate dynamic statistics from real orders
+        const totalRevenue = filtered.reduce((sum, o) => sum + (o.total || 0), 0);
+        const paidOrders = filtered.filter(o => o.isPaid);
+        const paidRevenue = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+        const pendingRevenue = totalRevenue - paidRevenue;
+
+        const pendingOrdersList = filtered.filter(o => o.status === 'Pending');
+        const processingOrdersList = filtered.filter(o => o.status === 'Processing');
+        const shippedOrdersList = filtered.filter(o => o.status === 'Shipped');
+        const deliveredOrdersList = filtered.filter(o => o.status === 'Delivered');
+        const cancelledOrdersList = filtered.filter(o => o.status === 'Cancelled');
+
+        const avgOrderValue = filtered.length > 0 ? totalRevenue / filtered.length : 0;
+
+        // Group by month
+        const byMonth: Record<string, { count: number; revenue: number }> = {};
+        filtered.forEach(o => {
+          const d = new Date(o.date);
+          const monthKey = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+          if (!byMonth[monthKey]) byMonth[monthKey] = { count: 0, revenue: 0 };
+          byMonth[monthKey].count++;
+          byMonth[monthKey].revenue += o.total || 0;
+        });
+
+        // Top customers
+        const customerRevenue: Record<string, number> = {};
+        filtered.forEach(o => {
+          customerRevenue[o.customer] = (customerRevenue[o.customer] || 0) + (o.total || 0);
+        });
+        const topCustomers = Object.entries(customerRevenue)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5);
+
+        // Create PDF using jsPDF
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        let y = 20;
+
+        // Header
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, pageWidth, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PetStore+ Revenue Report', pageWidth / 2, 18, { align: 'center' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Range: ${range} • Generated on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, 30, { align: 'center' });
+
+        y = 55;
+        doc.setTextColor(0, 0, 0);
+
+        // Revenue Overview
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text('REVENUE OVERVIEW', 15, y);
+        y += 12;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text('Total Revenue:', 15, y);
+        doc.text('Collected (Paid):', 80, y);
+        doc.text('Pending:', 145, y);
+        y += 7;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(14);
+        doc.text(this.formatMoney(totalRevenue), 15, y);
+        doc.setTextColor(5, 150, 105);
+        doc.text(this.formatMoney(paidRevenue), 80, y);
+        doc.setTextColor(217, 119, 6);
+        doc.text(this.formatMoney(pendingRevenue), 145, y);
+        
+        y += 12;
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total Orders:', 15, y);
+        doc.text('Avg Order Value:', 80, y);
+        doc.text('Paid Orders:', 145, y);
+        y += 7;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(14);
+        doc.text(String(filtered.length), 15, y);
+        doc.text(this.formatMoney(avgOrderValue), 80, y);
+        doc.text(String(paidOrders.length), 145, y);
+
+        y += 18;
+
+        // Order Status
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text('ORDER STATUS BREAKDOWN', 15, y);
+        y += 10;
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text('Status', 15, y);
+        doc.text('Count', 70, y);
+        doc.text('Percentage', 100, y);
+        doc.text('Revenue', 145, y);
+        y += 3;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(15, y, 190, y);
+        y += 7;
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+
+        const statuses = [
+          { name: 'Pending', orders: pendingOrdersList },
+          { name: 'Processing', orders: processingOrdersList },
+          { name: 'Shipped', orders: shippedOrdersList },
+          { name: 'Delivered', orders: deliveredOrdersList },
+          { name: 'Cancelled', orders: cancelledOrdersList }
+        ];
+
+        statuses.forEach(s => {
+          const pct = filtered.length ? ((s.orders.length / filtered.length) * 100).toFixed(1) : '0';
+          const rev = s.orders.reduce((sum, o) => sum + o.total, 0);
+          doc.text(s.name, 15, y);
+          doc.text(String(s.orders.length), 70, y);
+          doc.text(`${pct}%`, 100, y);
+          doc.text(this.formatMoney(rev), 145, y);
+          y += 7;
+        });
+
+        y += 12;
+
+        // Monthly Revenue
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text('MONTHLY REVENUE', 15, y);
+        y += 10;
+
+        doc.setFontSize(10);
+        doc.text('Month', 15, y);
+        doc.text('Orders', 80, y);
+        doc.text('Revenue', 130, y);
+        y += 3;
+        doc.line(15, y, 190, y);
+        y += 7;
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+
+        Object.entries(byMonth).slice(0, 6).forEach(([month, data]) => {
+          doc.text(month, 15, y);
+          doc.text(String(data.count), 80, y);
+          doc.text(this.formatMoney(data.revenue), 130, y);
+          y += 7;
+        });
+
+        y += 12;
+
+        // Top Customers
+        if (topCustomers.length > 0) {
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(100, 116, 139);
+          doc.text('TOP CUSTOMERS', 15, y);
+          y += 10;
+
+          doc.setFontSize(10);
+          doc.text('Customer', 15, y);
+          doc.text('Total Spent', 130, y);
+          y += 3;
+          doc.line(15, y, 190, y);
+          y += 7;
+
+          doc.setTextColor(0, 0, 0);
+          doc.setFont('helvetica', 'normal');
+
+          topCustomers.forEach(([name, revenue]) => {
+            doc.text(name.substring(0, 40), 15, y);
+            doc.text(this.formatMoney(revenue), 130, y);
+            y += 7;
+          });
+        }
+
+        // Footer
+        doc.setFontSize(9);
+        doc.setTextColor(148, 163, 184);
+        doc.text('This report was automatically generated by PetStore+ Admin Dashboard', pageWidth / 2, 280, { align: 'center' });
+        doc.text(`© ${new Date().getFullYear()} PetStore+ • All Rights Reserved`, pageWidth / 2, 287, { align: 'center' });
+
+        // Save PDF with proper filename
+        doc.save(`PetStore_Revenue_Report_${range.replace(/ /g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+        
+        this.showToast("PDF report downloaded!");
+      } catch (error) {
+        console.error('PDF Generation Error:', error);
+        this.showToast("Failed to generate PDF report.");
+      }
     }
+
   }
 });
 </script>

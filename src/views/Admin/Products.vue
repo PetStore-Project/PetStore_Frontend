@@ -168,7 +168,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
+import { defineComponent, ref, reactive, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import AdminProductCard from '@/components/Admin/AdminProductCard.vue';
@@ -179,7 +179,8 @@ const API_BASE = "https://petstore-backend-api.onrender.com/api";
 export default defineComponent({
   name: "Products",
   components: { AdminProductCard },
-  setup() {
+  props: ['globalSearch'],
+  setup(props) {
     const authStore = useAuthStore();
     const toast = useToast();
     const products = ref<any[]>([]);
@@ -193,6 +194,11 @@ export default defineComponent({
       search: '',
       category: '',
       stock: 'all'
+    });
+
+    // Watch global search from AdminLayout
+    watch(() => props.globalSearch, (newVal) => {
+      if (newVal !== undefined) filters.search = newVal;
     });
 
     const modal = reactive({ open: false, mode: 'create', id: '' });

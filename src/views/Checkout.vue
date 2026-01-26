@@ -66,6 +66,24 @@
       </div>
     </div>
 
+    <!-- Pay Later Confirmation Modal -->
+    <transition name="modal-fade">
+      <div v-if="showPayLaterConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showPayLaterConfirm = false"></div>
+        <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center">
+           <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+           </div>
+           <h3 class="text-xl font-bold text-gray-900 mb-2">Pay Later & 24h Expiration</h3>
+           <p class="text-gray-500 mb-6">Your order will be reserved, but you must complete payment within <span class="font-bold text-amber-600">24 hours</span> or it will be automatically cancelled.</p>
+           <div class="flex gap-3">
+             <button @click="showPayLaterConfirm = false" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition">Cancel</button>
+             <button @click="confirmPayLater" class="flex-1 py-3 bg-[#009200] text-white rounded-xl font-bold hover:bg-[#007a00] transition">Place Order</button>
+           </div>
+        </div>
+      </div>
+    </transition>
+
     <div class="max-w-[1200px] mx-auto px-4 md:px-8 pt-12" :class="{ 'blur-sm grayscale-[50%]': orderSuccess || showBakongModal }">
       <h1 class="text-4xl font-extrabold mb-10 text-gray-900">Checkout</h1>
 
@@ -123,6 +141,11 @@
                  <div v-if="form.paymentMethod === 'Card'" class="absolute top-3 right-3 text-blue-500"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg></div>
                  <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg></div>
                  <div><span class="block font-bold text-gray-900">Card</span><span class="text-xs text-gray-500">Visa / Master</span></div>
+              </div>
+              <div @click="setPaymentMethod('Later')" class="relative p-6 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col items-center text-center gap-3 hover:shadow-md" :class="form.paymentMethod === 'Later' ? 'border-amber-500 bg-amber-50/30' : 'border-gray-100 hover:border-amber-200 bg-white'">
+                 <div v-if="form.paymentMethod === 'Later'" class="absolute top-3 right-3 text-amber-500"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg></div>
+                 <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                 <div><span class="block font-bold text-gray-900">Pay Later</span><span class="text-xs text-gray-500">Pay via Order History</span></div>
               </div>
             </div>
 
@@ -185,7 +208,7 @@
               class="w-full mt-8 bg-gray-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-black transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 group relative overflow-hidden"
             >
               <svg v-if="isProcessing" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <span v-else>{{ form.paymentMethod === 'Bakong' ? 'Generate QR & Pay' : 'Place Order' }}</span>
+              <span v-else>{{ form.paymentMethod === 'Bakong' ? 'Generate QR & Pay' : (form.paymentMethod === 'Later' ? 'Place Order (Pay Later)' : 'Place Order') }}</span>
               <svg v-if="!isProcessing" class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
             </button>
 
@@ -215,6 +238,7 @@ export default defineComponent({
 
     const isProcessing = ref(false);
     const orderSuccess = ref(false);
+    const showPayLaterConfirm = ref(false);
 
     // BAKONG STATES
     const showBakongModal = ref(false);
@@ -231,7 +255,7 @@ export default defineComponent({
     let cardElement: any = null;
 
     const shippingCost = ref(5.00);
-    const totalCost = computed(() => cartStore.subtotal + shippingCost.value + (cartStore.subtotal * 0.08));
+    const totalCost = computed(() => Math.max(0, cartStore.subtotal + shippingCost.value + (cartStore.subtotal * 0.08) - cartStore.discountAmount));
 
     const form = reactive({
       firstName: '', lastName: '', address: '', city: '',
@@ -307,7 +331,24 @@ export default defineComponent({
       }
 
       isProcessing.value = true;
+      
+      // Pay Later Confirmation Intercept
+      if (form.paymentMethod === 'Later') {
+         isProcessing.value = false;
+         showPayLaterConfirm.value = true;
+         return;
+      }
 
+      processOrder();
+    };
+
+    const confirmPayLater = () => {
+       showPayLaterConfirm.value = false;
+       isProcessing.value = true;
+       processOrder();
+    };
+
+    const processOrder = async () => {
       try {
         let paymentInfo = { isPaid: false, paidAt: null };
 
@@ -349,6 +390,8 @@ export default defineComponent({
           itemsPrice: cartStore.subtotal,
           shippingPrice: shippingCost.value,
           totalPrice: totalCost.value,
+          promoCode: cartStore.promoCode,
+          discountAmount: cartStore.discountAmount,
           isPaid: paymentInfo.isPaid,
           paidAt: paymentInfo.paidAt
         };
@@ -365,7 +408,9 @@ export default defineComponent({
             return;
         }
 
-        // 4. FINISH
+        // 4. PAY LATER / CASH / COD / CARD Success
+        // For 'Later', no extra steps needed, order created as pending/unpaid.
+        
         cartStore.clearCart();
         orderSuccess.value = true;
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -383,7 +428,8 @@ export default defineComponent({
     return {
       cartStore, form, isProcessing, orderSuccess,
       shippingCost, totalCost, handleCheckout, setPaymentMethod, goToHistory,
-      showBakongModal, dynamicQR, closeBakongModal, timeLeft, formatTime
+      showBakongModal, dynamicQR, closeBakongModal, timeLeft, formatTime, 
+      showPayLaterConfirm, confirmPayLater
     };
   }
 });

@@ -189,8 +189,8 @@ export default defineComponent({
     const toast = useToast();
 
     const couponCode = ref("");
-    const discount = ref(0);
     const isLoadingPromo = ref(false);
+    const discount = computed(() => cartStore.discountAmount);
 
     const subtotal = computed(() => cartStore.subtotal);
     const shipping = computed(() => subtotal.value > 50 ? 0 : 5.00);
@@ -202,8 +202,7 @@ export default defineComponent({
     const applyCoupon = async () => {
       if (!couponCode.value) return;
       isLoadingPromo.value = true;
-      discount.value = 0; // Reset previous discount
-
+      
       try {
         const { data } = await axios.post(`${API_BASE}/promotions/validate`, {
           code: couponCode.value,
@@ -211,13 +210,13 @@ export default defineComponent({
         });
 
         if (data.success) {
-          discount.value = data.discountAmount;
+          cartStore.applyPromo(couponCode.value, data.discountAmount);
           toast.success(`Coupon applied! Saved $${data.discountAmount.toFixed(2)}`);
         }
       } catch (error: any) {
         const msg = error.response?.data?.message || "Invalid coupon code";
         toast.error(msg);
-        discount.value = 0;
+        cartStore.clearPromo();
       } finally {
         isLoadingPromo.value = false;
       }
