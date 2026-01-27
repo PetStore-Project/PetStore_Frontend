@@ -323,22 +323,22 @@
 
       <!-- Promotion Effectiveness Section -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-        <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-[32px] p-8 text-white shadow-lg">
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-[32px] p-8 text-white shadow-lg">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-black">Promotion Summary</h3>
             <router-link to="/admin/promotions" class="text-xs font-bold bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition">Manage</router-link>
           </div>
           <div class="grid grid-cols-2 gap-6">
             <div>
-              <p class="text-purple-200 text-xs font-bold uppercase mb-1">Active Campaigns</p>
+              <p class="text-emerald-100 text-xs font-bold uppercase mb-1">Active Campaigns</p>
               <p class="text-3xl font-black">{{ promoStats.active }}</p>
             </div>
             <div>
-              <p class="text-purple-200 text-xs font-bold uppercase mb-1">Total Redemptions</p>
+              <p class="text-emerald-100 text-xs font-bold uppercase mb-1">Total Redemptions</p>
               <p class="text-3xl font-black">{{ promoStats.totalRedemptions }}</p>
             </div>
             <div class="col-span-2 pt-4 border-t border-white/20">
-              <p class="text-purple-200 text-xs font-bold uppercase mb-1">Est. Savings Given</p>
+              <p class="text-emerald-100 text-xs font-bold uppercase mb-1">Est. Savings Given</p>
               <p class="text-2xl font-black">{{ formatMoney(promoStats.estimatedSavings) }}</p>
             </div>
           </div>
