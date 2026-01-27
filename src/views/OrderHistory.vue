@@ -28,7 +28,7 @@
                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total</p>
                <p class="font-bold text-[#009200]">${{ order.totalPrice.toFixed(2) }}</p>
             </div>
-            <div v-if="!order.isPaid && order.status === 'Pending' && !['Cash', 'COD'].includes(order.paymentMethod)" class="ml-4">
+            <div v-if="!order.isPaid && order.status === 'Pending' && order.paymentMethod === 'Later'" class="ml-4">
                <button @click.stop="openPayment(order)" class="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-slate-800 transition transform hover:-translate-y-0.5">
                  Pay Now
                </button>
@@ -381,7 +381,7 @@ export default defineComponent({
 
     const getExpiration = (order: any) => {
         // Strict check: Only expire if Pending AND Unpaid AND Not Cash/COD
-        if (order.isPaid || order.status !== 'Pending' || ['Cash', 'COD'].includes(order.paymentMethod)) return null;
+        if (order.paymentMethod !== 'Later' || order.isPaid || order.status !== 'Pending') return null;
         
         const created = new Date(order.createdAt);
         const expiresAt = new Date(created.getTime() + 24 * 60 * 60 * 1000); 

@@ -257,7 +257,7 @@ export default defineComponent({
     let elements: any = null;
     let cardElement: any = null;
 
-    const shippingCost = ref(5.00);
+    const shippingCost = computed(() => cartStore.subtotal > 50 ? 0 : 5.00);
     const totalCost = computed(() => Math.max(0, cartStore.subtotal + shippingCost.value + (cartStore.subtotal * 0.08) - cartStore.discountAmount));
 
     const form = reactive({
