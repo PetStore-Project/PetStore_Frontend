@@ -117,7 +117,7 @@
               We've paired our best-selling green toys with lucky red treats. The perfect balance for your pet.
             </p>
             <button
-              @click="router.push('/shop')"
+              @click="router.push({ name: 'shop', query: { products: 'Jade Collar,Lucky Chew' } })"
               class="bg-white text-[#004d29] px-10 py-4 rounded-full font-bold text-lg hover:bg-[#FFD700] transition-colors duration-300 shadow-lg"
             >
               Shop Bundles
@@ -143,7 +143,7 @@
                 <img :src="chewsImg" class="w-full h-full object-contain group-hover:scale-110 transition-transform" />
               </div>
               <div class="flex justify-between items-center">
-                <p class="font-bold text-gray-900 text-sm md:text-base">Lucky Chews</p>
+                <p class="font-bold text-gray-900 text-sm md:text-base">Lucky Chew</p>
                 <span class="text-lg font-bold text-[#D00000]">$5.99</span>
               </div>
             </div>

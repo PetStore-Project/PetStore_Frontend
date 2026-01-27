@@ -145,7 +145,7 @@
             <!-- Actions -->
             <div class="flex gap-2">
               <button
-                @click="broadcastPromo(promo._id)"
+                @click="confirmBroadcast(promo._id)"
                 :disabled="sendingPromoId === promo._id"
                 class="flex-1 text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-xl transition flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -335,6 +335,30 @@
       </div>
     </transition>
 
+    <!-- Email Broadcast Confirmation Modal -->
+    <transition name="modal">
+      <div v-if="showEmailConfirm" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="cancelBroadcast"></div>
+        <div class="relative bg-white w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden p-8 text-center">
+          <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-black text-slate-900 mb-2">Send Email Alert?</h3>
+          <p class="text-slate-500 text-sm font-medium mb-6">Are you sure you want to email this promotion to <strong>ALL users</strong>? This cannot be undone.</p>
+          <div class="flex gap-3">
+            <button @click="cancelBroadcast" class="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition">
+              Cancel
+            </button>
+            <button @click="proceedBroadcast" class="flex-1 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg shadow-slate-900/30 transition">
+              Send Email
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -435,11 +459,27 @@ export default defineComponent({
       }
     };
 
-    const broadcastPromo = async (id: string) => {
-      try {
-        if (!confirm("Are you sure you want to email this promotion to ALL users?")) return;
+    const showEmailConfirm = ref(false);
+    const pendingEmailId = ref<string | null>(null);
 
-        sendingPromoId.value = id;
+    const confirmBroadcast = (id: string) => {
+      pendingEmailId.value = id;
+      showEmailConfirm.value = true;
+    };
+
+    const cancelBroadcast = () => {
+      showEmailConfirm.value = false;
+      pendingEmailId.value = null;
+    };
+
+    const proceedBroadcast = async () => {
+      if (!pendingEmailId.value) return;
+      
+      const id = pendingEmailId.value;
+      showEmailConfirm.value = false; // Close modal immediately
+      
+      sendingPromoId.value = id;
+      try {
         const { data } = await axios.post(`${API_BASE}/promotions/${id}/broadcast`, {}, getAuthHeader());
         toast.info(data.message || "Broadcast started!");
       } catch (error: any) {
@@ -447,6 +487,7 @@ export default defineComponent({
         toast.error(error.response?.data?.message || "Failed to start broadcast");
       } finally {
         sendingPromoId.value = null;
+        pendingEmailId.value = null;
       }
     };
 
@@ -595,7 +636,8 @@ export default defineComponent({
       formatDate, formatMoney, getStatusText, getStatusClass, copyCode,
       activeCount, scheduledCount, totalRedemptions, estimatedSavings, calculatePromoSavings,
       showDeleteConfirm, confirmDelete, cancelDelete,
-      broadcastPromo,
+      broadcastPromo: confirmBroadcast, // Expose as broadcastPromo for template compatibility if needed, but template uses confirmBroadcast now
+      confirmBroadcast, cancelBroadcast, proceedBroadcast, showEmailConfirm,
       sendingPromoId
     };
   }

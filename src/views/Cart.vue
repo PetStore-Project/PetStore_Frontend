@@ -107,17 +107,17 @@
 
             <div class="mb-6">
               <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Promo Code</label>
-              <div class="flex gap-2">
+              <div class="flex gap-3 w-full">
                 <input
                   v-model="couponCode"
                   type="text"
                   placeholder="Enter code"
-                  class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 uppercase"
+                  class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 uppercase"
                 >
                 <button
                   @click="applyCoupon"
                   :disabled="isLoadingPromo || !couponCode"
-                  class="bg-gray-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  class="bg-gray-900 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
                 >
                   {{ isLoadingPromo ? '...' : 'Apply' }}
                 </button>

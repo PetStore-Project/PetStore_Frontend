@@ -321,7 +321,7 @@ export default defineComponent({
           if (user && user.role === 'admin') {
             router.push('/admin/dashboard');
           } else {
-            router.push('/shop');
+            router.push('/');
           }
         }, 500);
 

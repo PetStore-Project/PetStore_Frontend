@@ -142,6 +142,7 @@ import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { useToast } from 'vue-toastification';
 
 const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
@@ -237,6 +238,10 @@ export default defineComponent({
     };
 
     const handleLogout = () => {
+      // Clear any active toasts (free shipping, etc)
+      const toast = useToast(); 
+      toast.clear();
+      
       authStore.logout();
       localStorage.removeItem('userToken');
       localStorage.removeItem('userInfo');

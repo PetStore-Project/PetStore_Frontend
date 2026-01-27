@@ -174,7 +174,10 @@ export default defineComponent({
     }
 
     const cancelChanges = () => { fetchUserProfile(); passwordData.value = { current: '', new: '', confirm: '' }; }
-    const logout = () => { authStore.logout(); }
+    const logout = () => { 
+      toast.clear();
+      authStore.logout(); 
+    }
 
     onMounted(() => { fetchUserProfile(); fetchOrderCount(); })
 

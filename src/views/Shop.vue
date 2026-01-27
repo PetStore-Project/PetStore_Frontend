@@ -201,7 +201,18 @@ export default defineComponent({
                          product.name.includes(activeTab.value) ||
                          product.description.includes(activeTab.value) ||
                          (activeTab.value === 'Small Pet' && (product.category === 'Hamster' || product.description.includes('small')));
-        return searchMatch && catMatch && tabMatch;
+        
+        // 🆕 Check for specific product names (e.g. from "Shop Bundles")
+        const productsParam = route.query.products as string;
+        let productMatch = true;
+        
+        if (productsParam) {
+           const targetNames = productsParam.split(',').map(n => n.trim().toLowerCase());
+           // If product name is in the target list
+           productMatch = targetNames.some(target => product.name.toLowerCase().includes(target));
+        }
+
+        return searchMatch && catMatch && tabMatch && productMatch;
       });
 
       // Apply sorting
