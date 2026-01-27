@@ -35,7 +35,7 @@
 
       <select v-model="filters.stock" class="w-full md:w-48 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer">
         <option value="all">All Stock</option>
-        <option value="low">Low Stock (&lt; 10)</option>
+        <option value="low">Low Stock (&le; 5)</option>
         <option value="out">Out of Stock</option>
       </select>
 
@@ -169,6 +169,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router'; // Import useRoute
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import AdminProductCard from '@/components/Admin/AdminProductCard.vue';
@@ -243,7 +244,7 @@ export default defineComponent({
         const currentStock = p.stockQuantity !== undefined ? p.stockQuantity : (p.stock || 0);
 
         let matchesStock = true;
-        if (filters.stock === 'low') matchesStock = currentStock < 10;
+        if (filters.stock === 'low') matchesStock = currentStock <= 5; // Standardized: <= 5
         if (filters.stock === 'out') matchesStock = currentStock === 0;
 
         return matchesSearch && matchesCategory && matchesStock;
@@ -256,6 +257,15 @@ export default defineComponent({
       if (filters.category) count++;
       if (filters.stock !== 'all') count++;
       return count;
+    });
+
+    // Check for query param ?filter=low_stock
+    const route = useRoute();
+    onMounted(() => {
+      fetchProducts();
+      if (route.query.filter === 'low_stock') {
+        filters.stock = 'low';
+      }
     });
 
     const resetFilters = () => {
@@ -361,7 +371,7 @@ export default defineComponent({
       }
     }
 
-    onMounted(fetchProducts);
+    // onMounted(fetchProducts); // Already called above
 
     return {
       products, isLoading, isSaving, modal, form, filters, filteredProducts, activeFiltersCount,

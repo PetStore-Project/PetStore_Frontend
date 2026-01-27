@@ -46,7 +46,14 @@
         </StatsCard>
 
         <!-- Inventory -->
-        <StatsCard label="Inventory" :value="stats.products" color="purple">
+        <!-- Inventory -->
+        <StatsCard 
+          label="Inventory" 
+          :value="stats.products" 
+          color="purple" 
+          class="cursor-pointer hover:border-purple-200 transition"
+          @click="$router.push('/admin/products?filter=low_stock')"
+        >
           <template #icon>
             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11z"/><path d="M10 22h4v-5.5h-4z"/></svg>
           </template>
@@ -570,13 +577,14 @@ export default defineComponent({
       revenue: number;
     }
 
-    // Promotion Stats
     const promoStats = ref<PromoStats>({
       active: 0,
       totalRedemptions: 0,
       estimatedSavings: 0,
-      revenue: 0 // New field
+      revenue: 0
     });
+
+
 
     // Revenue Data for Chart (storage for different modes)
     const revenueSeries = ref(new Array(12).fill(0));
@@ -672,7 +680,7 @@ export default defineComponent({
           products: products.length,
           customers: users.length,
           newCustomers: users.filter((u: any) => new Date(u.createdAt).toDateString() === new Date().toDateString()).length,
-          lowStock: products.filter((p: any) => (p.stockQuantity || p.stock || 0) < 5).length,
+          lowStock: products.filter((p: any) => (p.stockQuantity || p.stock || 0) <= 5).length, // Standardized: <= 5
           processingOrders: processCount, // Count of Paid + Processing orders
           pendingOrders: pendingCount, // Count of Unpaid/Pending orders
           
@@ -774,6 +782,14 @@ export default defineComponent({
         const estSavingsFromOrders = orders.reduce((sum: number, o: any) => {
           return sum + (o.discountAmount || 0);
         }, 0);
+
+        // Update Promo Stats with Real Data
+        promoStats.value = {
+          active: activePromos.length,
+          totalRedemptions: totalRedemptions,
+          estimatedSavings: promos.reduce((sum: number, p: any) => sum + (p.totalSavings || 0), 0),
+          revenue: promos.reduce((sum: number, p: any) => sum + (p.revenue || 0), 0)
+        };
 
         const avgOrderValue = stats.value.orders > 0 ? stats.value.revenue / stats.value.orders : 50;
         const estSavingsFromPromos = promos.reduce((sum: number, p: any) => {

@@ -24,7 +24,7 @@
         :alt="product.name"
         class="h-full w-full object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-110"
       />
-      <div v-if="(product.stockQuantity || product.stock || 0) < 5" class="absolute bottom-3 left-3 bg-red-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm">
+      <div v-if="(product.stockQuantity || product.stock || 0) <= 5" class="absolute bottom-3 left-3 bg-red-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm">
         Low Stock
       </div>
     </div>
