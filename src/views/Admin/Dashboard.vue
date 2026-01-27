@@ -91,7 +91,7 @@
           </div>
 
           <!-- Chart Container with Y-axis labels -->
-          <div class="overflow-x-auto">
+          <div class="overflow-x-auto pt-12 pb-2">
             <div class="flex gap-4 min-w-[600px]">
               <!-- Y-Axis Labels - matches h-64 chart area for perfect alignment -->
               <div class="flex flex-col justify-between text-xs font-medium text-slate-400 w-16 text-right h-64 sticky left-0 bg-white/95 backdrop-blur-sm z-20">
@@ -380,7 +380,10 @@
         </div>
 
         <div class="lg:col-span-2 bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
-          <h3 class="text-lg font-black text-slate-900 mb-6">Top Performing Promos</h3>
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-black text-slate-900">Top Performing Promos</h3>
+            <button @click="showAllPromosModal = true" class="text-xs font-bold text-blue-600 hover:underline">View All</button>
+          </div>
           <div class="space-y-4 flex-1 overflow-x-auto">
             <div class="min-w-[400px] flex flex-col gap-4">
               <div v-for="(promo, i) in topPromos" :key="i" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
@@ -413,6 +416,42 @@
       </div>
 
     </main>
+
+
+    <!-- All Promos Modal -->
+    <div v-if="showAllPromosModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAllPromosModal = false"></div>
+      <div class="relative bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+          <h3 class="text-xl font-black text-slate-900">All Performing Promotions</h3>
+          <button @click="showAllPromosModal = false" class="p-2 hover:bg-slate-100 rounded-full transition">
+            <svg class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div class="overflow-y-auto p-6 space-y-4">
+           <div v-for="(promo, i) in allPerformingPromos" :key="i" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm"
+                :class="promo.type === 'percent' ? 'bg-purple-500' : 'bg-emerald-500'">
+                {{ promo.type === 'percent' ? '%' : '$' }}
+              </div>
+              <div>
+                <p class="font-mono font-black text-slate-900">{{ promo.code }}</p>
+                <p class="text-xs text-slate-500">{{ promo.type === 'percent' ? promo.value + '% Off' : '$' + promo.value + ' Off' }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-black text-slate-900">{{ promo.usageCount || 0 }}</p>
+              <p class="text-xs text-slate-500">redemptions</p>
+              <p class="text-[10px] font-bold text-emerald-600 mt-1">{{ formatMoney(promo.revenue || 0) }}</p>
+            </div>
+          </div>
+          <div v-if="allPerformingPromos.length === 0" class="text-center py-8 text-slate-400 font-medium">
+             No performing promotions found yet.
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -459,6 +498,10 @@ export default defineComponent({
     // Top Products Filtering State
     const topProductsFilter = ref('All Time');
     const showTopProductsFilterMenu = ref(false);
+
+    // Top Promos State
+    const showAllPromosModal = ref(false);
+    const allPerformingPromos = ref<any[]>([]);
 
     // Compute Top Products Reactively
     const topProducts = computed(() => {
@@ -771,8 +814,13 @@ export default defineComponent({
 
         topPromos.value = promosWithUsage
           .filter((p: any) => (p.usageCount || 0) > 0)
-          .sort((a: any, b: any) => (b.usageCount || 0) - (a.usageCount || 0)) // Still sort by usage? Or revenue? usually usage, but display revenue
-          .slice(0, 3);
+          .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0)) // Sort by Revenue Impact
+          .slice(0, 3); // Top 3
+
+        // Store full list for Modal
+        allPerformingPromos.value = promosWithUsage
+           .filter((p: any) => (p.usageCount || 0) > 0)
+           .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0));
 
       } catch (error) {
         console.error("Dashboard Load Error", error);
@@ -1041,7 +1089,8 @@ export default defineComponent({
       // Chart hover and peak/valley functionality
       chartHoverIndex, chartMaxValue, formatChartValue, handleChartHover,
       peakValleyIndices,
-      topProductsFilter, showTopProductsFilterMenu // Added filter state
+      topProductsFilter, showTopProductsFilterMenu, // Added filter state
+      showAllPromosModal, allPerformingPromos // Added modal state
     };
   }
 });
