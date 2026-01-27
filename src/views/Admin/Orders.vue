@@ -2,15 +2,15 @@
   <div class="w-full min-h-screen bg-slate-50 flex flex-col font-sans">
     <main class="flex-1 w-full overflow-y-auto px-4 sm:px-8 pt-8 pb-10">
 
-      <section class="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
-        <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-slate-50 opacity-60"></div>
+      <section class="relative rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+        <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-slate-50 opacity-60 rounded-3xl"></div>
         <div class="relative p-6 sm:p-8">
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div class="min-w-0">
               <h1 class="mt-3 text-3xl font-black text-slate-900 tracking-tight">Orders Center</h1>
               <p class="mt-2 text-sm text-slate-600 max-w-xl">Track revenue and manage order fulfillment in real-time.</p>
             </div>
-            <div class="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+            <div class="flex flex-wrap items-center gap-3 sm:gap-4 pb-2 sm:pb-0">
               <button @click="fetchOrders" class="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2">
                 <svg v-if="isLoading" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 <span v-else>Refresh</span>
