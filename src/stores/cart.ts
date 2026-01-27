@@ -34,15 +34,23 @@ export const useCartStore = defineStore('cart', {
     addToCart(product: any) {
       // Check if item is already in cart
       const existingItem = this.items.find((item) => item._id === product._id);
+      const stockLimit = product.stockQuantity || 0;
 
       if (existingItem) {
+        if (existingItem.quantity + 1 > stockLimit) {
+          // Optional: You could return false or throw error here to show toast in UI
+          // For now, we max out at stock limit
+          return;
+        }
         existingItem.quantity++;
         // Update price info in case it changed (e.g. discount applied)
-        // Round to 2 decimals to ensure Total = Sum(Components)
         existingItem.price = Number(Number(product.price).toFixed(2));
         existingItem.originalPrice = product.originalPrice;
         existingItem.hasDiscount = product.hasDiscount;
+        existingItem.stockQuantity = stockLimit; // Keep updated
       } else {
+        if (1 > stockLimit) return; // Should be handled by UI disabled button, but double check
+
         this.items.push({
           _id: product._id,
           name: product.name,
@@ -52,9 +60,11 @@ export const useCartStore = defineStore('cart', {
           quantity: 1,
           originalPrice: product.originalPrice,
           hasDiscount: product.hasDiscount,
+          stockQuantity: stockLimit // Store it
         });
       }
       this.saveToLocalStorage();
+      return true; // Success indicator
     },
 
     removeFromCart(productId: string) {
@@ -67,17 +77,25 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    updateQuantity(productId: string, change: number) {
+    updateQuantity(productId: string, change: number): boolean {
       const item = this.items.find((item) => item._id === productId);
       if (item) {
-        item.quantity += change;
+        const newQty = item.quantity + change;
+
+        // Prevent exceeding stock
+        if (change > 0 && item.stockQuantity && newQty > item.stockQuantity) {
+          return false;
+        }
+
+        item.quantity = newQty;
         // If quantity drops to 0, remove the item
         if (item.quantity <= 0) {
           this.removeFromCart(productId);
-          return; // removeFromCart handles saving
+          return true; // Success (removed)
         }
       }
       this.saveToLocalStorage();
+      return true;
     },
 
     clearCart() {

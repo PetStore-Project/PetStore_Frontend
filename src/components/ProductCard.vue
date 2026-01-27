@@ -9,15 +9,16 @@
       {{ discountLabel }}
     </div>
 
-    <!-- Low Stock Badge -->
+    <!-- Low Stock Badge (Show even if discounted, just move down) -->
     <div
-      v-else-if="isLowStock"
-      class="absolute top-3 left-3 z-20 bg-amber-500 text-white px-2 py-1 rounded-lg text-xs font-black shadow-lg flex items-center gap-1"
+      v-if="isLowStock"
+      class="absolute left-3 z-20 bg-amber-500 text-white px-2 py-1 rounded-lg text-xs font-black shadow-lg flex items-center gap-1"
+      :class="hasProductDiscount ? 'top-12' : 'top-3'"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
       </svg>
-      Low {{ product.stockQuantity }}
+      Low {{ realTimeStock }}
     </div>
 
     <button
@@ -67,13 +68,16 @@
         </div>
 
         <button
-          @click.prevent="addToCart"
-          class="bg-[#009200] hover:bg-[#007a00] text-white p-3 rounded-lg shadow-md transition-colors flex items-center justify-center active:scale-95"
-          title="Add to Cart"
+          @click.prevent="!isOutOfStock && addToCart()"
+          :disabled="isOutOfStock"
+          class="p-3 rounded-lg shadow-md transition-colors flex items-center justify-center"
+          :class="isOutOfStock ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#009200] hover:bg-[#007a00] text-white active:scale-95'"
+          :title="isOutOfStock ? 'Out of Stock' : 'Add to Cart'"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+          <svg v-if="!isOutOfStock" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
           </svg>
+          <span v-else class="text-xs font-bold px-1">Sold Out</span>
         </button>
       </div>
     </div>
@@ -88,6 +92,7 @@ import { useWishlistStore } from '@/stores/wishlist';
 import { useDiscountStore } from '@/stores/discount';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
+import { useToast } from 'vue-toastification';
 
 const BACKEND_URL = "https://petstore-backend-api.onrender.com";
 
@@ -105,6 +110,7 @@ export default defineComponent({
     const discountStore = useDiscountStore();
     const authStore = useAuthStore();
     const router = useRouter();
+    const toast = useToast();
 
     // Fetch discounts if not loaded
     onMounted(() => {
@@ -123,9 +129,26 @@ export default defineComponent({
       return discountStore.getDiscountLabel(props.product._id);
     });
 
-    // Check for Low Stock (e.g., <= 5 items)
+    // Get quantity currently in cart
+    const cartQuantity = computed(() => {
+      const item = cartStore.items.find((i: any) => i._id === props.product._id);
+      return item ? item.quantity : 0;
+    });
+
+    // Real-time Available Stock (Database Stock - Cart Quantity)
+    const realTimeStock = computed(() => {
+      const totalStock = props.product.stockQuantity || 0;
+      return Math.max(0, totalStock - cartQuantity.value);
+    });
+
+    // Check for Low Stock (e.g., <= 5 items) based on AVAILABLE stock
     const isLowStock = computed(() => {
-      return (props.product.stockQuantity || 0) > 0 && (props.product.stockQuantity || 0) <= 5;
+      return realTimeStock.value > 0 && realTimeStock.value <= 5;
+    });
+
+    const isOutOfStock = computed(() => {
+      // It's out of stock if Real Time Stock is 0
+      return realTimeStock.value <= 0;
     });
 
     // Original price formatted
@@ -163,13 +186,19 @@ export default defineComponent({
         ? discountStore.getDiscountedPrice(props.product._id, props.product.price)
         : props.product.price;
 
-      cartStore.addToCart({
+      const success = cartStore.addToCart({
         ...props.product,
         image: resolvedImage.value,
         originalPrice: props.product.price,
         price: finalPrice,
         hasDiscount: hasProductDiscount.value
       });
+      
+      if (!success) {
+         toast.warning("Max Stock Limit Reached");
+      } else {
+         toast.success("Added to Cart");
+      }
     };
 
     const toggleWishlist = () => {
@@ -188,7 +217,9 @@ export default defineComponent({
       resolvedImage,
       hasProductDiscount,
       discountLabel,
-      isLowStock
+      isLowStock,
+      isOutOfStock,
+      realTimeStock
     };
   }
 });

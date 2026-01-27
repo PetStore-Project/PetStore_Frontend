@@ -75,7 +75,7 @@
                    <div class="flex items-center bg-gray-100 rounded-lg p-1">
                       <button @click="cartStore.updateQuantity(item._id, -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-gray-600 hover:text-[#009200] font-bold transition disabled:opacity-50">-</button>
                       <span class="w-10 text-center font-bold text-gray-900">{{ item.quantity }}</span>
-                      <button @click="cartStore.updateQuantity(item._id, 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-gray-600 hover:text-[#009200] font-bold transition">+</button>
+                      <button @click="increaseQty(item)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-gray-600 hover:text-[#009200] font-bold transition">+</button>
                    </div>
 
                    <div class="text-right">
@@ -229,7 +229,11 @@ export default defineComponent({
 
     return {
       cartStore, subtotal, shipping, tax, total,
-      couponCode, discount, applyCoupon, isLoadingPromo
+      couponCode, discount, applyCoupon, isLoadingPromo,
+      increaseQty: (item: any) => {
+        const success = cartStore.updateQuantity(item._id, 1);
+        if (!success) toast.warning("Max Stock Limit Reached");
+      }
     };
   }
 });

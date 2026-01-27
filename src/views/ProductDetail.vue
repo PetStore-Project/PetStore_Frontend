@@ -68,10 +68,12 @@
 
             <button
               @click="addToCart"
-              class="w-full flex-1 h-[56px] rounded-xl bg-[#009200] text-white font-bold text-lg hover:bg-[#007a00] transition-all shadow-lg shadow-green-200 active:scale-95 flex items-center justify-center gap-2"
+              :disabled="isOutOfStock"
+              class="w-full flex-1 h-[56px] rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2"
+              :class="isOutOfStock ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' : 'bg-[#009200] text-white hover:bg-[#007a00] shadow-green-200 active:scale-95'"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-              Add to Cart
+              <svg v-if="!isOutOfStock" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+              {{ isOutOfStock ? 'Out of Stock' : 'Add to Cart' }}
             </button>
           </div>
         </div>
@@ -332,16 +334,25 @@ export default defineComponent({
       }
 
       if (!product.value) return;
+      let addedCount = 0;
       for (let i = 0; i < quantity.value; i++) {
-        cartStore.addToCart({
+        const success = cartStore.addToCart({
           _id: product.value._id,
           name: product.value.name,
           price: product.value.price,
           category: product.value.category,
-          image: mainImage.value // 👇 Passes the full URL to the cart!
+          stockQuantity: product.value.stockQuantity, // Pass Stock!
+          image: mainImage.value 
         });
+        if (success) addedCount++;
       }
-      toast.success("Added to Cart!");
+
+      if (addedCount > 0) {
+        toast.success(`Added ${addedCount} to Cart!`);
+      } 
+      if (addedCount < quantity.value) {
+        toast.warning("Some items could not be added (Stock Limit Reached)");
+      }
     };
 
     onMounted(() => {
@@ -359,10 +370,14 @@ export default defineComponent({
       }
     );
 
+    const isOutOfStock = computed(() => {
+        return (product.value.stockQuantity || 0) <= 0;
+    });
+
     return {
       product, loading, error, mainImage, quantity, addToCart,
       user, rating, comment, submitReview,
-      recommendedProducts, recommendedLoading, getImageUrl
+      recommendedProducts, recommendedLoading, getImageUrl, isOutOfStock
     };
   }
 });
