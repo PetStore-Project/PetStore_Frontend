@@ -531,13 +531,17 @@ export default defineComponent({
     }
 
     const isActive = (path: string) => {
-      return route.path === path || route.path.startsWith(`${path}/`)
+      // Special case: Product Detail page should highlight 'Shop'
+      if (path === '/shop' && route.name === 'product-detail') {
+        return true
+      }
+      return route.path === path || (path !== '/' && route.path.startsWith(`${path}/`))
     }
 
     return {
       cartStore,
-      wishlistStore, // Return wishlistStore
-      authStore, // 3. Return authStore so template can check isAuthenticated
+      wishlistStore,
+      authStore,
       searchQuery,
       isSearchOpen,
       isMobileMenuOpen,
@@ -577,95 +581,14 @@ export default defineComponent({
     transform: scale(1);
   }
 }
-/* ... YOUR ORIGINAL STYLES REMAIN UNCHANGED ... */
-.whole_nav {
-  width: 100%;
-  height: 120px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 70px;
-  background-color: white; /* Added for safety so it's not transparent */
-}
 
-.nav_links {
-  font-family: 'Poppins', sans-serif;
-  font-size: 18px;
-  font-weight: 600;
+/* Transitions */
+.search-overlay-enter-active,
+.search-overlay-leave-active {
+  transition: opacity 0.3s ease;
 }
-
-.nav_items {
-  list-style: none;
-  display: flex;
-  gap: 35px;
-  padding: 0;
-  margin: 0;
-}
-
-.nav_items a {
-  text-decoration: none;
-  color: #000000;
-}
-
-.nav_items a:hover {
-  color: #008c00;
-}
-
-.nav_items a.router-link-active {
-  color: #008c00;
-}
-
-.action_icons {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-}
-
-/* Added 'group' to handle hover on SVG properly */
-.action_icons svg {
-  fill: #000000;
-  transition: fill 0.3s ease;
-}
-
-.action_icons a:hover svg {
-  fill: #008c00;
-}
-
-.searchWrapper {
-  height: 36px;
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.Search {
-  position: absolute;
-  z-index: 10;
-  background: url(@/assets/search.svg) no-repeat 10px center;
-  background-color: white;
-  right: -1px;
-  top: 50%;
-  transform: translateY(-50%) scaleX(0);
-  transform-origin: right center;
-  width: 230px;
-  height: 42px;
-  border: 1px solid #d9d9d9;
-  border-radius: 24px;
-  padding-left: 40px;
+.search-overlay-enter-from,
+.search-overlay-leave-to {
   opacity: 0;
-  transition:
-    transform 0.3s ease-out,
-    opacity 0.3s ease-out;
-  color: #000000;
-}
-
-.searchWrapper:hover .Search {
-  transform: translateY(-50%) scaleX(1);
-  opacity: 1;
-}
-
-.searchWrapper svg {
-  position: relative;
-  z-index: 0;
 }
 </style>

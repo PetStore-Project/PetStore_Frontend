@@ -543,7 +543,7 @@ export default defineComponent({
       const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered'];
       
       filtered.forEach((o: any) => {
-        if (paidStatuses.includes(o.status)) {
+        if (o.isPaid) {
            if (o.orderItems && Array.isArray(o.orderItems)) {
               o.orderItems.forEach((item: any) => {
                 const qty = item.quantity || item.qty || 0;
@@ -645,11 +645,11 @@ export default defineComponent({
         const totalBase = orders.length || 1;
 
         // Calculate dynamic trend (this month vs last month) - Real Revenue
-        const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered']; // Money Exists
+        // CRITICAL: Use isPaid flag, NOT status. 'Pending' orders can be paid!
+        const totalRev = orders.filter((o: any) => o.isPaid).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
         
-        const totalRev = orders.filter((o: any) => paidStatuses.includes(o.status)).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
-        
-        const unpaidCount = orders.length - orders.filter((o: any) => paidStatuses.includes(o.status)).length;
+        // Unpaid count (for stats, though we display Pending Orders elsewhere)
+        const unpaidCount = orders.filter((o: any) => !o.isPaid).length;
 
         // Calculate dynamic trend (this month vs last month) - Real Revenue
         const trendNow = new Date();
@@ -660,12 +660,12 @@ export default defineComponent({
 
         const thisMonthRev = orders.filter((o: any) => {
           const d = new Date(o.createdAt);
-          return d.getMonth() === thisMonth && d.getFullYear() === thisYear && paidStatuses.includes(o.status);
+          return d.getMonth() === thisMonth && d.getFullYear() === thisYear && o.isPaid;
         }).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
 
         const lastMonthRev = orders.filter((o: any) => {
           const d = new Date(o.createdAt);
-          return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear && paidStatuses.includes(o.status);
+          return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear && o.isPaid;
         }).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
 
         // Calculate percentage change
@@ -704,7 +704,7 @@ export default defineComponent({
 
         orders.forEach((o: any) => {
           const d = new Date(o.createdAt);
-          if (d.getFullYear() === currentYear && paidStatuses.includes(o.status)) {
+          if (d.getFullYear() === currentYear && o.isPaid) {
             monthlyRev[d.getMonth()] += (o.totalPrice || 0);
           }
         });
@@ -719,7 +719,7 @@ export default defineComponent({
           targetDate.setDate(today.getDate() - (6 - i));
           const dateStr = targetDate.toDateString();
           orders.forEach((o: any) => {
-            if (new Date(o.createdAt).toDateString() === dateStr && paidStatuses.includes(o.status)) {
+            if (new Date(o.createdAt).toDateString() === dateStr && o.isPaid) {
               dailyRev[i] += (o.totalPrice || 0);
             }
           });
@@ -735,7 +735,7 @@ export default defineComponent({
           weekEnd.setDate(weekStart.getDate() + 7);
           orders.forEach((o: any) => {
             const orderDate = new Date(o.createdAt);
-            if (orderDate >= weekStart && orderDate < weekEnd && paidStatuses.includes(o.status)) {
+            if (orderDate >= weekStart && orderDate < weekEnd && o.isPaid) {
               weeklyRev[i] += (o.totalPrice || 0);
             }
           });
@@ -749,7 +749,7 @@ export default defineComponent({
           const year = currentYear - (4 - i);
           orders.forEach((o: any) => {
             const orderDate = new Date(o.createdAt);
-            if (orderDate.getFullYear() === year && paidStatuses.includes(o.status)) {
+            if (orderDate.getFullYear() === year && o.isPaid) {
               yearlyRev[i] += (o.totalPrice || 0);
             }
           });
