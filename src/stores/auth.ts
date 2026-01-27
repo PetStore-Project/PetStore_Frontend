@@ -60,8 +60,8 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(this.user));
 
-        // 4. Redirect (Real world: Go back to where they came from, or Shop)
-        router.push('/shop');
+        // 4. Redirect (Removed to fix flicker - Login.vue handles this based on role)
+        // router.push('/shop');
 
       } catch (error) {
         throw error; // Let the component display the error message

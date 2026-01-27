@@ -7,6 +7,7 @@ interface WishlistItem {
   price: number;
   image: string;
   stockStatus: string; // 'In Stock' or 'Out of Stock'
+  stockQuantity?: number; // Added to fix add-to-cart bug
 }
 
 export const useWishlistStore = defineStore('wishlist', {
@@ -32,7 +33,8 @@ export const useWishlistStore = defineStore('wishlist', {
           category: product.category || 'Accessory',
           price: product.price,
           image: product.image,
-          stockStatus: 'In Stock' // Defaulting to In Stock for now
+          stockStatus: 'In Stock', // Defaulting to In Stock for now
+          stockQuantity: product.stockQuantity // Preserve stock for add-to-cart later
         });
       } else {
         // Remove if already there

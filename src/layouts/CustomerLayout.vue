@@ -12,7 +12,7 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, onUnmounted, h } from 'vue';
-import { useRoute } from 'vue-router'; // Imported useRoute
+import { useRoute, useRouter } from 'vue-router'; // Added useRouter
 import Navigation from '../components/navigation.vue';
 import AppFooter from '../components/AppFooter.vue';
 import { useToast } from "vue-toastification";
@@ -25,7 +25,8 @@ export default defineComponent({
   },
   setup() {
     const toast = useToast();
-    const route = useRoute(); // Initialize route
+    const route = useRoute();
+    const router = useRouter(); // Initialize router
     let promoTimer: any = null;
 
     onMounted(() => {
@@ -35,9 +36,7 @@ export default defineComponent({
       const hasSeenPromo = sessionStorage.getItem('hasSeenPromo');
 
       if (!hasSeenPromo) {
-           // ... logic continues ...
-
-          // Define the Toast Component
+           // Define the Toast Component
           const ModernToast = () => h('div', { class: 'flex items-center w-full gap-4' }, [
              h('div', { class: 'flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-sm' }, [
                 h('svg', { class: 'w-6 h-6 text-white drop-shadow-sm', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: '2.5' }, [
@@ -49,7 +48,11 @@ export default defineComponent({
                 h('p', { class: 'text-green-50 text-sm mt-1 font-medium' }, 'Free shipping over 50$')
              ]),
              h('button', {
-                class: 'bg-white text-[#009200] text-sm font-extrabold px-4 py-2 rounded-full shadow-md hover:bg-green-50 hover:scale-105 transition-all cursor-pointer'
+                class: 'bg-white text-[#009200] text-sm font-extrabold px-4 py-2 rounded-full shadow-md hover:bg-green-50 hover:scale-105 transition-all cursor-pointer',
+                onClick: () => {
+                  router.push('/shop');
+                  toast.clear(); // Clear the toast on click
+                }
              }, 'Shop')
           ]);
 
