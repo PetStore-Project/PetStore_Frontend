@@ -1,18 +1,30 @@
 <template>
   <div class="min-h-screen bg-slate-50 font-sans text-slate-900">
-    <div class="flex w-full h-screen overflow-hidden">
-      <div class="w-[260px] shrink-0 border-r border-slate-200 bg-white z-20">
-        <SideBar class="w-full h-full" />
+    <div class="flex w-full h-screen overflow-hidden relative">
+      <!-- Mobile Backdrop -->
+      <div 
+        v-if="sidebarOpen" 
+        @click="sidebarOpen = false"
+        class="fixed inset-0 bg-slate-900/50 z-20 lg:hidden backdrop-blur-sm transition-opacity"
+      ></div>
+
+      <!-- Sidebar Container -->
+      <div 
+        class="fixed inset-y-0 left-0 z-30 w-[260px] bg-white border-r border-slate-200 transform transition-transform duration-300 lg:relative lg:translate-x-0 shrink-0"
+        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+      >
+        <SideBar class="w-full h-full" @close="sidebarOpen = false" />
       </div>
 
-      <div class="flex-1 min-w-0 h-full flex flex-col relative">
+      <div class="flex-1 min-w-0 h-full flex flex-col relative w-full">
         <AdminNavigation
           :title="pageTitle"
           :name="userName"
           @search-change="searchText = $event"
+          @toggle-sidebar="toggleSidebar"
         />
 
-        <div class="flex-1 min-w-0 overflow-y-auto p-6 scroll-smooth">
+        <div class="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 scroll-smooth">
           <div class="max-w-7xl mx-auto w-full">
             <RouterView v-slot="{ Component }">
               <transition name="fade" mode="out-in">
@@ -38,8 +50,9 @@ export default defineComponent({
   components: { SideBar, AdminNavigation },
   setup() {
     const route = useRoute();
-    const authStore = useAuthStore(); // 👈 Use Store
+    const authStore = useAuthStore();
     const searchText = ref("");
+    const sidebarOpen = ref(false);
 
     // 1. Get Real Name
     const userName = computed(() => {
@@ -59,7 +72,11 @@ export default defineComponent({
       return "Admin";
     });
 
-    return { searchText, userName, pageTitle };
+    const toggleSidebar = () => {
+      sidebarOpen.value = !sidebarOpen.value;
+    };
+
+    return { searchText, userName, pageTitle, sidebarOpen, toggleSidebar };
   },
 });
 </script>

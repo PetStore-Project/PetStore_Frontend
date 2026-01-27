@@ -91,95 +91,97 @@
           </div>
 
           <!-- Chart Container with Y-axis labels -->
-          <div class="flex gap-4">
-            <!-- Y-Axis Labels - matches h-64 chart area for perfect alignment -->
-            <div class="flex flex-col justify-between text-xs font-medium text-slate-400 w-16 text-right h-64">
-              <span>{{ formatChartValue(chartMaxValue) }}</span>
-              <span>{{ formatChartValue(chartMaxValue * 0.75) }}</span>
-              <span>{{ formatChartValue(chartMaxValue * 0.5) }}</span>
-              <span>{{ formatChartValue(chartMaxValue * 0.25) }}</span>
-              <span>$0</span>
-            </div>
-
-            <!-- Chart Area -->
-            <div 
-              class="relative h-64 w-full"
-              @mousemove="handleChartHover"
-              @mouseleave="chartHoverIndex = -1"
-            >
-              <!-- Grid Lines -->
-              <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                <div v-for="i in 5" :key="i" class="w-full h-px bg-slate-100"></div>
+          <div class="overflow-x-auto">
+            <div class="flex gap-4 min-w-[600px]">
+              <!-- Y-Axis Labels - matches h-64 chart area for perfect alignment -->
+              <div class="flex flex-col justify-between text-xs font-medium text-slate-400 w-16 text-right h-64 sticky left-0 bg-white/95 backdrop-blur-sm z-20">
+                <span>{{ formatChartValue(chartMaxValue) }}</span>
+                <span>{{ formatChartValue(chartMaxValue * 0.75) }}</span>
+                <span>{{ formatChartValue(chartMaxValue * 0.5) }}</span>
+                <span>{{ formatChartValue(chartMaxValue * 0.25) }}</span>
+                <span>$0</span>
               </div>
 
-              <!-- SVG Chart with explicit viewBox for proper coordinate mapping -->
-              <svg class="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/>
-                    <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
-                  </linearGradient>
-                </defs>
-                <path :d="areaPath" fill="url(#chartGradient)" />
-                <path :d="linePath" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke" />
-              </svg>
-
-              <!-- Circle marker - placed OUTSIDE SVG to maintain perfect circle shape -->
-              <div
-                v-if="chartHoverIndex >= 0 && peakValleyIndices.includes(chartHoverIndex) && points[chartHoverIndex]"
-                class="absolute w-4 h-4 bg-white border-[3px] border-emerald-500 rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
-                :style="{
-                  left: `${points[chartHoverIndex]?.x}%`,
-                  top: `${points[chartHoverIndex]?.y}%`
-                }"
-              ></div>
-
-              <!-- Visible Data Points (Always visible) -->
-               <div
-                 v-for="(point, i) in points"
-                 :key="i"
-                 class="absolute w-2 h-2 bg-emerald-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                 :style="{
-                   left: `${point.x}%`,
-                   top: `${point.y}%`
-                 }"
-               ></div>
-
-              <!-- Hover Vertical Line & Tooltip -->
-              <div
-                v-if="chartHoverIndex >= 0"
-                class="absolute top-0 bottom-0 pointer-events-none z-10"
-                :style="{ left: `${(chartHoverIndex * (100 / Math.max(chartLabels.length, 1))) + (100 / Math.max(chartLabels.length, 1) / 2)}%` }"
+              <!-- Chart Area -->
+              <div 
+                class="relative h-64 w-full"
+                @mousemove="handleChartHover"
+                @mouseleave="chartHoverIndex = -1"
               >
-                <!-- Vertical Line -->
-                <div class="h-full w-px bg-emerald-500 mx-auto"></div>
-
-                <!-- Tooltip -->
-                 <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap">
-                  {{ formatMoney(currentRevenueSeries[chartHoverIndex] || 0) }}
-                  <div class="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+                <!-- Grid Lines -->
+                <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  <div v-for="i in 5" :key="i" class="w-full h-px bg-slate-100"></div>
                 </div>
 
-                <!-- Date Label -->
+                <!-- SVG Chart with explicit viewBox for proper coordinate mapping -->
+                <svg class="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/>
+                      <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path :d="areaPath" fill="url(#chartGradient)" />
+                  <path :d="linePath" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                </svg>
+
+                <!-- Circle marker - placed OUTSIDE SVG to maintain perfect circle shape -->
                 <div
-                  class="absolute -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow"
-                  :style="{ bottom: '-28px' }"
+                  v-if="chartHoverIndex >= 0 && peakValleyIndices.includes(chartHoverIndex) && points[chartHoverIndex]"
+                  class="absolute w-4 h-4 bg-white border-[3px] border-emerald-500 rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
+                  :style="{
+                    left: `${points[chartHoverIndex]?.x}%`,
+                    top: `${points[chartHoverIndex]?.y}%`
+                  }"
+                ></div>
+
+                <!-- Visible Data Points (Always visible) -->
+                 <div
+                   v-for="(point, i) in points"
+                   :key="i"
+                   class="absolute w-2 h-2 bg-emerald-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                   :style="{
+                     left: `${point.x}%`,
+                     top: `${point.y}%`
+                   }"
+                 ></div>
+
+                <!-- Hover Vertical Line & Tooltip -->
+                <div
+                  v-if="chartHoverIndex >= 0"
+                  class="absolute top-0 bottom-0 pointer-events-none z-10"
+                  :style="{ left: `${(chartHoverIndex * (100 / Math.max(chartLabels.length, 1))) + (100 / Math.max(chartLabels.length, 1) / 2)}%` }"
                 >
-                  {{ chartLabels[chartHoverIndex] }}
+                  <!-- Vertical Line -->
+                  <div class="h-full w-px bg-emerald-500 mx-auto"></div>
+
+                  <!-- Tooltip -->
+                   <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap">
+                    {{ formatMoney(currentRevenueSeries[chartHoverIndex] || 0) }}
+                    <div class="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+                  </div>
+
+                  <!-- Date Label -->
+                  <div
+                    class="absolute -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow"
+                    :style="{ bottom: '-28px' }"
+                  >
+                    {{ chartLabels[chartHoverIndex] }}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- X-Axis Labels - aligned to match chart data points -->
-          <div class="flex gap-4 mt-4">
-            <div class="w-16"></div>
-            <div class="flex-1 flex text-xs font-semibold text-slate-400">
-              <span
-                v-for="(label, idx) in chartLabels"
-                :key="idx"
-                class="text-center flex-1"
-              >{{ label }}</span>
+            <!-- X-Axis Labels - aligned to match chart data points -->
+            <div class="flex gap-4 mt-4 min-w-[600px]">
+              <div class="w-16 sticky left-0 z-20 bg-white/95"></div>
+              <div class="flex-1 flex text-xs font-semibold text-slate-400">
+                <span
+                  v-for="(label, idx) in chartLabels"
+                  :key="idx"
+                  class="text-center flex-1"
+                >{{ label }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -187,72 +189,74 @@
         <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
           <h3 class="text-lg font-black text-slate-900 mb-6">Order Status</h3>
 
-          <div class="relative flex-1 flex items-center justify-center min-h-[220px]">
-            <svg viewBox="0 0 36 36" class="w-48 h-48 transform -rotate-90 overflow-visible">
-              <!-- Background Ring -->
-              <path class="text-slate-100" 
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
-                fill="none" 
-                stroke="currentColor" 
-                stroke-width="3.8" 
-              />
-              
-              <!-- Completed Segment (Green) -->
-              <path class="text-emerald-500 drop-shadow-lg transition-all duration-1000"
-                :stroke-dasharray="`${stats.completedPercent}, 100`"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none" 
-                stroke="currentColor" 
-                stroke-width="3.8" 
-              />
-              
-              <!-- To Process Segment (Blue) -->
-              <path class="text-blue-500 transition-all duration-1000"
-                :stroke-dasharray="`${stats.processPercent}, 100`"
-                :stroke-dashoffset="`-${stats.completedPercent}`"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none" 
-                stroke="currentColor" 
-                stroke-width="3.8" 
-              />
+          <div class="overflow-x-auto min-h-[300px] flex flex-col justify-center">
+            <div class="relative flex-1 flex items-center justify-center min-w-[280px]">
+              <svg viewBox="0 0 36 36" class="w-48 h-48 transform -rotate-90 overflow-visible">
+                <!-- Background Ring -->
+                <path class="text-slate-100" 
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  stroke-width="3.8" 
+                />
+                
+                <!-- Completed Segment (Green) -->
+                <path class="text-emerald-500 drop-shadow-lg transition-all duration-1000"
+                  :stroke-dasharray="`${stats.completedPercent}, 100`"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none" 
+                  stroke="currentColor" 
+                  stroke-width="3.8" 
+                />
+                
+                <!-- To Process Segment (Blue) -->
+                <path class="text-blue-500 transition-all duration-1000"
+                  :stroke-dasharray="`${stats.processPercent}, 100`"
+                  :stroke-dashoffset="`-${stats.completedPercent}`"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none" 
+                  stroke="currentColor" 
+                  stroke-width="3.8" 
+                />
 
-              <!-- Pending Segment (Amber) -->
-              <path class="text-amber-400 transition-all duration-1000"
-                :stroke-dasharray="`${stats.pendingPercent}, 100`"
-                :stroke-dashoffset="`-${stats.completedPercent + stats.processPercent}`"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none" 
-                stroke="currentColor" 
-                stroke-width="3.8" 
-              />
-            </svg>
-            <div class="absolute text-center z-10">
-              <span class="block text-3xl font-black text-slate-900">{{ stats.orders }}</span>
-              <span class="text-xs font-bold text-slate-400 uppercase">Total</span>
+                <!-- Pending Segment (Amber) -->
+                <path class="text-amber-400 transition-all duration-1000"
+                  :stroke-dasharray="`${stats.pendingPercent}, 100`"
+                  :stroke-dashoffset="`-${stats.completedPercent + stats.processPercent}`"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none" 
+                  stroke="currentColor" 
+                  stroke-width="3.8" 
+                />
+              </svg>
+              <div class="absolute text-center z-10">
+                <span class="block text-3xl font-black text-slate-900">{{ stats.orders }}</span>
+                <span class="text-xs font-bold text-slate-400 uppercase">Total</span>
+              </div>
             </div>
-          </div>
 
-          <div class="grid grid-cols-1 gap-3 mt-8">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-                <span class="text-sm font-bold text-slate-600">Completed</span>
+            <div class="grid grid-cols-1 gap-3 mt-8 min-w-[280px]">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                  <span class="text-sm font-bold text-slate-600">Completed</span>
+                </div>
+                <span class="text-xs font-bold text-slate-400">{{ stats.completedPercent }}%</span>
               </div>
-              <span class="text-xs font-bold text-slate-400">{{ stats.completedPercent }}%</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span class="text-sm font-bold text-slate-600">To Process (Action)</span>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span class="text-sm font-bold text-slate-600">To Process (Action)</span>
+                </div>
+                <span class="text-xs font-bold text-slate-400">{{ stats.processPercent }}%</span>
               </div>
-              <span class="text-xs font-bold text-slate-400">{{ stats.processPercent }}%</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-amber-400"></div>
-                <span class="text-sm font-bold text-slate-600">Pending Payment</span>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                  <span class="text-sm font-bold text-slate-600">Pending Payment</span>
+                </div>
+                <span class="text-xs font-bold text-slate-400">{{ stats.pendingPercent }}%</span>
               </div>
-              <span class="text-xs font-bold text-slate-400">{{ stats.pendingPercent }}%</span>
             </div>
           </div>
         </div>
@@ -315,7 +319,7 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                   <th class="pb-3">ID</th>
@@ -377,22 +381,24 @@
 
         <div class="lg:col-span-2 bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
           <h3 class="text-lg font-black text-slate-900 mb-6">Top Performing Promos</h3>
-          <div class="space-y-4 flex-1">
-            <div v-for="(promo, i) in topPromos" :key="i" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm"
-                  :class="promo.type === 'percent' ? 'bg-purple-500' : 'bg-emerald-500'">
-                  {{ promo.type === 'percent' ? '%' : '$' }}
+          <div class="space-y-4 flex-1 overflow-x-auto">
+            <div class="min-w-[400px] flex flex-col gap-4">
+              <div v-for="(promo, i) in topPromos" :key="i" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm"
+                    :class="promo.type === 'percent' ? 'bg-purple-500' : 'bg-emerald-500'">
+                    {{ promo.type === 'percent' ? '%' : '$' }}
+                  </div>
+                  <div>
+                    <p class="font-mono font-black text-slate-900">{{ promo.code }}</p>
+                    <p class="text-xs text-slate-500">{{ promo.type === 'percent' ? promo.value + '% Off' : '$' + promo.value + ' Off' }}</p>
+                  </div>
                 </div>
-                <div>
-                  <p class="font-mono font-black text-slate-900">{{ promo.code }}</p>
-                  <p class="text-xs text-slate-500">{{ promo.type === 'percent' ? promo.value + '% Off' : '$' + promo.value + ' Off' }}</p>
+                <div class="text-right">
+                  <p class="font-black text-slate-900">{{ promo.usageCount || 0 }}</p>
+                  <p class="text-xs text-slate-500">redemptions</p>
+                  <p class="text-[10px] font-bold text-emerald-600 mt-1">{{ formatMoney(promo.revenue || 0) }}</p>
                 </div>
-              </div>
-              <div class="text-right">
-                <p class="font-black text-slate-900">{{ promo.usageCount || 0 }}</p>
-                <p class="text-xs text-slate-500">redemptions</p>
-                <p class="text-[10px] font-bold text-emerald-600 mt-1">{{ formatMoney(promo.revenue || 0) }}</p>
               </div>
             </div>
             <div v-if="topPromos.length === 0" class="flex flex-col items-center justify-center py-8 text-center">

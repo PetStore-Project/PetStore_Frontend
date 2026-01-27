@@ -1,8 +1,14 @@
 <template>
   <header class="w-full h-20 flex items-center justify-between px-6 lg:px-10 bg-[#F8FAFC] sticky top-0 z-30">
 
-    <div>
-      <h1 class="text-2xl font-black text-slate-900 tracking-tight">{{ title }}</h1>
+    <div class="flex items-center gap-4">
+      <button 
+        @click="$emit('toggle-sidebar')" 
+        class="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-xl transition"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+      <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{{ title }}</h1>
     </div>
 
     <div class="flex items-center gap-4">
@@ -152,7 +158,7 @@ export default defineComponent({
     title: { type: String, required: true },
     name: { type: String, required: true },
   },
-  emits: ["search-change"],
+  emits: ["search-change", "toggle-sidebar"],
   setup(props, { emit }) {
     const authStore = useAuthStore();
     const router = useRouter();
