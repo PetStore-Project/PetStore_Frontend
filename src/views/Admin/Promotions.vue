@@ -419,11 +419,14 @@ export default defineComponent({
     });
 
     const estimatedSavings = computed(() => {
-      return promotions.value.reduce((sum, p) => sum + calculatePromoSavings(p), 0);
+      // Use the backend-tracked totalSavings if available, fallback to manual calc
+      return promotions.value.reduce((sum, p) => sum + (p.totalSavings || calculatePromoSavings(p)), 0);
     });
 
     const calculatePromoSavings = (promo: any) => {
-      // Estimate based on usage count and average order value ($50)
+      // Legacy fallback (should ideally use p.totalSavings)
+      if (promo.totalSavings !== undefined) return promo.totalSavings;
+      
       const avgOrderValue = 50;
       const usageCount = promo.usageCount || 0;
       if (promo.type === 'percent') {

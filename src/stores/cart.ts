@@ -5,7 +5,8 @@ export const useCartStore = defineStore('cart', {
     // Load from local storage if available, otherwise start empty
     items: JSON.parse(localStorage.getItem('cartItems') || '[]') as any[],
     promoCode: localStorage.getItem('cartPromoCode') || '',
-    discountAmount: Number(localStorage.getItem('cartDiscountAmount')) || 0,
+    promoType: localStorage.getItem('cartPromoType') || '', // 'fixed' or 'percent'
+    promoValue: Number(localStorage.getItem('cartPromoValue')) || 0,
   }),
 
   getters: {
@@ -13,6 +14,20 @@ export const useCartStore = defineStore('cart', {
     totalItems: (state) => state.items.reduce((total, item) => total + item.quantity, 0),
     // Calculate total price
     subtotal: (state) => state.items.reduce((total, item) => total + (item.price * item.quantity), 0),
+
+    // Dynamic Discount Calculation
+    discountAmount: (state): number => {
+      if (!state.promoCode) return 0;
+      const subtotal = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+      if (state.promoType === 'percent') {
+        return (subtotal * state.promoValue) / 100;
+      } else if (state.promoType === 'fixed') {
+        // Ensure discount doesn't exceed subtotal
+        return Math.min(state.promoValue, subtotal);
+      }
+      return 0;
+    }
   },
 
   actions: {
@@ -44,7 +59,12 @@ export const useCartStore = defineStore('cart', {
 
     removeFromCart(productId: string) {
       this.items = this.items.filter((item) => item._id !== productId);
-      this.saveToLocalStorage();
+      // Auto-remove promo if cart is empty
+      if (this.items.length === 0) {
+        this.clearPromo();
+      } else {
+        this.saveToLocalStorage();
+      }
     },
 
     updateQuantity(productId: string, change: number) {
@@ -54,6 +74,7 @@ export const useCartStore = defineStore('cart', {
         // If quantity drops to 0, remove the item
         if (item.quantity <= 0) {
           this.removeFromCart(productId);
+          return; // removeFromCart handles saving
         }
       }
       this.saveToLocalStorage();
@@ -61,19 +82,21 @@ export const useCartStore = defineStore('cart', {
 
     clearCart() {
       this.items = [];
-      this.clearPromo();
-      this.saveToLocalStorage();
+      this.clearPromo(); // Also clears promo
+      // saveToLocalStorage called in clearPromo
     },
 
-    applyPromo(code: string, amount: number) {
+    applyPromo(code: string, type: string, value: number) {
       this.promoCode = code;
-      this.discountAmount = amount;
+      this.promoType = type;
+      this.promoValue = value;
       this.saveToLocalStorage();
     },
 
     clearPromo() {
       this.promoCode = '';
-      this.discountAmount = 0;
+      this.promoType = '';
+      this.promoValue = 0;
       this.saveToLocalStorage();
     },
 
@@ -81,7 +104,8 @@ export const useCartStore = defineStore('cart', {
     saveToLocalStorage() {
       localStorage.setItem('cartItems', JSON.stringify(this.items));
       localStorage.setItem('cartPromoCode', this.promoCode);
-      localStorage.setItem('cartDiscountAmount', this.discountAmount.toString());
+      localStorage.setItem('cartPromoType', this.promoType);
+      localStorage.setItem('cartPromoValue', this.promoValue.toString());
     }
   },
 });

@@ -215,7 +215,7 @@ export default defineComponent({
         });
 
         if (data.success) {
-          cartStore.applyPromo(couponCode.value, data.discountAmount);
+          cartStore.applyPromo(couponCode.value, data.type, data.value);
           toast.success(`Coupon applied! Saved $${data.discountAmount.toFixed(2)}`);
         }
       } catch (error: any) {

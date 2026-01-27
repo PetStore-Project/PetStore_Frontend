@@ -200,6 +200,10 @@
                <div class="flex justify-between text-gray-500"><span>Subtotal</span><span>${{ cartStore.subtotal.toFixed(2) }}</span></div>
                <div class="flex justify-between text-gray-500"><span>Shipping</span><span>${{ shippingCost.toFixed(2) }}</span></div>
                <div class="flex justify-between text-gray-500"><span>Tax (8%)</span><span>${{ (cartStore.subtotal * 0.08).toFixed(2) }}</span></div>
+               <div v-if="cartStore.discountAmount > 0" class="flex justify-between text-[#009200]">
+                  <span>Discount</span>
+                  <span class="font-bold">-${{ cartStore.discountAmount.toFixed(2) }}</span>
+               </div>
                <div class="flex justify-between font-extrabold text-2xl text-gray-900 pt-4 border-t border-gray-100 mt-4">
                  <span>Total</span><span class="text-[#009200]">${{ totalCost.toFixed(2) }}</span>
                </div>
