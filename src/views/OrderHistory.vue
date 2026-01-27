@@ -34,13 +34,7 @@
                </button>
             </div>
             <div class="ml-auto">
-               <span :class="{
-                 'bg-yellow-100 text-yellow-700': order.status === 'Pending',
-                 'bg-blue-100 text-blue-700': order.status === 'Shipped',
-                 'bg-green-100 text-green-700': order.status === 'Delivered'
-               }" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
-                 {{ order.status || 'Pending' }}
-               </span>
+               <StatusBadge :status="order.status || 'Pending'" show-dot />
             </div>
           </div>
 
@@ -177,9 +171,11 @@ import { defineComponent, ref, onMounted, onUnmounted } from 'vue';
 import api from '@/services/api';
 import { useToast } from "vue-toastification";
 import { loadStripe } from '@stripe/stripe-js';
+import StatusBadge from '@/components/UI/StatusBadge.vue';
 
 export default defineComponent({
   name: 'OrderHistory',
+  components: { StatusBadge },
   setup() {
     const orders = ref<any[]>([]);
     const loading = ref(true);

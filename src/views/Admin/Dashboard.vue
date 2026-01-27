@@ -8,6 +8,10 @@
           <h1 class="text-3xl font-black text-slate-900 tracking-tight">Performance Overview</h1>
         </div>
         <div class="flex gap-3">
+          <button @click="generateReport" class="flex items-center gap-2 px-5 py-2.5 bg-slate-900 border border-slate-900 rounded-xl text-xs font-bold text-white hover:bg-slate-800 transition shadow-lg shadow-slate-200">
+             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+             Export Report
+          </button>
           <button @click="loadData" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm">
             <span v-if="isLoading" class="animate-spin h-3 w-3 border-2 border-slate-400 border-t-transparent rounded-full"></span>
             <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -18,56 +22,53 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
-        <div class="group relative p-6 bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-          <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-emerald-500">
+        <!-- Revenue -->
+        <StatsCard label="Total Revenue" :value="formatMoney(stats.revenue)" color="emerald">
+          <template #icon>
             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05 1.18 1.91 2.53 1.91 1.29 0 2.13-.81 2.13-1.88 0-1.1-.68-1.57-1.75-1.82l-2.02-.46c-1.75-.41-3.04-1.5-3.04-3.56 0-1.77 1.29-3.06 3.2-3.4V3h2.67v1.93c1.38.3 2.48 1.34 2.63 3.03h-1.97c-.09-.86-.82-1.54-1.92-1.54-1.21 0-1.87.82-1.87 1.63 0 1.05.79 1.57 2.02 1.83l1.8.41c1.92.46 3.1 1.58 3.1 3.73 0 1.78-1.18 3.27-3.16 3.69z"></path></svg>
-          </div>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Revenue</p>
-          <h3 class="text-3xl font-black text-slate-900 mt-2">{{ formatMoney(stats.revenue) }}</h3>
-          <div class="mt-4 flex items-center gap-2">
+          </template>
+          <template #subtext>
             <span class="text-xs font-bold px-2 py-1 rounded-lg" :class="stats.trend >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'">
               {{ stats.trend >= 0 ? '+' : '' }}{{ stats.trend }}%
             </span>
             <span class="text-xs text-slate-400 font-medium">vs last month</span>
-          </div>
-        </div>
+          </template>
+        </StatsCard>
 
-        <div class="group relative p-6 bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-          <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-blue-500">
+        <!-- Orders -->
+        <StatsCard label="Total Orders" :value="stats.orders" color="blue">
+          <template #icon>
             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"></path></svg>
-          </div>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Orders</p>
-          <h3 class="text-3xl font-black text-slate-900 mt-2">{{ stats.orders }}</h3>
-          <div class="mt-4 flex items-center gap-2">
-            <span class="text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">{{ stats.pendingOrders }} Pending</span>
-          </div>
-        </div>
+          </template>
+          <template #subtext>
+             <span class="text-xs font-bold px-2 py-1 bg-amber-100 text-amber-700 rounded-lg">{{ stats.pendingOrders }} Pending</span>
+          </template>
+        </StatsCard>
 
-        <div class="group relative p-6 bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-          <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-purple-500">
+        <!-- Inventory -->
+        <StatsCard label="Inventory" :value="stats.products" color="purple">
+          <template #icon>
             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11z"/><path d="M10 22h4v-5.5h-4z"/></svg>
-          </div>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Inventory</p>
-          <h3 class="text-3xl font-black text-slate-900 mt-2">{{ stats.products }}</h3>
-          <div class="mt-4 flex items-center gap-2">
+          </template>
+          <template #subtext>
             <span class="text-xs font-bold px-2 py-1 rounded-lg" :class="stats.lowStock > 0 ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'">
               {{ stats.lowStock > 0 ? `${stats.lowStock} Low Stock` : 'Stock Healthy' }}
             </span>
-          </div>
-        </div>
+          </template>
+        </StatsCard>
 
-        <div class="group relative p-6 bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-          <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-amber-500">
+        <!-- Customers -->
+        <StatsCard label="Customers" :value="stats.customers" color="amber">
+          <template #icon>
             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
-          </div>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Customers</p>
-          <h3 class="text-3xl font-black text-slate-900 mt-2">{{ stats.customers }}</h3>
-          <div class="mt-4 flex items-center gap-2">
+          </template>
+          <template #subtext>
             <span v-if="stats.newCustomers > 0" class="text-xs font-bold px-2 py-1 bg-amber-100 text-amber-700 rounded-lg">+{{ stats.newCustomers }} New</span>
             <span v-else class="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-500 rounded-lg">No new users</span>
             <span class="text-xs text-slate-400 font-medium">Today</span>
-          </div>
-        </div>
+          </template>
+        </StatsCard>
+
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
@@ -260,7 +261,33 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
-          <h3 class="text-lg font-black text-slate-900 mb-6">Top Selling Products</h3>
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-black text-slate-900">Top Selling Products</h3>
+            <div class="relative">
+              <button 
+                @click="showTopProductsFilterMenu = !showTopProductsFilterMenu" 
+                class="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition"
+              >
+                {{ topProductsFilter }}
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+              
+              <!-- Dropdown -->
+              <div v-if="showTopProductsFilterMenu" class="absolute right-0 mt-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-20 overflow-hidden">
+                <button 
+                  v-for="opt in ['All Time', 'Today', 'This Week', 'This Month', 'This Year']" 
+                  :key="opt"
+                  @click="topProductsFilter = opt; showTopProductsFilterMenu = false"
+                  class="w-full text-left px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition"
+                  :class="{'text-emerald-600 bg-emerald-50': topProductsFilter === opt}"
+                >
+                  {{ opt }}
+                </button>
+              </div>
+              <!-- Backdrop -->
+              <div v-if="showTopProductsFilterMenu" @click="showTopProductsFilterMenu = false" class="fixed inset-0 z-10 cursor-default"></div>
+            </div>
+          </div>
           <div class="space-y-5">
             <div v-for="(p, i) in topProducts" :key="i" class="flex flex-col gap-2">
               <div class="flex justify-between text-sm font-bold text-slate-700">
@@ -337,7 +364,11 @@
               <p class="text-emerald-100 text-xs font-bold uppercase mb-1">Total Redemptions</p>
               <p class="text-3xl font-black">{{ promoStats.totalRedemptions }}</p>
             </div>
-            <div class="col-span-2 pt-4 border-t border-white/20">
+            <div class="pt-4 border-t border-white/20">
+              <p class="text-emerald-100 text-xs font-bold uppercase mb-1">Impact Sales</p>
+              <p class="text-2xl font-black">{{ formatMoney(promoStats.revenue || 0) }}</p>
+            </div>
+             <div class="pt-4 border-t border-white/20">
               <p class="text-emerald-100 text-xs font-bold uppercase mb-1">Est. Savings Given</p>
               <p class="text-2xl font-black">{{ formatMoney(promoStats.estimatedSavings) }}</p>
             </div>
@@ -361,6 +392,7 @@
               <div class="text-right">
                 <p class="font-black text-slate-900">{{ promo.usageCount || 0 }}</p>
                 <p class="text-xs text-slate-500">redemptions</p>
+                <p class="text-[10px] font-bold text-emerald-600 mt-1">{{ formatMoney(promo.revenue || 0) }}</p>
               </div>
             </div>
             <div v-if="topPromos.length === 0" class="flex flex-col items-center justify-center py-8 text-center">
@@ -382,11 +414,15 @@
 import { defineComponent, ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import StatsCard from '@/components/Admin/StatsCard.vue';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: "Dashboard",
+  components: { StatsCard },
   setup() {
     const authStore = useAuthStore();
     const isLoading = ref(true);
@@ -406,22 +442,91 @@ export default defineComponent({
       completedPercent: 0,
       processPercent: 0,
       pendingPercent: 0,
-      trend: 0
+      trend: 0,
+      processingOrders: 0
     });
 
     // Store all orders for chart calculations
     const allOrders = ref<any[]>([]);
     const allPromos = ref<any[]>([]);
 
+    // Top Products Filtering State
+    const topProductsFilter = ref('All Time');
+    const showTopProductsFilterMenu = ref(false);
+
+    // Compute Top Products Reactively
+    const topProducts = computed(() => {
+      const now = new Date();
+      
+      let filtered = allOrders.value;
+
+      // 1. Filter by Time Range
+      if (topProductsFilter.value !== 'All Time') {
+        filtered = filtered.filter((o: any) => {
+          const d = new Date(o.createdAt);
+          switch (topProductsFilter.value) {
+            case 'Today':
+              return d.toDateString() === now.toDateString();
+            case 'This Week': {
+               const weekStart = new Date(now);
+               weekStart.setDate(now.getDate() - now.getDay());
+               weekStart.setHours(0,0,0,0);
+               return d >= weekStart;
+            }
+            case 'This Month':
+              return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            case 'This Year':
+              return d.getFullYear() === now.getFullYear();
+            default: return true;
+          }
+        });
+      }
+
+      // 2. Count Items (Paid Only)
+      const itemMap: Record<string, number> = {};
+      const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered'];
+      
+      filtered.forEach((o: any) => {
+        if (paidStatuses.includes(o.status)) {
+           if (o.orderItems && Array.isArray(o.orderItems)) {
+              o.orderItems.forEach((item: any) => {
+                const qty = item.quantity || item.qty || 0;
+                itemMap[item.name] = (itemMap[item.name] || 0) + qty;
+              });
+           }
+        }
+      });
+
+      const sorted = Object.entries(itemMap)
+        .map(([name, qty]) => ({ name, qty }))
+        .filter(i => i.qty > 0)
+        .sort((a, b) => b.qty - a.qty)
+        .slice(0, 5); // Top 5
+
+      const max = sorted.length > 0 && sorted[0]? sorted[0].qty : 1;
+      
+      return sorted.map(i => ({
+        ...i,
+        percent: Math.round((i.qty / max) * 100)
+      }));
+    });
+
     const recentOrders = ref<any[]>([]);
-    const topProducts = ref<{name: string, qty: number, percent: number}[]>([]);
     const topPromos = ref<any[]>([]);
 
+    interface PromoStats {
+      active: number;
+      totalRedemptions: number;
+      estimatedSavings: number;
+      revenue: number;
+    }
+
     // Promotion Stats
-    const promoStats = ref({
+    const promoStats = ref<PromoStats>({
       active: 0,
       totalRedemptions: 0,
-      estimatedSavings: 0
+      estimatedSavings: 0,
+      revenue: 0 // New field
     });
 
     // Revenue Data for Chart (storage for different modes)
@@ -519,7 +624,8 @@ export default defineComponent({
           customers: users.length,
           newCustomers: users.filter((u: any) => new Date(u.createdAt).toDateString() === new Date().toDateString()).length,
           lowStock: products.filter((p: any) => (p.stockQuantity || p.stock || 0) < 5).length,
-          pendingOrders: processCount, // "Pending" in the top card context usually means "Pending Action" (To Process)
+          processingOrders: processCount, // Count of Paid + Processing orders
+          pendingOrders: pendingCount, // Count of Unpaid/Pending orders
           
           // Chart Data
           completedPercent: Math.round((completedCount / totalBase) * 100),
@@ -593,33 +699,6 @@ export default defineComponent({
         }
         yearlyRevenue.value = yearlyRev;
 
-        // --- CALCULATE TOP PRODUCTS ---
-        const itemMap: Record<string, number> = {};
-        orders.forEach((o: any) => {
-          // Count sold items only for Real Money orders? Or all?
-          // Usually "Top Selling" implies sold & paid.
-          if (paidStatuses.includes(o.status)) {
-            if (o.orderItems && Array.isArray(o.orderItems)) {
-              o.orderItems.forEach((item: any) => {
-                const qty = item.quantity || item.qty || 0;
-                itemMap[item.name] = (itemMap[item.name] || 0) + qty;
-              });
-            }
-          }
-        });
-
-        const sortedItems = Object.entries(itemMap)
-          .map(([name, qty]) => ({ name, qty }))
-          .filter(item => item.qty > 0)
-          .sort((a, b) => b.qty - a.qty)
-          .slice(0, 5);
-
-        const maxQty = sortedItems.length && sortedItems[0] ? sortedItems[0].qty : 1;
-        topProducts.value = sortedItems.map(i => ({
-          ...i,
-          percent: Math.round((i.qty / maxQty) * 100)
-        }));
-
         // Recent Orders
         recentOrders.value = orders.slice(0, 5);
 
@@ -656,27 +735,37 @@ export default defineComponent({
           return sum + p.value * uses;
         }, 0);
 
-        promoStats.value = {
-          active: activePromos.length,
-          totalRedemptions,
-          estimatedSavings: Math.max(estSavingsFromOrders, estSavingsFromPromos)
-        };
-
         const promoUsageMap: Record<string, number> = {};
+        const promoRevenueMap: Record<string, number> = {}; // Track revenue per code
+        
+        // Calculate Total Promo Revenue (Sum of orders using ANY promo)
+        let totalPromoRevenue = 0;
+
         orders.forEach((o: any) => {
           if (o.promoCode) {
-            promoUsageMap[o.promoCode.toUpperCase()] = (promoUsageMap[o.promoCode.toUpperCase()] || 0) + 1;
+            const code = o.promoCode.toUpperCase();
+            promoUsageMap[code] = (promoUsageMap[code] || 0) + 1;
+            promoRevenueMap[code] = (promoRevenueMap[code] || 0) + (o.totalPrice || 0); // Add revenue
+            totalPromoRevenue += (o.totalPrice || 0);
           }
         });
 
+        promoStats.value = {
+          active: activePromos.length,
+          totalRedemptions,
+          estimatedSavings: Math.max(estSavingsFromOrders, estSavingsFromPromos),
+          revenue: totalPromoRevenue // New Metric
+        };
+
         const promosWithUsage = promos.map((p: any) => ({
           ...p,
-          usageCount: Math.max(p.usageCount || 0, promoUsageMap[p.code?.toUpperCase()] || 0)
+          usageCount: Math.max(p.usageCount || 0, promoUsageMap[p.code?.toUpperCase()] || 0),
+          revenue: promoRevenueMap[p.code?.toUpperCase()] || 0 // New Metric per promo
         }));
 
         topPromos.value = promosWithUsage
           .filter((p: any) => (p.usageCount || 0) > 0)
-          .sort((a: any, b: any) => (b.usageCount || 0) - (a.usageCount || 0))
+          .sort((a: any, b: any) => (b.usageCount || 0) - (a.usageCount || 0)) // Still sort by usage? Or revenue? usually usage, but display revenue
           .slice(0, 3);
 
       } catch (error) {
@@ -849,11 +938,95 @@ export default defineComponent({
       return map[status] || 'bg-slate-50 text-slate-600';
     };
 
+    // PDF Report Generation
+    const generateReport = () => {
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(22);
+      doc.setTextColor(0, 77, 41); // PetStore Green
+      doc.text('PetStore+ Analytics Report', 14, 22);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+      // 1. Sales Overview
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text('1. Sales Overview', 14, 45);
+      
+      const salesData = [
+         ['Total Revenue', formatMoney(stats.value.revenue), 'Total Orders', stats.value.orders.toString()],
+         ['Processing Orders', stats.value.processingOrders.toString(), 'Pending Orders', stats.value.pendingOrders.toString()],
+         ['Avg Order Value', formatMoney(stats.value.revenue / (stats.value.orders || 1)), 'New Customers', stats.value.newCustomers.toString()]
+      ];
+
+      autoTable(doc, {
+        startY: 50,
+        head: [['Metric', 'Value', 'Metric', 'Value']],
+        body: salesData,
+        theme: 'striped',
+        headStyles: { fillColor: [0, 146, 0] },
+        styles: { fontSize: 10 }
+      });
+
+      // 2. Top Products
+      let finalY = (doc as any).lastAutoTable.finalY + 15;
+      doc.setFontSize(14);
+      doc.text(`2. Top Selling Products (${topProductsFilter.value})`, 14, finalY);
+      
+      const productData = topProducts.value.map(p => [p.name, p.qty, p.percent + '%']);
+      
+      if (productData.length === 0) {
+        productData.push(['No sales data for this period', '-', '-']);
+      }
+
+      autoTable(doc, {
+        startY: finalY + 5,
+        head: [['Product Name', 'Quantity Sold', 'Popularity']],
+        body: productData,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 146, 0] },
+      });
+
+      // 3. Promotions
+      finalY = (doc as any).lastAutoTable.finalY + 15;
+      doc.setFontSize(14);
+      doc.text('3. Promotion Effectiveness', 14, finalY);
+
+      const promoData = [
+        ['Active Campaigns', promoStats.value.active],
+        ['Total Redemptions', promoStats.value.totalRedemptions],
+        ['Impact Sales', formatMoney(promoStats.value.revenue || 0)], // Show Revenue in PDF
+        ['Est. Savings Given', formatMoney(promoStats.value.estimatedSavings)]
+      ];
+
+      autoTable(doc, {
+        startY: finalY + 5,
+        head: [['Metric', 'Value']],
+        body: promoData,
+        theme: 'striped',
+        headStyles: { fillColor: [0, 146, 0] }
+      });
+
+      // Footer
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Page ${i} of ${pageCount}`, 196, 285, { align: 'right' });
+      }
+
+      doc.save('petstore-analytics-report.pdf');
+    };
+
     onMounted(() => { loadData(); });
 
     return {
       isLoading, stats, recentOrders, topProducts, loadData, revenueSeries,
-      formatMoney, formatDate, statusClass, currentDate,
+      formatMoney, formatDate, statusClass, currentDate, generateReport,
       points, linePath, areaPath,
       promoStats, topPromos,
       // Chart mode functionality
@@ -861,7 +1034,8 @@ export default defineComponent({
       dailyRevenue, yearlyRevenue,
       // Chart hover and peak/valley functionality
       chartHoverIndex, chartMaxValue, formatChartValue, handleChartHover,
-      peakValleyIndices
+      peakValleyIndices,
+      topProductsFilter, showTopProductsFilterMenu // Added filter state
     };
   }
 });

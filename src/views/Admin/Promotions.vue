@@ -14,45 +14,29 @@
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
-        <div>
-          <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Active</p>
-          <p class="text-2xl font-black text-slate-900">{{ activeCount }}</p>
-        </div>
-      </div>
+      <StatsCard label="Active" :value="activeCount" color="emerald">
+        <template #icon>
+          <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </template>
+      </StatsCard>
 
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
-        <div>
-          <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Scheduled</p>
-          <p class="text-2xl font-black text-slate-900">{{ scheduledCount }}</p>
-        </div>
-      </div>
+      <StatsCard label="Scheduled" :value="scheduledCount" color="blue">
+        <template #icon>
+          <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </template>
+      </StatsCard>
+      
+      <StatsCard label="Total Redemptions" :value="totalRedemptions" color="purple">
+        <template #icon>
+          <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+        </template>
+      </StatsCard>
 
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="p-3 bg-purple-50 text-purple-600 rounded-2xl">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-        </div>
-        <div>
-          <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Total Redemptions</p>
-          <p class="text-2xl font-black text-slate-900">{{ totalRedemptions }}</p>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-        <div class="p-3 bg-amber-50 text-amber-600 rounded-2xl">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
-        <div>
-          <p class="text-slate-400 text-xs font-bold uppercase tracking-wide">Est. Savings Given</p>
-          <p class="text-2xl font-black text-slate-900">{{ formatMoney(estimatedSavings) }}</p>
-        </div>
-      </div>
+      <StatsCard label="Est. Savings Given" :value="formatMoney(estimatedSavings)" color="amber">
+        <template #icon>
+          <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </template>
+      </StatsCard>
     </div>
 
     <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -312,52 +296,39 @@
     </transition>
 
     <!-- Delete Confirmation Modal -->
-    <transition name="modal">
-      <div v-if="showDeleteConfirm" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="cancelDelete"></div>
-        <div class="relative bg-white w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden p-8 text-center">
-          <div class="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-8 h-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-          </div>
-          <h3 class="text-xl font-black text-slate-900 mb-2">Delete Campaign?</h3>
-          <p class="text-slate-500 text-sm font-medium mb-6">Are you sure you want to delete this campaign? This action cannot be undone.</p>
-          <div class="flex gap-3">
-            <button @click="cancelDelete" class="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition">
-              Cancel
-            </button>
-            <button @click="confirmDelete" class="flex-1 px-6 py-3 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 shadow-lg shadow-rose-500/30 transition">
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <ConfirmModal
+      :is-open="showDeleteConfirm"
+      title="Delete Campaign?"
+      confirm-text="Delete"
+      cancel-text="Cancel"
+      type="danger"
+      @close="cancelDelete"
+      @confirm="confirmDelete"
+    >
+      <template #message>
+        <p class="text-slate-500 mb-6">Are you sure you want to delete this campaign? This action cannot be undone.</p>
+      </template>
+    </ConfirmModal>
 
     <!-- Email Broadcast Confirmation Modal -->
-    <transition name="modal">
-      <div v-if="showEmailConfirm" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="cancelBroadcast"></div>
-        <div class="relative bg-white w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden p-8 text-center">
-          <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-            </svg>
-          </div>
-          <h3 class="text-xl font-black text-slate-900 mb-2">Send Email Alert?</h3>
-          <p class="text-slate-500 text-sm font-medium mb-6">Are you sure you want to email this promotion to <strong>ALL users</strong>? This cannot be undone.</p>
-          <div class="flex gap-3">
-            <button @click="cancelBroadcast" class="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition">
-              Cancel
-            </button>
-            <button @click="proceedBroadcast" class="flex-1 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-lg shadow-slate-900/30 transition">
-              Send Email
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <ConfirmModal
+      :is-open="showEmailConfirm"
+      title="Send Email Alert?"
+      confirm-text="Send Email"
+      cancel-text="Cancel"
+      type="info"
+      @close="cancelBroadcast"
+      @confirm="proceedBroadcast"
+    >
+      <template #icon>
+        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+      </template>
+      <template #message>
+        <p class="text-slate-500 mb-6">Are you sure you want to email this promotion to <strong>ALL users</strong>? This cannot be undone.</p>
+      </template>
+    </ConfirmModal>
 
   </div>
 </template>
@@ -367,11 +338,14 @@ import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
+import StatsCard from '@/components/Admin/StatsCard.vue';
+import ConfirmModal from '@/components/Admin/ConfirmModal.vue';
 
 const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: "Promotions",
+  components: { StatsCard, ConfirmModal },
   setup() {
     const authStore = useAuthStore();
     const toast = useToast();

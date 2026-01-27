@@ -197,10 +197,9 @@
                   <td class="py-4 px-4" @click.stop>
                     <!-- Show locked badge for cancelled orders -->
                     <div v-if="o.status === 'Cancelled'" class="flex items-center gap-2">
-                      <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1.5">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        Cancelled
-                      </span>
+                       <StatusBadge status="Cancelled" show-dot>
+                         Cancelled
+                       </StatusBadge>
                     </div>
                     <!-- Show dropdown for non-cancelled orders -->
                     <div v-else class="relative inline-block">
@@ -420,30 +419,37 @@
       </transition>
 
       <!-- Cancel Confirmation Modal -->
-      <transition name="fade">
-        <div v-if="showCancelConfirm" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" @click="cancelCancelConfirm"></div>
-          <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
-            <div class="p-8 text-center">
-              <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-8 h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                </svg>
-              </div>
-              <h3 class="text-xl font-black text-slate-900 mb-2">Cancel This Order?</h3>
-              <p class="text-slate-500 mb-6">This action <span class="font-bold text-rose-600">cannot be undone</span>. The order will be permanently cancelled and status changes will be locked.</p>
-              <div class="flex gap-3">
-                <button @click="cancelCancelConfirm" class="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition">
-                  Keep Order
-                </button>
-                <button @click="confirmCancelOrder" class="flex-1 px-6 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition">
-                  Yes, Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </transition>
+      <ConfirmModal
+        :is-open="showCancelConfirm"
+        title="Cancel This Order?"
+        confirm-text="Yes, Cancel"
+        cancel-text="Keep Order"
+        type="danger"
+        @close="cancelCancelConfirm"
+        @confirm="confirmCancelOrder"
+      >
+        <template #message>
+          <p class="text-slate-500 mb-6">This action <span class="font-bold text-rose-600">cannot be undone</span>. The order will be permanently cancelled.</p>
+        </template>
+      </ConfirmModal>
+
+      <!-- Mark Paid Confirmation Modal -->
+      <ConfirmModal
+        :is-open="showMarkPaidConfirm"
+        title="Mark as Paid?"
+        confirm-text="Mark Paid"
+        cancel-text="Cancel"
+        type="success"
+        @close="cancelMarkPaidConfirm"
+        @confirm="confirmMarkPaid"
+      >
+        <template #icon>
+          <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </template>
+        <template #message>
+          <p class="text-slate-500 mb-6">Are you sure you want to mark this order as <strong>PAID</strong>? This will update the status and payment date.</p>
+        </template>
+      </ConfirmModal>
 
       <transition name="fade">
         <div v-if="toast" class="fixed bottom-6 right-6 z-[100] bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-bold">
@@ -462,6 +468,8 @@ import axios from "axios";
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { jsPDF } from 'jspdf';
+import ConfirmModal from '@/components/Admin/ConfirmModal.vue';
+import StatusBadge from '@/components/UI/StatusBadge.vue';
 
 const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
@@ -490,6 +498,7 @@ interface OrderRow {
 
 export default defineComponent({
   name: "Orders",
+  components: { ConfirmModal, StatusBadge },
   props: ['globalSearch'],
   data() {
     return {
