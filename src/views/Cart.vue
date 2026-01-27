@@ -59,6 +59,8 @@
                    <div>
                       <h3 class="text-lg font-bold text-gray-900 line-clamp-1">{{ item.name }}</h3>
                       <p class="text-sm text-gray-500 font-medium">{{ item.category }}</p>
+                      <!-- Show discount badge if applicable -->
+                      <span v-if="item.hasDiscount" class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-600">DISCOUNTED</span>
                    </div>
                    <button
                       @click="cartStore.removeFromCart(item._id)"
@@ -78,7 +80,17 @@
 
                    <div class="text-right">
                       <p class="text-xs text-gray-400 mb-0.5">Total</p>
-                      <p class="text-xl font-extrabold text-[#009200]">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                      <!-- Show strikethrough for discounted items -->
+                      <div v-if="item.hasDiscount && item.originalPrice" class="flex flex-col items-end">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600">
+                             -{{ Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100) }}%
+                          </span>
+                          <span class="text-xs text-gray-400 line-through">${{ (item.originalPrice * item.quantity).toFixed(2) }}</span>
+                        </div>
+                        <p class="text-xl font-extrabold text-red-500">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                      </div>
+                      <p v-else class="text-xl font-extrabold text-[#009200]">${{ (item.price * item.quantity).toFixed(2) }}</p>
                    </div>
                 </div>
               </div>
@@ -92,6 +104,28 @@
               <svg class="w-5 h-5 text-[#009200]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
               Order Summary
             </h3>
+
+            <div class="mb-6">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Promo Code</label>
+              <div class="flex gap-3 w-full">
+                <input
+                  v-model="couponCode"
+                  type="text"
+                  placeholder="Enter code"
+                  class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 uppercase"
+                >
+                <button
+                  @click="applyCoupon"
+                  :disabled="isLoadingPromo || !couponCode"
+                  class="bg-gray-900 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
+                >
+                  {{ isLoadingPromo ? '...' : 'Apply' }}
+                </button>
+              </div>
+              <p v-if="discount > 0" class="text-xs font-bold text-green-600 mt-2">
+                Coupon Applied! You saved ${{ discount.toFixed(2) }}
+              </p>
+            </div>
 
             <div class="space-y-4 mb-8">
               <div class="flex justify-between text-gray-500">
@@ -107,6 +141,11 @@
               <div class="flex justify-between text-gray-500">
                 <span>Tax (8%)</span>
                 <span class="font-bold text-gray-900">${{ tax.toFixed(2) }}</span>
+              </div>
+
+              <div v-if="discount > 0" class="flex justify-between text-[#009200]">
+                <span>Discount</span>
+                <span class="font-bold">-${{ discount.toFixed(2) }}</span>
               </div>
 
               <div class="h-px bg-gray-100 my-4"></div>
@@ -141,20 +180,57 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, ref } from 'vue';
 import { useCartStore } from '@/stores/cart';
+import axios from 'axios';
+import { useToast } from 'vue-toastification';
+
+const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: 'CartView',
   setup() {
     const cartStore = useCartStore();
+    const toast = useToast();
+
+    const couponCode = ref("");
+    const isLoadingPromo = ref(false);
+    const discount = computed(() => cartStore.discountAmount);
 
     const subtotal = computed(() => cartStore.subtotal);
     const shipping = computed(() => subtotal.value > 50 ? 0 : 5.00);
     const tax = computed(() => subtotal.value * 0.08);
-    const total = computed(() => subtotal.value + shipping.value + tax.value);
 
-    return { cartStore, subtotal, shipping, tax, total };
+    // Updated total calculation
+    const total = computed(() => Math.max(0, subtotal.value + shipping.value + tax.value - discount.value));
+
+    const applyCoupon = async () => {
+      if (!couponCode.value) return;
+      isLoadingPromo.value = true;
+      
+      try {
+        const { data } = await axios.post(`${API_BASE}/promotions/validate`, {
+          code: couponCode.value,
+          cartTotal: subtotal.value
+        });
+
+        if (data.success) {
+          cartStore.applyPromo(couponCode.value, data.discountAmount);
+          toast.success(`Coupon applied! Saved $${data.discountAmount.toFixed(2)}`);
+        }
+      } catch (error: any) {
+        const msg = error.response?.data?.message || "Invalid coupon code";
+        toast.error(msg);
+        cartStore.clearPromo();
+      } finally {
+        isLoadingPromo.value = false;
+      }
+    };
+
+    return {
+      cartStore, subtotal, shipping, tax, total,
+      couponCode, discount, applyCoupon, isLoadingPromo
+    };
   }
 });
 </script>

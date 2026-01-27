@@ -61,10 +61,12 @@
             <ul class="space-y-1">
               <li v-for="sort in sortItems" :key="sort">
                 <button
-                  class="w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:text-[#009200]"
-                  :class="sort === 'Default' ? 'text-[#009200] font-bold' : 'text-gray-600'"
+                  @click="selectedSort = sort"
+                  class="w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex justify-between items-center"
+                  :class="selectedSort === sort ? 'bg-green-50 text-[#009200] font-bold' : 'text-gray-600 hover:bg-white hover:shadow-sm'"
                 >
                   {{ sort }}
+                  <span v-if="selectedSort === sort" class="w-2 h-2 rounded-full bg-[#009200]"></span>
                 </button>
               </li>
             </ul>
@@ -115,10 +117,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed, h } from 'vue'
+import { defineComponent, ref, onMounted, computed, h, watch } from 'vue' // Added watch
 import api from '../services/api'
 import ProductCard from '../components/ProductCard.vue'
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useToast } from "vue-toastification";
 
 export default defineComponent({
@@ -126,18 +128,51 @@ export default defineComponent({
   components: { ProductCard },
   setup() {
     const route = useRoute();
+    const router = useRouter();
     const toast = useToast();
+
+    const topTabs = ['All', 'Cat', 'Dog', 'Small Pet', 'Bird', 'Fish'];
+    const categoryItems = ['All', 'Food', 'Toys', 'Furniture', 'Accessories', 'Treats'];
+    const sortItems = ['Default', 'Price: Low to High', 'Price: High to Low', 'Name: A-Z'];
 
     const showMobileFilters = ref(false);
     const products = ref<any[]>([]);
     const loading = ref(true);
     const error = ref('');
-    const activeTab = ref('All');
-    const selectedCategory = ref('All');
+    // Sync Category from URL (Species -> activeTab, Item Type -> selectedCategory)
+    const initCategory = (route.query.category as string) || '';
+    
+    // Helper to find matching tab (case-insensitive)
+    const findTab = (name: string) => topTabs.find(t => t.toLowerCase() === name.toLowerCase());
+    const findCat = (name: string) => categoryItems.find(c => c.toLowerCase() === name.toLowerCase());
 
-    const topTabs = ['All', 'Cat', 'Dog', 'Small Pet', 'Bird', 'Fish'];
-    const categoryItems = ['All', 'Food', 'Toys', 'Furniture', 'Accessories', 'Treats'];
-    const sortItems = ['Default', 'Price: Low to High', 'Price: High to Low', 'Name: A-Z'];
+    const activeTab = ref(findTab(initCategory) || 'All');
+    const selectedCategory = ref(findCat(initCategory) || 'All');
+    const selectedSort = ref('Default');
+
+    watch(() => route.query.category, (newVal: any) => {
+      const val = newVal as string;
+      if (!val) {
+        activeTab.value = 'All';
+        selectedCategory.value = 'All';
+        return;
+      }
+
+      const matchedTab = findTab(val);
+      if (matchedTab) {
+        activeTab.value = matchedTab;
+        selectedCategory.value = 'All'; // Reset item filter if switching species
+      } else {
+        const matchedCat = findCat(val);
+        if (matchedCat) {
+          selectedCategory.value = matchedCat;
+          // Optional: Keep activeTab or reset? Usually reset to search broadly.
+          // activeTab.value = 'All'; 
+        }
+      }
+    });
+
+
 
     const fetchProducts = async () => {
       loading.value = true;
@@ -157,7 +192,7 @@ export default defineComponent({
 
     const filteredProducts = computed(() => {
       const searchQuery = (route.query.q as string || '').toLowerCase();
-      return products.value.filter(product => {
+      let result = products.value.filter(product => {
         const searchMatch = product.name.toLowerCase().includes(searchQuery) ||
                             (product.description && product.description.toLowerCase().includes(searchQuery));
         const catMatch = selectedCategory.value === 'All' ||
@@ -166,55 +201,47 @@ export default defineComponent({
                          product.name.includes(activeTab.value) ||
                          product.description.includes(activeTab.value) ||
                          (activeTab.value === 'Small Pet' && (product.category === 'Hamster' || product.description.includes('small')));
-        return searchMatch && catMatch && tabMatch;
+        
+        // 🆕 Check for specific product names (e.g. from "Shop Bundles")
+        const productsParam = route.query.products as string;
+        let productMatch = true;
+        
+        if (productsParam) {
+           const targetNames = productsParam.split(',').map(n => n.trim().toLowerCase());
+           // If product name is in the target list
+           productMatch = targetNames.some(target => product.name.toLowerCase().includes(target));
+        }
+
+        return searchMatch && catMatch && tabMatch && productMatch;
       });
+
+      // Apply sorting
+      if (selectedSort.value === 'Price: Low to High') {
+        result = [...result].sort((a, b) => a.price - b.price);
+      } else if (selectedSort.value === 'Price: High to Low') {
+        result = [...result].sort((a, b) => b.price - a.price);
+      } else if (selectedSort.value === 'Name: A-Z') {
+        result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      return result;
     });
 
     const resetFilters = () => {
       activeTab.value = 'All';
       selectedCategory.value = 'All';
+      selectedSort.value = 'Default';
+      // Clear URL Query (Search)
+      router.replace({ query: {} });
     };
 
     onMounted(() => {
       fetchProducts();
-      const hasSeenPromo = sessionStorage.getItem('hasSeenPromo');
-
-      if (!hasSeenPromo) {
-
-          // Define the Toast Component
-          const ModernToast = () => h('div', { class: 'flex items-center w-full gap-4' }, [
-             h('div', { class: 'flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-sm' }, [
-                h('svg', { class: 'w-6 h-6 text-white drop-shadow-sm', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: '2.5' }, [
-                     h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z' })
-                ])
-             ]),
-             h('div', { class: 'flex-1 min-w-0' }, [
-                h('h4', { class: 'font-extrabold text-white text-lg leading-tight drop-shadow-sm' }, 'Flash Sale Alert! ⚡'),
-                h('p', { class: 'text-green-50 text-sm mt-1 font-medium' }, '20% off all Dog Food today.')
-             ]),
-             h('button', {
-                class: 'bg-white text-[#009200] text-sm font-extrabold px-4 py-2 rounded-full shadow-md hover:bg-green-50 hover:scale-105 transition-all cursor-pointer'
-             }, 'Shop')
-          ]);
-
-          // Trigger the Toast
-          setTimeout(() => {
-            toast(ModernToast, {
-                timeout: 8000,
-                closeButton: true,
-                icon: false,
-                toastClassName: "petstore-modern-toast",
-            });
-
-            sessionStorage.setItem('hasSeenPromo', 'true');
-
-          }, 2000);
-      }
     });
 
     return {
       products, loading, error, topTabs, categoryItems, sortItems,
-      activeTab, selectedCategory, filteredProducts, resetFilters, showMobileFilters
+      activeTab, selectedCategory, selectedSort, filteredProducts, resetFilters, showMobileFilters
     };
   }
 })

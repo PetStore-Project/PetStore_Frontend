@@ -4,6 +4,8 @@ export const useCartStore = defineStore('cart', {
   state: () => ({
     // Load from local storage if available, otherwise start empty
     items: JSON.parse(localStorage.getItem('cartItems') || '[]') as any[],
+    promoCode: localStorage.getItem('cartPromoCode') || '',
+    discountAmount: Number(localStorage.getItem('cartDiscountAmount')) || 0,
   }),
 
   getters: {
@@ -20,14 +22,21 @@ export const useCartStore = defineStore('cart', {
 
       if (existingItem) {
         existingItem.quantity++;
+        // Update price info in case it changed (e.g. discount applied)
+        // Round to 2 decimals to ensure Total = Sum(Components)
+        existingItem.price = Number(Number(product.price).toFixed(2));
+        existingItem.originalPrice = product.originalPrice;
+        existingItem.hasDiscount = product.hasDiscount;
       } else {
         this.items.push({
           _id: product._id,
           name: product.name,
-          price: Number(product.price),
-          image: product.imageUrl || product.image, // Handle backend vs frontend naming
+          price: Number(Number(product.price).toFixed(2)),
+          image: product.imageUrl || product.image,
           category: product.category,
           quantity: 1,
+          originalPrice: product.originalPrice,
+          hasDiscount: product.hasDiscount,
         });
       }
       this.saveToLocalStorage();
@@ -52,12 +61,27 @@ export const useCartStore = defineStore('cart', {
 
     clearCart() {
       this.items = [];
+      this.clearPromo();
+      this.saveToLocalStorage();
+    },
+
+    applyPromo(code: string, amount: number) {
+      this.promoCode = code;
+      this.discountAmount = amount;
+      this.saveToLocalStorage();
+    },
+
+    clearPromo() {
+      this.promoCode = '';
+      this.discountAmount = 0;
       this.saveToLocalStorage();
     },
 
     // Manual saving function (Works without plugins)
     saveToLocalStorage() {
       localStorage.setItem('cartItems', JSON.stringify(this.items));
+      localStorage.setItem('cartPromoCode', this.promoCode);
+      localStorage.setItem('cartDiscountAmount', this.discountAmount.toString());
     }
   },
 });

@@ -3,33 +3,24 @@
 
     <transition name="modal-fade">
       <div v-if="showBakongModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-
         <div class="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" @click="closeBakongModal"></div>
 
         <div class="relative bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden transform transition-all scale-100">
-
           <div class="bg-[#E60000] p-6 text-white text-center relative overflow-hidden">
              <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-
              <button @click="closeBakongModal" class="absolute top-4 right-4 text-white/80 hover:text-white hover:bg-white/20 rounded-full p-2 transition z-20">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
              </button>
-
              <h3 class="text-xl font-bold tracking-wide relative z-10">KHQR PAYMENT</h3>
              <p class="text-white/80 text-sm relative z-10">Scan with any Mobile Banking App</p>
           </div>
 
           <div class="p-8 flex flex-col items-center">
-
              <div class="flex items-center justify-center gap-6 mb-8 opacity-90">
                 <img src="/src/assets/aba_logo.png" class="h-8 object-contain" alt="ABA">
-
                 <div class="w-px h-6 bg-gray-200"></div>
-
                 <img src="/src/assets/acleda_logo.png" class="h-8 object-contain" alt="Acleda">
-
                 <div class="w-px h-6 bg-gray-200"></div>
-
                 <img src="/src/assets/bakong_logo.png" class="h-8 object-contain" alt="Bakong">
              </div>
 
@@ -42,7 +33,6 @@
                 <div class="absolute -inset-1 bg-gradient-to-r from-red-500 to-blue-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                 <div class="relative bg-white p-3 rounded-xl border-2 border-gray-100 shadow-inner">
                     <img :src="dynamicQR" alt="Dynamic KHQR" class="w-64 h-64 object-contain mix-blend-multiply rounded-lg" />
-
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-1.5 rounded-full shadow-md border border-gray-100">
                         <img src="https://bakong.nbc.gov.kh/images/logo.svg" class="w-8 h-8" alt="KHQR">
                     </div>
@@ -58,7 +48,6 @@
                 <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                 Waiting for payment confirmation...
              </div>
-
           </div>
         </div>
       </div>
@@ -76,6 +65,24 @@
         </button>
       </div>
     </div>
+
+    <!-- Pay Later Confirmation Modal -->
+    <transition name="modal-fade">
+      <div v-if="showPayLaterConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showPayLaterConfirm = false"></div>
+        <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center">
+           <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+           </div>
+           <h3 class="text-xl font-bold text-gray-900 mb-2">Pay Later & 24h Expiration</h3>
+           <p class="text-gray-500 mb-6">Your order will be reserved, but you must complete payment within <span class="font-bold text-amber-600">24 hours</span> or it will be automatically cancelled.</p>
+           <div class="flex gap-3">
+             <button @click="showPayLaterConfirm = false" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition">Cancel</button>
+             <button @click="confirmPayLater" class="flex-1 py-3 bg-[#009200] text-white rounded-xl font-bold hover:bg-[#007a00] transition">Place Order</button>
+           </div>
+        </div>
+      </div>
+    </transition>
 
     <div class="max-w-[1200px] mx-auto px-4 md:px-8 pt-12" :class="{ 'blur-sm grayscale-[50%]': orderSuccess || showBakongModal }">
       <h1 class="text-4xl font-extrabold mb-10 text-gray-900">Checkout</h1>
@@ -135,6 +142,11 @@
                  <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg></div>
                  <div><span class="block font-bold text-gray-900">Card</span><span class="text-xs text-gray-500">Visa / Master</span></div>
               </div>
+              <div @click="setPaymentMethod('Later')" class="relative p-6 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col items-center text-center gap-3 hover:shadow-md" :class="form.paymentMethod === 'Later' ? 'border-amber-500 bg-amber-50/30' : 'border-gray-100 hover:border-amber-200 bg-white'">
+                 <div v-if="form.paymentMethod === 'Later'" class="absolute top-3 right-3 text-amber-500"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg></div>
+                 <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                 <div><span class="block font-bold text-gray-900">Pay Later</span><span class="text-xs text-gray-500">Pay via Order History</span></div>
+              </div>
             </div>
 
             <transition name="fade">
@@ -158,14 +170,26 @@
 
             <div class="space-y-4 mb-8 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                <div v-for="item in cartStore.items" :key="item._id" class="flex items-start gap-4">
-                 <div class="w-16 h-16 bg-gray-50 rounded-lg border border-gray-100 p-1 flex-shrink-0">
+                 <div class="w-16 h-16 bg-gray-50 rounded-lg border border-gray-100 p-1 flex-shrink-0 relative">
                     <img :src="item.image" class="w-full h-full object-contain mix-blend-multiply" />
+                    <!-- Discount indicator -->
+                    <div v-if="item.hasDiscount" class="absolute -top-1 -left-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <span class="text-[8px] text-white font-bold">%</span>
+                    </div>
                  </div>
                  <div class="flex-1">
                     <h4 class="font-bold text-sm text-gray-900 line-clamp-1">{{ item.name }}</h4>
                     <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
+                    <span v-if="item.hasDiscount" class="text-[10px] font-bold text-red-500">DISCOUNTED</span>
                  </div>
-                 <span class="font-bold text-sm">${{ (item.price * item.quantity).toFixed(2) }}</span>
+                 <!-- Price with strikethrough for discounts -->
+                 <div class="text-right">
+                   <div v-if="item.hasDiscount && item.originalPrice" class="flex flex-col items-end">
+                     <span class="text-xs text-gray-400 line-through">${{ (item.originalPrice * item.quantity).toFixed(2) }}</span>
+                     <span class="font-bold text-sm text-red-500">${{ (item.price * item.quantity).toFixed(2) }}</span>
+                   </div>
+                   <span v-else class="font-bold text-sm">${{ (item.price * item.quantity).toFixed(2) }}</span>
+                 </div>
                </div>
             </div>
 
@@ -184,7 +208,7 @@
               class="w-full mt-8 bg-gray-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-black transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 group relative overflow-hidden"
             >
               <svg v-if="isProcessing" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <span v-else>{{ form.paymentMethod === 'Bakong' ? 'Generate QR & Pay' : 'Place Order' }}</span>
+              <span v-else>{{ form.paymentMethod === 'Bakong' ? 'Generate QR & Pay' : (form.paymentMethod === 'Later' ? 'Place Order (Pay Later)' : 'Place Order') }}</span>
               <svg v-if="!isProcessing" class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
             </button>
 
@@ -214,12 +238,13 @@ export default defineComponent({
 
     const isProcessing = ref(false);
     const orderSuccess = ref(false);
+    const showPayLaterConfirm = ref(false);
 
     // BAKONG STATES
     const showBakongModal = ref(false);
     const dynamicQR = ref('');
     const currentOrderId = ref('');
-    const timeLeft = ref(900); // 15 minutes in seconds
+    const timeLeft = ref(900); // 15 minutes
     let pollingInterval: any = null;
     let timerInterval: any = null;
 
@@ -230,7 +255,7 @@ export default defineComponent({
     let cardElement: any = null;
 
     const shippingCost = ref(5.00);
-    const totalCost = computed(() => cartStore.subtotal + shippingCost.value + (cartStore.subtotal * 0.08));
+    const totalCost = computed(() => Math.max(0, cartStore.subtotal + shippingCost.value + (cartStore.subtotal * 0.08) - cartStore.discountAmount));
 
     const form = reactive({
       firstName: '', lastName: '', address: '', city: '',
@@ -258,7 +283,6 @@ export default defineComponent({
 
     const setPaymentMethod = (method: string) => { form.paymentMethod = method; };
 
-    // Format seconds into MM:SS
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
@@ -266,7 +290,7 @@ export default defineComponent({
     };
 
     const startTimer = () => {
-        timeLeft.value = 900; // Reset to 15 mins
+        timeLeft.value = 900;
         timerInterval = setInterval(() => {
             if (timeLeft.value > 0) timeLeft.value--;
             else {
@@ -277,7 +301,7 @@ export default defineComponent({
     };
 
     const startPolling = (orderId: string) => {
-        startTimer(); // Start visual countdown
+        startTimer();
         pollingInterval = setInterval(async () => {
             try {
                 const res = await api.get(`/orders/${orderId}/payment`);
@@ -301,24 +325,57 @@ export default defineComponent({
     const handleCheckout = async () => {
       if (cartStore.items.length === 0) return toast.error("Your cart is empty!");
 
-      const requiredFields = ['firstName', 'lastName', 'address', 'city', 'phone'];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const requiredFields = ['firstName', 'lastName', 'address', 'city', 'phone', 'postalCode'];
       if (requiredFields.some((f) => !form[f as keyof typeof form])) {
-        return toast.warning("Please fill in all shipping details.");
+        return toast.warning("Please fill in all shipping details, including Postal Code.");
       }
 
       isProcessing.value = true;
+      
+      // Pay Later Confirmation Intercept
+      if (form.paymentMethod === 'Later') {
+         isProcessing.value = false;
+         showPayLaterConfirm.value = true;
+         return;
+      }
 
+      processOrder();
+    };
+
+    const confirmPayLater = () => {
+       showPayLaterConfirm.value = false;
+       isProcessing.value = true;
+       processOrder();
+    };
+
+    const processOrder = async () => {
       try {
         let paymentInfo = { isPaid: false, paidAt: null };
 
-        // 1. STRIPE FLOW
+        // 🛡️ 1. SECURE STRIPE FLOW (Updated)
         if (form.paymentMethod === 'Card') {
-            const amountInCents = Math.round(totalCost.value * 100);
-            const { data: { clientSecret } } = await api.post('/payment/create-payment-intent', { amount: amountInCents });
+
+            // 🔒 SECURITY FIX: Send ITEMS, not AMOUNT
+            // We map the cart items so the backend can verify prices from the DB.
+            const paymentItems = cartStore.items.map(item => ({
+                _id: item._id,
+                qty: item.quantity
+            }));
+
+            // Call backend to get clientSecret (Backend calculates real total)
+            const { data: { clientSecret } } = await api.post('/payment/create-payment-intent', { items: paymentItems });
+
+            // Confirm payment with Stripe
             const result = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: { card: cardElement, billing_details: { name: `${form.firstName} ${form.lastName}`, address: { line1: form.address, city: form.city, country: 'US' } } }
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: `${form.firstName} ${form.lastName}`,
+                        address: { line1: form.address, city: form.city, country: 'US' }
+                    }
+                }
             });
+
             if (result.error) throw new Error(result.error.message);
             if (result.paymentIntent.status === 'succeeded') paymentInfo = { isPaid: true, paidAt: new Date() as any };
         }
@@ -333,6 +390,8 @@ export default defineComponent({
           itemsPrice: cartStore.subtotal,
           shippingPrice: shippingCost.value,
           totalPrice: totalCost.value,
+          promoCode: cartStore.promoCode,
+          discountAmount: cartStore.discountAmount,
           isPaid: paymentInfo.isPaid,
           paidAt: paymentInfo.paidAt
         };
@@ -349,7 +408,9 @@ export default defineComponent({
             return;
         }
 
-        // 4. OTHER METHODS
+        // 4. PAY LATER / CASH / COD / CARD Success
+        // For 'Later', no extra steps needed, order created as pending/unpaid.
+        
         cartStore.clearCart();
         orderSuccess.value = true;
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -367,7 +428,8 @@ export default defineComponent({
     return {
       cartStore, form, isProcessing, orderSuccess,
       shippingCost, totalCost, handleCheckout, setPaymentMethod, goToHistory,
-      showBakongModal, dynamicQR, closeBakongModal, timeLeft, formatTime
+      showBakongModal, dynamicQR, closeBakongModal, timeLeft, formatTime, 
+      showPayLaterConfirm, confirmPayLater
     };
   }
 });
@@ -380,8 +442,6 @@ export default defineComponent({
 .input-modern:focus { background: white; border-color: #009200; box-shadow: 0 0 0 4px rgba(0, 146, 0, 0.1); }
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e5e5; border-radius: 20px; }
-
-/* Modal Animation */
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>

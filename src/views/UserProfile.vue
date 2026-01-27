@@ -1,7 +1,7 @@
 <template>
   <div class="h-[calc(100vh-80px)] bg-[#F3F4F6] font-sans text-gray-900 overflow-hidden flex flex-col">
 
-    <div class="max-w-[1400px] w-full mx-auto px-4 md:px-8 pt-8 flex-1 flex flex-col min-h-0">
+    <div class="max-w-[1400px] w-full mx-auto px-4 md:px-8 pt-8 pb-10 flex-1 flex flex-col min-h-0">
 
       <header class="mb-8 flex-shrink-0 flex items-end justify-between">
         <div>
@@ -174,7 +174,10 @@ export default defineComponent({
     }
 
     const cancelChanges = () => { fetchUserProfile(); passwordData.value = { current: '', new: '', confirm: '' }; }
-    const logout = () => { authStore.logout(); }
+    const logout = () => { 
+      toast.clear();
+      authStore.logout(); 
+    }
 
     onMounted(() => { fetchUserProfile(); fetchOrderCount(); })
 
