@@ -12,18 +12,31 @@ interface User {
 }
 
 export const useAuthStore = defineStore('auth', {
-  // 🛡️ REAL WORLD STATE INITIALIZATION
-  // We use a try-catch block here so the app NEVER crashes on startup
-  // even if LocalStorage has corrupted data (like "undefined").
+  // Initialize state from local storage
   state: () => {
     let userData = null;
     let tokenData = null;
 
     try {
       const storedUser = localStorage.getItem('user');
-      const storedToken = localStorage.getItem('token');
+      let storedToken = localStorage.getItem('token');
 
-      // strictly check against "undefined" string which causes crashes
+      // Restore session from legacy storage
+      if (!storedToken || storedToken === 'undefined') {
+          const legacy = localStorage.getItem('userInfo');
+          if (legacy) {
+              try {
+                  const p = JSON.parse(legacy);
+                  if (p && p.token) {
+                    storedToken = p.token;
+                    // Persist to standard storage
+                    if (storedToken) localStorage.setItem('token', storedToken);
+                  }
+              } catch(e) {}
+          }
+      }
+
+      // Check against "undefined" string to prevent parsing errors
       if (storedUser && storedUser !== 'undefined') {
         userData = JSON.parse(storedUser);
       }
@@ -31,7 +44,7 @@ export const useAuthStore = defineStore('auth', {
         tokenData = storedToken;
       }
     } catch (error) {
-      console.error("⚠️ Corrupted local storage detected. Resetting session.", error);
+      console.error("Corrupted local storage detected.", error);
       localStorage.removeItem('user');
       localStorage.removeItem('token');
     }
@@ -48,29 +61,23 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await api.post('/auth/login', { email, password });
 
-        // 1. Destructure user data
+        // Update state with user data and token
         const { _id, firstName, lastName, role, token } = response.data;
-
-        // 2. Update State
         this.token = token;
         this.user = { _id, firstName, lastName, email, role, token };
         this.isAuthenticated = true;
 
-        // 3. Persist to LocalStorage
+        // Persist to LocalStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(this.user));
 
-        // 4. Redirect (Removed to fix flicker - Login.vue handles this based on role)
-        // router.push('/shop');
-
       } catch (error) {
-        throw error; // Let the component display the error message
+        throw error;
       }
     },
 
     async register(email: string, password: string) {
       try {
-        // 1. Create Account
         await api.post('/auth/register', {
           email,
           password,
@@ -78,14 +85,10 @@ export const useAuthStore = defineStore('auth', {
           lastName: 'User'
         });
 
-        // 2. REAL WORLD UX: Clean up the "Guest" session
-        // If I register a new account, I shouldn't inherit the previous user's cart
-        // unless you specifically built a "Merge Cart" feature.
-        // For now, we clear it to avoid the "Why do I have checkout data?" confusion.
+        // Clear previous session data to ensure a fresh start
         localStorage.removeItem('cartItems');
 
-        // 3. Force Login (Security Best Practice)
-        // We don't auto-login after register. We make them verify credentials.
+        // Redirect to login page for verification
         router.push('/login');
 
       } catch (error) {
@@ -94,23 +97,19 @@ export const useAuthStore = defineStore('auth', {
     },
 
     logout() {
-      // 1. Clear State
+      // Reset state
       this.user = null;
       this.token = null;
       this.isAuthenticated = false;
 
-      // 2. Clear Storage
+      // Clear local storage
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
-
-      // 3. Clear Cart (Optional: Keep this if you want shared carts, remove if you want privacy)
       localStorage.removeItem('cartItems');
-
-      // 4. Reset Session Flags (e.g. Free Shipping Popup)
       sessionStorage.removeItem('hasSeenPromo');
 
-      // 4. Redirect
+      // Redirect to login
       router.push('/login');
     }
   }

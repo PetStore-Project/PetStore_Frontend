@@ -257,7 +257,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* BACKGROUND ANIMATION: Floating Lanterns */
+/* Background Animation: Floating Lanterns */
 .lantern {
   position: absolute;
   bottom: -150px;

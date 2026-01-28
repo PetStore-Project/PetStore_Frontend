@@ -2,14 +2,14 @@
   <div class="min-h-screen bg-slate-50 font-sans text-slate-900">
     <div class="flex w-full h-screen overflow-hidden relative">
       <!-- Mobile Backdrop -->
-      <div 
-        v-if="sidebarOpen" 
+      <div
+        v-if="sidebarOpen"
         @click="sidebarOpen = false"
         class="fixed inset-0 bg-slate-900/50 z-20 lg:hidden backdrop-blur-sm transition-opacity"
       ></div>
 
       <!-- Sidebar Container -->
-      <div 
+      <div
         class="fixed inset-y-0 left-0 z-30 w-[260px] bg-white border-r border-slate-200 transform transition-transform duration-300 lg:relative lg:translate-x-0 shrink-0"
         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
       >
@@ -41,7 +41,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed } from "vue";
 import { useRoute } from "vue-router";
-import { useAuthStore } from "@/stores/auth"; // 👈 Import Store
+import { useAuthStore } from "@/stores/auth";
 import SideBar from "@/components/Admin/SideBar.vue";
 import AdminNavigation from "@/components/Admin/AdminNavigation.vue";
 
@@ -54,14 +54,14 @@ export default defineComponent({
     const searchText = ref("");
     const sidebarOpen = ref(false);
 
-    // 1. Get Real Name
+    // Get Real Name
     const userName = computed(() => {
       const u = authStore.user;
       if (!u) return "Admin";
       return `${u.firstName} ${u.lastName}`;
     });
 
-    // 2. Dynamic Title
+    // Dynamic Title
     const pageTitle = computed(() => {
       const path = route.path;
       if (path.includes("dashboard")) return "Dashboard";

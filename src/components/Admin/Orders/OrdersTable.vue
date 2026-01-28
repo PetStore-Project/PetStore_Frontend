@@ -65,8 +65,8 @@
                   :value="o.status"
                   @change="$emit('update-status', o, $event)"
                   class="appearance-none pl-3 pr-7 py-1.5 rounded-lg text-xs font-bold border outline-none cursor-pointer transition-colors focus:ring-2 focus:ring-offset-1 focus:ring-slate-200"
-                  :class="[statusPill(o.status), { 'opacity-50 cursor-not-allowed': (!o.isPaid && o.status === 'Pending' && !['Cash', 'COD'].includes(o.paymentMethod)) }]"
-                  :disabled="!o.isPaid && o.status === 'Pending' && !['Cash', 'COD'].includes(o.paymentMethod)"
+                  :class="[statusPill(o.status), { 'opacity-50 cursor-not-allowed': (!o.isPaid && o.paymentMethod !== 'COD') || o.status === 'Cancelled' || o.status === 'Delivered' }]"
+                  :disabled="(!o.isPaid && o.paymentMethod !== 'COD') || o.status === 'Cancelled' || o.status === 'Delivered'"
                 >
                    <option value="Pending">Pending</option>
                    <option value="Processing">Processing</option>

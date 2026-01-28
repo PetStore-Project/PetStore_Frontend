@@ -30,7 +30,7 @@ export default defineComponent({
     let promoTimer: any = null;
 
     onMounted(() => {
-      // 🛑 Block Toast on Admin Pages
+      // Block Toast on Admin Pages
       if (route.path.startsWith('/admin')) return;
 
       const hasSeenPromo = sessionStorage.getItem('hasSeenPromo');
@@ -58,7 +58,7 @@ export default defineComponent({
 
           // Trigger the Toast
           promoTimer = setTimeout(() => {
-            // 🛑 Double Check: If user navigated to Admin during the 2s wait
+            // Double Check: If user navigated to Admin during the 2s wait
             if (route.path.startsWith('/admin')) return;
 
             toast(ModernToast, {
@@ -84,12 +84,12 @@ export default defineComponent({
 </script>
 
 <style>
-/* 1. Push the Container Down (Below Navbar) */
+/* Push the Container Down */
 .Vue-Toastification__container.top-right {
     top: 90px !important; /* Adjust based on your header height */
 }
 
-/* 2. Increase Toast Size & Padding */
+/* Increase Toast Size & Padding */
 .petstore-modern-toast {
     background: linear-gradient(135deg, #009200 0%, #007a00 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -101,7 +101,7 @@ export default defineComponent({
     min-width: 380px !important; /* Wider card */
 }
 
-/* 3. Bigger Close Button */
+/* Bigger Close Button */
 .petstore-modern-toast .Vue-Toastification__close-button {
     color: rgba(255, 255, 255, 0.7) !important;
     padding-left: 15px !important;

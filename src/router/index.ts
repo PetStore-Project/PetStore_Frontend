@@ -20,13 +20,32 @@ import ResetPassword from '@/views/Auth/ResetPassword.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // 1. Root Redirect
+
+
+    // Customer Routes
     {
       path: '/',
-      redirect: '/home',
+      component: () => import('@/layouts/CustomerLayout.vue'),
+      children: [
+        { path: '', name: 'home', component: Home, alias: 'home' },
+        { path: 'shop', name: 'shop', component: Shop },
+        { path: 'about', name: 'about', component: About },
+        { path: 'contact', name: 'contact', component: Contact },
+        { path: 'product-detail/:id', name: 'product-detail', component: ProductDetail },
+        { path: 'faqs', name: 'faqs', component: () => import('@/views/Site/FAQs.vue') },
+        { path: 'privacy-policy', name: 'privacy-policy', component: () => import('@/views/Site/PrivacyPolicy.vue') },
+        { path: 'terms-conditions', name: 'terms-conditions', component: () => import('@/views/Site/TermsConditions.vue') },
+
+        // Protected Routes
+        { path: 'profile', name: 'profile', component: UserProfile, meta: { requiresAuth: true } },
+        { path: 'cart', name: 'cart', component: Cart, meta: { requiresAuth: true } },
+        { path: 'wishlist', name: 'wishlist', component: Wishlist, meta: { requiresAuth: true } },
+        { path: 'checkout', name: 'checkout', component: Checkout, meta: { requiresAuth: true } },
+        { path: 'order-history', name: 'order-history', component: OrderHistory, meta: { requiresAuth: true } }
+      ]
     },
 
-    // 2. Auth Pages with AuthLayout
+    // Auth Routes
     {
       path: '/',
       component: () => import('@/layouts/AuthLayout.vue'),
@@ -38,30 +57,7 @@ const router = createRouter({
       ],
     },
 
-    // 3. Main Application Routes (Customer)
-    {
-      path: '/',
-      component: () => import('@/layouts/CustomerLayout.vue'),
-      children: [
-        { path: 'home', name: 'home', component: Home },
-        { path: 'shop', name: 'shop', component: Shop },
-        { path: 'about', name: 'about', component: About },
-        { path: 'contact', name: 'contact', component: Contact },
-        { path: 'product-detail/:id', name: 'product-detail', component: ProductDetail },
-        { path: 'faqs', name: 'faqs', component: () => import('@/views/Site/FAQs.vue') },
-        { path: 'privacy-policy', name: 'privacy-policy', component: () => import('@/views/Site/PrivacyPolicy.vue') },
-        { path: 'terms-conditions', name: 'terms-conditions', component: () => import('@/views/Site/TermsConditions.vue') },
-
-        // --- PROTECTED ROUTES ---
-        { path: 'profile', name: 'profile', component: UserProfile, meta: { requiresAuth: true } },
-        { path: 'cart', name: 'cart', component: Cart, meta: { requiresAuth: true } },
-        { path: 'wishlist', name: 'wishlist', component: Wishlist, meta: { requiresAuth: true } },
-        { path: 'checkout', name: 'checkout', component: Checkout, meta: { requiresAuth: true } },
-        { path: 'order-history', name: 'order-history', component: OrderHistory, meta: { requiresAuth: true } }
-      ]
-    },
-
-    // 4. ADMIN ROUTES (Secured)
+    // Admin Routes
     {
       path: '/admin',
       component: () => import('@/layouts/AdminLayout.vue'),
@@ -104,7 +100,7 @@ const router = createRouter({
   ],
 })
 
-// 5. Global Guard Logic
+// Global Guard Logic
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const loggedIn = authStore.isAuthenticated;
@@ -128,13 +124,13 @@ router.beforeEach((to, from, next) => {
   }
   // 3. Prevent Logged-in users from seeing Login/Register
   else if ((to.name === 'login' || to.name === 'register' || to.name === 'forgot-password') && loggedIn) {
-    // 👇 UPDATED REDIRECT LOGIC 👇
+
     if (user && user.role === 'admin') {
       next('/admin/dashboard');
     } else {
-      next('/profile'); // or '/shop'
+      next('/profile');
     }
-    // 👆 END UPDATE 👆
+
   }
   else {
     next();

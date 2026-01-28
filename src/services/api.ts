@@ -1,19 +1,36 @@
 import axios from 'axios';
-import router from '@/router';
 
-// Create Axios instance
+// Create Axios instance with base configuration
 const api = axios.create({
-  baseURL: 'https://petstore-backend-api.onrender.com/api', // Production backend on Render
-  // baseURL: 'http://localhost:5000/api', // 🟢 Local Backend for Testing
+  baseURL: 'https://petstore-backend-api.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Automatically attaches the token to every request
+// Request interceptor: Automatically attaches the token to every request
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    let token = localStorage.getItem('token');
+
+    // Check for token in alternative storage locations
+    if (!token) {
+        try {
+            const userStr = localStorage.getItem('user');
+            const userInfoStr = localStorage.getItem('userInfo');
+
+            if (userStr) {
+                 const parsed = JSON.parse(userStr);
+                 if (parsed && parsed.token) token = parsed.token;
+            } else if (userInfoStr) {
+                 const parsed = JSON.parse(userInfoStr);
+                 if (parsed && parsed.token) token = parsed.token;
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -22,19 +39,18 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Response interceptor: Global error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Check if the error is a 401 (Unauthorized)
+    // Handle 401 Unauthorized errors (session expiry)
     if (error.response && error.response.status === 401) {
-      console.warn("⚠️ Session expired or invalid token. Logging out...");
+      console.warn("Session expired or invalid token. Logging out...");
 
-      // 1. Clear local storage to prevent loops
       localStorage.removeItem('token');
       localStorage.removeItem('user');
 
-      // 2. Force redirect to login
-      // We use window.location to ensure a hard refresh clears any stale memory
+      // Force redirect to login page
       if (window.location.pathname !== '/login') {
           window.location.href = '/login';
       }

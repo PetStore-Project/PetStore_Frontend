@@ -228,7 +228,7 @@ import { useAuthStore } from '@/stores/auth';
 import api from '@/services/api';
 import { useToast } from "vue-toastification";
 
-// 👇 Define your backend URL constant
+// Define your backend URL constant
 const BACKEND_URL = "https://petstore-backend-api.onrender.com";
 
 export default defineComponent({
@@ -255,7 +255,7 @@ export default defineComponent({
     const recommendedLoading = ref(true);
     const recommendedProducts = ref<any[]>([]);
 
-    // 👇 Helper to fix image paths
+    // Helper to fix image paths
     const getImageUrl = (path: string) => {
       if (!path) return 'https://via.placeholder.com/300';
       // If it starts with http, it's already a full URL (external image)
@@ -270,7 +270,7 @@ export default defineComponent({
         const response = await api.get(`/products/${route.params.id}`);
         product.value = response.data;
         if (product.value) {
-            // 👇 Use the helper immediately so 'mainImage' is always a valid URL
+            // Use the helper immediately so 'mainImage' is always a valid URL
             const rawPath = product.value.imageUrl || product.value.image || '';
             mainImage.value = getImageUrl(rawPath);
             // Fetch recommended products after getting current product
@@ -342,14 +342,14 @@ export default defineComponent({
           price: product.value.price,
           category: product.value.category,
           stockQuantity: product.value.stockQuantity, // Pass Stock!
-          image: mainImage.value 
+          image: mainImage.value
         });
         if (success) addedCount++;
       }
 
       if (addedCount > 0) {
         toast.success(`Added ${addedCount} to Cart!`);
-      } 
+      }
       if (addedCount < quantity.value) {
         toast.warning("Some items could not be added (Stock Limit Reached)");
       }
@@ -359,7 +359,7 @@ export default defineComponent({
         fetchProduct();
     });
 
-    // ⚡️ Fix for route changes not updating the component
+    // Fix for route changes not updating the component
     watch(
       () => route.params.id,
       (newId) => {

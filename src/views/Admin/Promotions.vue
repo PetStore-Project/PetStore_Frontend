@@ -1,6 +1,6 @@
 <template>
   <div class="w-full min-h-screen">
-    
+
     <!-- Header -->
     <AdminPageHeader title="Campaigns" description="Create discount codes and manage offers.">
       <template #actions>
@@ -24,7 +24,7 @@
           <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </template>
       </StatsCard>
-      
+
       <StatsCard label="Total Redemptions" :value="totalRedemptions" color="purple">
         <template #icon>
           <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
@@ -57,7 +57,7 @@
         :key="promo._id"
         class="group relative bg-white rounded-[24px] border border-slate-100 p-6 flex flex-col justify-between hover:shadow-xl hover:border-slate-200 transition-all duration-300"
       >
-        <!-- Promo Card Content -->
+        <!-- Promo Card -->
         <div class="flex justify-between items-start mb-4">
           <div class="flex flex-col">
             <span class="text-[10px] font-black uppercase tracking-wider mb-1"
@@ -95,7 +95,7 @@
             <span class="text-slate-500 font-medium">Valid Period</span>
             <span class="font-bold text-slate-900 text-xs">{{ formatDate(promo.startDate) }} - {{ formatDate(promo.endDate) }}</span>
           </div>
-          
+
           <div v-if="promo.applicableProducts && promo.applicableProducts.length > 0" class="flex justify-between items-center text-sm">
             <span class="text-slate-500 font-medium">Applies To</span>
             <span class="font-bold text-purple-600 text-xs">{{ promo.applicableProducts.length }} products</span>
@@ -204,7 +204,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
 
@@ -215,14 +215,12 @@ import StatsCard from '@/components/Admin/StatsCard.vue';
 import ConfirmModal from '@/components/Admin/ConfirmModal.vue';
 import PromotionFormModal from '@/components/Admin/Promotions/PromotionFormModal.vue';
 
-const API_BASE = "https://petstore-backend-api.onrender.com/api";
-
 export default defineComponent({
   name: "Promotions",
-  components: { 
+  components: {
     AdminPageHeader,
     AdminStatsGrid,
-    StatsCard, 
+    StatsCard,
     ConfirmModal,
     PromotionFormModal
   },
@@ -234,7 +232,7 @@ export default defineComponent({
     const isLoading = ref(true);
     const showModal = ref(false);
 
-    // --- FORM STATE ---
+    // Form State
     const form = reactive({
       code: '',
       type: 'percent',
@@ -251,20 +249,11 @@ export default defineComponent({
     const editingId = ref<string | null>(null);
     const sendingPromoId = ref<string | null>(null);
 
-    const getAuthHeader = () => {
-      let token = authStore.token;
-      if (!token) {
-         const stored = localStorage.getItem('userInfo');
-         if (stored) token = JSON.parse(stored).token;
-      }
-      return { headers: { Authorization: `Bearer ${token}` } };
-    };
-
-    // --- API CALLS ---
+    // API Calls
     const fetchPromotions = async () => {
       isLoading.value = true;
       try {
-        const { data } = await axios.get(`${API_BASE}/promotions`, getAuthHeader());
+        const { data } = await api.get('/promotions');
         promotions.value = data;
       } catch (error) {
         console.error(error);
@@ -275,14 +264,14 @@ export default defineComponent({
 
     const fetchProducts = async () => {
       try {
-        const { data } = await axios.get(`${API_BASE}/products`);
+        const { data } = await api.get('/products');
         products.value = data;
       } catch (error) {
         console.error(error);
       }
     };
 
-    // --- STATS LOGIC ---
+    // Stats Logic
     const activeCount = computed(() => {
       const now = new Date();
       return promotions.value.filter(p =>
@@ -317,7 +306,7 @@ export default defineComponent({
     const showEmailConfirm = ref(false);
     const pendingEmailId = ref<string | null>(null);
 
-    // --- BROADCAST LOGIC ---
+    // Broadcast Logic
     const confirmBroadcast = (id: string) => {
       pendingEmailId.value = id;
       showEmailConfirm.value = true;
@@ -331,10 +320,10 @@ export default defineComponent({
     const proceedBroadcast = async () => {
       if (!pendingEmailId.value) return;
       const id = pendingEmailId.value;
-      showEmailConfirm.value = false; 
+      showEmailConfirm.value = false;
       sendingPromoId.value = id;
       try {
-        const { data } = await axios.post(`${API_BASE}/promotions/${id}/broadcast`, {}, getAuthHeader());
+        const { data } = await api.post(`/promotions/${id}/broadcast`, {});
         toast.info(data.message || "Broadcast started!");
       } catch (error: any) {
         console.error("Broadcast failed", error);
@@ -345,29 +334,30 @@ export default defineComponent({
       }
     };
 
-    // --- CRUD ACTIONS ---
-    const savePromotion = async () => {
-      if(!form.code || !form.value || !form.endDate) {
+    // CRUD Actions
+    const savePromotion = async (updatedData: any) => {
+      // Use updatedData instead of form
+      if(!updatedData.code || !updatedData.value || !updatedData.endDate) {
         toast.error("Please fill all required fields");
         return;
       }
-      if(form.campaignType === 'product_discount' && form.applicableProducts.length === 0) {
+      if(updatedData.campaignType === 'product_discount' && (!updatedData.applicableProducts || updatedData.applicableProducts.length === 0)) {
         toast.error("Please select at least one product for Product Discount");
         return;
       }
 
       try {
         const payload = {
-          ...form,
-          applicableProducts: form.applicableProducts.length > 0 ? form.applicableProducts : undefined,
-          minPurchase: form.campaignType === 'promo_code' ? (form.minPurchase !== undefined ? form.minPurchase : undefined) : undefined
+          ...updatedData,
+          applicableProducts: updatedData.applicableProducts.length > 0 ? updatedData.applicableProducts : undefined,
+          minPurchase: updatedData.campaignType === 'promo_code' ? (updatedData.minPurchase !== undefined ? updatedData.minPurchase : undefined) : undefined
         };
 
         if (isEditing.value && editingId.value) {
-          await axios.put(`${API_BASE}/promotions/${editingId.value}`, payload, getAuthHeader());
+          await api.put(`/promotions/${editingId.value}`, payload);
           toast.success("Campaign Updated!");
         } else {
-          await axios.post(`${API_BASE}/promotions`, payload, getAuthHeader());
+          await api.post('/promotions', payload);
           toast.success("Campaign Created!");
         }
 
@@ -426,7 +416,7 @@ export default defineComponent({
     const confirmDelete = async () => {
       if (!pendingDeleteId.value) return;
       try {
-        await axios.delete(`${API_BASE}/promotions/${pendingDeleteId.value}`, getAuthHeader());
+        await api.delete(`/promotions/${pendingDeleteId.value}`);
         toast.success("Deleted");
         fetchPromotions();
       } catch (e) {

@@ -8,11 +8,11 @@ import router from './router'
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 
-/* add fontawesome core */
+/* FontAwesome Setup */
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-/* import all the icons in Free Solid, Free Regular, and Brands styles */
+/* Import icons */
 import { fas } from '@fortawesome/free-solid-svg-icons'
 import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'

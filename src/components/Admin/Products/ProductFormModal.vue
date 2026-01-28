@@ -45,12 +45,12 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
               <label class="text-xs font-bold text-slate-500 uppercase">Product Name</label>
-              <input v-model="form.name" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition" placeholder="e.g. Premium Dog Food">
+              <input v-model="localForm.name" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition" placeholder="e.g. Premium Dog Food">
             </div>
 
             <div class="space-y-2">
               <label class="text-xs font-bold text-slate-500 uppercase">Category</label>
-              <select v-model="form.category" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition appearance-none">
+              <select v-model="localForm.category" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition appearance-none">
                 <option>Food</option>
                 <option>Toys</option>
                 <option>Furniture</option>
@@ -61,25 +61,25 @@
 
             <div class="space-y-2">
               <label class="text-xs font-bold text-slate-500 uppercase">Price ($)</label>
-              <input v-model.number="form.price" type="number" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition" placeholder="0.00">
+              <input v-model.number="localForm.price" type="number" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition" placeholder="0.00">
             </div>
 
             <div class="space-y-2">
               <label class="text-xs font-bold text-slate-500 uppercase">Stock Quantity</label>
-              <input v-model.number="form.stockQuantity" type="number" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition" placeholder="0">
+              <input v-model.number="localForm.stockQuantity" type="number" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition" placeholder="0">
             </div>
           </div>
 
           <div class="space-y-2">
             <label class="text-xs font-bold text-slate-500 uppercase">Description</label>
-            <textarea v-model="form.description" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition resize-none" placeholder="Describe the product..."></textarea>
+            <textarea v-model="localForm.description" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition resize-none" placeholder="Describe the product..."></textarea>
           </div>
 
         </div>
 
         <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
           <button @click="$emit('close')" class="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition">Cancel</button>
-          <button @click="$emit('save')" :disabled="isSaving" class="px-8 py-3 rounded-xl bg-slate-900 text-white font-bold shadow-lg hover:bg-slate-800 transition disabled:opacity-70 flex items-center gap-2">
+          <button @click="$emit('save', localForm)" :disabled="isSaving" class="px-8 py-3 rounded-xl bg-slate-900 text-white font-bold shadow-lg hover:bg-slate-800 transition disabled:opacity-70 flex items-center gap-2">
             <span v-if="isSaving" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
             {{ isSaving ? 'Saving...' : 'Save Product' }}
           </button>
@@ -100,14 +100,17 @@ export default defineComponent({
     isEditing: { type: Boolean, default: false },
     isSaving: { type: Boolean, default: false },
     form: { type: Object, required: true },
-    previewImage: { type: String, default: null } // Passed as prop now
+    previewImage: { type: String, default: null }
   },
   emits: ['close', 'save', 'select-file', 'remove-image'],
   setup(props, { emit }) {
     const fileInput = ref<HTMLInputElement | null>(null);
+    const localForm = ref({ ...props.form });
+
+    watch(() => props.form, (newVal) => { localForm.value = { ...newVal }; }, { deep: true });
 
     const triggerFileInput = () => fileInput.value?.click();
-    
+
     // Forward file selection to parent
     const handleFileSelect = (event: Event) => {
         const input = event.target as HTMLInputElement;
@@ -121,7 +124,7 @@ export default defineComponent({
         if (fileInput.value) fileInput.value.value = '';
     };
 
-    return { fileInput, triggerFileInput, handleFileSelect, removeImage };
+    return { fileInput, triggerFileInput, handleFileSelect, removeImage, localForm };
   }
 });
 </script>

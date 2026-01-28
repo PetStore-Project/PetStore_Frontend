@@ -3,8 +3,8 @@
     <main class="flex-1 w-full overflow-y-auto px-4 sm:px-8 pt-8 pb-10">
 
       <!-- Page Header -->
-      <AdminPageHeader 
-        title="Orders Center" 
+      <AdminPageHeader
+        title="Orders Center"
         description="Track revenue and manage order fulfillment in real-time."
       >
         <template #actions>
@@ -57,7 +57,7 @@
         </div>
       </AdminStatsGrid>
 
-      <!-- Filter Section (Custom for Orders due to Tabs) -->
+      <!-- Filter Section -->
       <div class="pt-8 flex flex-col gap-6">
         <section class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden p-2">
           <div class="p-2 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
@@ -79,15 +79,15 @@
         </section>
 
         <!-- Orders Table & Pagination -->
-        <OrdersTable 
-          :orders="paged" 
+        <OrdersTable
+          :orders="paged"
           :is-loading="isLoading"
           @view-details="openDetails"
           @update-status="updateStatus"
           @generate-invoice="generateInvoice"
         >
           <template #pagination>
-             <AdminPagination 
+             <AdminPagination
                 v-if="!isLoading && orders.length > 0"
                 v-model:currentPage="page"
                 :totalPages="totalPages"
@@ -97,23 +97,23 @@
       </div>
 
       <!-- Modals -->
-      <OrderDetailsModal 
-        v-if="showDetails && selected" 
-        :order="selected" 
-        :formatMoney="formatMoney" 
-        :formatDate="formatDate" 
-        :initials="initials" 
-        :statusPill="statusPill" 
-        @close="closeDetails" 
-        @generate-invoice="generateInvoice" 
-        @update-status="updateStatus" 
-        @mark-paid="triggerMarkPaid" 
-        @refund="handleRefund" 
+      <OrderDetailsModal
+        v-if="showDetails && selected"
+        :order="selected"
+        :formatMoney="formatMoney"
+        :formatDate="formatDate"
+        :initials="initials"
+        :statusPill="statusPill"
+        @close="closeDetails"
+        @generate-invoice="generateInvoice"
+        @update-status="updateStatus"
+        @mark-paid="triggerMarkPaid"
+        @refund="handleRefund"
       />
 
       <ConfirmModal :is-open="showMarkPaidConfirm" title="Mark as Paid?" confirm-text="Mark Paid" cancel-text="Cancel" type="success" @close="showMarkPaidConfirm = false" @confirm="confirmMarkPaid" ><template #message><p class="text-slate-500 mb-6">Are you sure you want to mark this order as <strong>PAID</strong>?</p></template></ConfirmModal>
       <ConfirmModal :is-open="showCancelConfirm" title="Cancel Order?" confirm-text="Yes, Cancel" type="danger" @close="showCancelConfirm = false" @confirm="confirmCancelOrder"><template #message><p class="text-slate-500 mb-6">This action cannot be undone.</p></template></ConfirmModal>
-      
+
       <!-- Update Status Confirmation Modal -->
       <ConfirmModal
         :is-open="showStatusUpdateConfirm"
@@ -125,8 +125,8 @@
         @confirm="confirmStatusUpdate"
       >
         <template #icon>
-          <div :class="['w-12 h-12 rounded-full flex items-center justify-center', 
-             pendingStatusUpdate?.newStatus === 'Cancelled' ? 'bg-rose-100 text-rose-600' : 
+          <div :class="['w-12 h-12 rounded-full flex items-center justify-center',
+             pendingStatusUpdate?.newStatus === 'Cancelled' ? 'bg-rose-100 text-rose-600' :
              pendingStatusUpdate?.newStatus === 'Delivered' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600']">
             <svg v-if="pendingStatusUpdate?.newStatus === 'Delivered'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             <svg v-else-if="pendingStatusUpdate?.newStatus === 'Cancelled'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -136,7 +136,7 @@
         <template #message>
            <div class="text-slate-500 mb-6 space-y-3">
             <p>Are you sure you want to change order <span class="font-mono font-bold">#{{ pendingStatusUpdate?.order?.id?.slice(-6).toUpperCase() }}</span> status to <span class="font-bold text-slate-900">{{ pendingStatusUpdate?.newStatus }}</span>?</p>
-            
+
             <div v-if="pendingStatusUpdate?.newStatus === 'Delivered'" class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-emerald-700">
               <p class="font-bold mb-1 flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
@@ -161,7 +161,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import axios from "axios";
+import api from '@/services/api';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 
@@ -175,17 +175,15 @@ import OrderDetailsModal from '../../components/Admin/Orders/OrderDetailsModal.v
 
 import { exportCSVService, downloadInvoiceService, generateFinancialReportService } from '../../services/orderExport';
 
-const API_BASE = "https://petstore-backend-api.onrender.com/api";
-
 export default defineComponent({
   name: "Orders",
-  components: { 
+  components: {
     AdminPageHeader,
     AdminStatsGrid,
     AdminPagination,
     OrdersTable,
-    ConfirmModal, 
-    OrderDetailsModal 
+    ConfirmModal,
+    OrderDetailsModal
   },
   props: ['globalSearch'],
   data() {
@@ -202,31 +200,30 @@ export default defineComponent({
     return { route, authStore };
   },
   computed: {
-    // --- STATUS TABS ---
+    // Status Tabs
     statusTabs() { return [{ key: "all", label: "All", count: this.orders.length }, { key: "Pending", label: "Pending", count: this.orders.filter(o => o.status === 'Pending').length }, { key: "Processing", label: "Processing", count: this.orders.filter(o => o.status === 'Processing').length }, { key: "Shipped", label: "Shipped", count: this.orders.filter(o => o.status === 'Shipped').length }, { key: "Delivered", label: "Delivered", count: this.orders.filter(o => o.status === 'Delivered').length }, { key: "Cancelled", label: "Cancelled", count: this.orders.filter(o => o.status === 'Cancelled').length }]; },
-    
-    // --- FILTER LOGIC ---
+
+    // Filter Logic
     filteredSorted() { let list = this.orders; if (this.activeStatus !== "all") list = list.filter(o => o.status === this.activeStatus); if (this.activePaymentFilter === 'paid') list = list.filter(o => o.isPaid); if (this.activePaymentFilter === 'unpaid') list = list.filter(o => !o.isPaid); const search = this.q.toLowerCase().trim(); if (search) list = list.filter(o => o.id.toLowerCase().includes(search) || o.customer.toLowerCase().includes(search)); return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); },
-    
-    // --- STATS CALCULATION ---
+
+    // Stats Calculation
     totalPages() { return Math.max(1, Math.ceil(this.filteredSorted.length / this.pageSize)); },
     paged() { return this.filteredSorted.slice((this.page - 1) * this.pageSize, this.page * this.pageSize); },
     stats() { const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered']; return { total: this.orders.length, revenue: this.orders.filter(o => paidStatuses.includes(o.status)).reduce((s, o) => s + (o.total || 0), 0), paidCount: this.orders.filter(o => o.isPaid).length, unpaidCount: this.orders.filter(o => !o.isPaid).length, pending: this.orders.filter(o => o.status === 'Pending').length, delivered: this.orders.filter(o => o.status === 'Delivered').length }; }
   },
   methods: {
-    getAuthHeader() { const token = this.authStore.token || JSON.parse(localStorage.getItem('userInfo') || '{}').token; return { headers: { Authorization: `Bearer ${token}` } }; },
     formatMoney(amt: number) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amt || 0); },
     formatDate(date: string) { return date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'; },
     initials(name: string) { return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '??'; },
     statusPill(status: string) { const map: any = { Paid: "bg-emerald-50 text-emerald-700 border-emerald-100", Pending: "bg-amber-50 text-amber-700 border-amber-100", Shipped: "bg-blue-50 text-blue-700 border-blue-100", Delivered: "bg-emerald-100 text-emerald-800 border-emerald-200", Cancelled: "bg-rose-50 text-rose-700 border-rose-100", Processing: "bg-indigo-50 text-indigo-700 border-indigo-100" }; return map[status] || "bg-slate-50"; },
     showToast(msg: string) { this.toast = msg; setTimeout(() => { this.toast = ""; }, 3000); },
-    
-    // --- MODAL CONTROLS ---
+
+    // Modal Controls
     openDetails(order: any) { this.selected = { ...order }; this.showDetails = true; },
     closeDetails() { this.showDetails = false; this.selected = null; },
-    
-    // --- API CALLS ---
-    async fetchOrders() { this.isLoading = true; try { const { data } = await axios.get(`${API_BASE}/orders`, this.getAuthHeader()); this.orders = data.map((o: any) => ({ id: o._id, customer: o.user ? `${o.user.firstName} ${o.user.lastName}` : 'Guest', email: o.user ? o.user.email : 'N/A', date: o.createdAt, total: o.totalPrice, status: o.status || 'Pending', orderItems: o.orderItems || [], isPaid: o.isPaid || false, paidAt: o.paidAt, paymentMethod: o.paymentMethod || 'N/A', shippingAddress: o.shippingAddress })); } finally { this.isLoading = false; } },
+
+    // API Calls
+    async fetchOrders() { this.isLoading = true; try { const { data } = await api.get(`/orders`); this.orders = data.map((o: any) => ({ id: o._id, customer: o.user ? `${o.user.firstName} ${o.user.lastName}` : 'Guest', email: o.user ? o.user.email : 'N/A', date: o.createdAt, total: o.totalPrice, status: o.status || 'Pending', orderItems: o.orderItems || [], isPaid: o.isPaid || false, paidAt: o.paidAt, paymentMethod: o.paymentMethod || 'N/A', shippingAddress: o.shippingAddress })); } finally { this.isLoading = false; } },
     async updateStatus(o: any, e: any) {
       const s = e.target ? e.target.value : e;
       if (o.status === 'Cancelled') { this.showToast("Cannot modify a cancelled order."); return; }
@@ -235,33 +232,60 @@ export default defineComponent({
       if (e.target) e.target.value = o.status;
     },
     cancelStatusUpdateConfirm() { this.showStatusUpdateConfirm = false; this.pendingStatusUpdate = null; },
-    async confirmStatusUpdate() { 
-      if (!this.pendingStatusUpdate) return; 
-      const { order, newStatus } = this.pendingStatusUpdate; 
-      try { 
-        await axios.put(`${API_BASE}/orders/${order.id}/status`, { status: newStatus }, this.getAuthHeader()); 
-        
+    async confirmStatusUpdate() {
+      if (!this.pendingStatusUpdate) return;
+      const { order, newStatus } = this.pendingStatusUpdate;
+      try {
+        await api.put(`/orders/${order.id}/status`, { status: newStatus });
+
         // Update local state by finding the exact index for reactivity
         const index = this.orders.findIndex(x => x.id === order.id);
         if (index !== -1) {
           this.orders[index].status = newStatus;
         }
-        
-        this.showToast(`Updated to ${newStatus}`); 
-      } catch { 
-        this.showToast("Failed"); 
-      } finally { 
-        this.cancelStatusUpdateConfirm(); 
-      } 
+
+        this.showToast(`Updated to ${newStatus}`);
+      } catch {
+        this.showToast("Failed");
+      } finally {
+        this.cancelStatusUpdateConfirm();
+      }
     },
-    async confirmCancelOrder() { if (!this.pendingCancelOrder) return; try { await axios.put(`${API_BASE}/orders/${this.pendingCancelOrder.id}/status`, { status: 'Cancelled' }, this.getAuthHeader()); this.pendingCancelOrder.status = 'Cancelled'; const orig = this.orders.find(x => x.id === this.pendingCancelOrder.id); if (orig) orig.status = 'Cancelled'; this.showToast("Cancelled"); } finally { this.showCancelConfirm = false; } },
+    async confirmCancelOrder() { if (!this.pendingCancelOrder) return; try { await api.put(`/orders/${this.pendingCancelOrder.id}/status`, { status: 'Cancelled' }); this.pendingCancelOrder.status = 'Cancelled'; const orig = this.orders.find(x => x.id === this.pendingCancelOrder.id); if (orig) orig.status = 'Cancelled'; this.showToast("Cancelled"); } finally { this.showCancelConfirm = false; } },
     triggerMarkPaid(order: any) { this.pendingPaidOrder = order; this.showMarkPaidConfirm = true; },
-    async confirmMarkPaid() { if (!this.pendingPaidOrder) return; try { await axios.put(`${API_BASE}/orders/${this.pendingPaidOrder.id}/pay`, {}, this.getAuthHeader()); this.pendingPaidOrder.isPaid = true; const orig = this.orders.find(x => x.id === this.pendingPaidOrder.id); if (orig) orig.isPaid = true; this.showToast("Paid"); } catch (err) { console.error(err); this.showToast("Failed to mark paid"); } finally { this.showMarkPaidConfirm = false; } },
-    async handleRefund(order: any) { if (!confirm("Refund?")) return; try { await axios.put(`${API_BASE}/orders/${order.id}/status`, { status: 'Cancelled' }, this.getAuthHeader()); order.status = 'Cancelled'; const orig = this.orders.find(x => x.id === order.id); if (orig) orig.status = 'Cancelled'; this.showToast("Refunded"); this.closeDetails(); } catch { this.showToast("Failed"); } },
+    async confirmMarkPaid() {
+      if (!this.pendingPaidOrder) return;
+      try {
+        await api.put(`/orders/${this.pendingPaidOrder.id}/pay`, {});
+
+        this.pendingPaidOrder.isPaid = true;
+        const orig = this.orders.find(x => x.id === this.pendingPaidOrder.id);
+        if (orig) orig.isPaid = true;
+        this.showToast("Paid");
+      } catch (err: any) {
+        console.error(err);
+        if (err.response && err.response.status === 403) {
+           this.showToast("Permission Denied: Admin rights required.");
+        } else {
+           // Handle other errors
+           const status = err.response ? `(${err.response.status})` : '';
+           const msg = err.response?.data?.message || `Failed to update payment status ${status}`;
+           this.showToast(msg);
+        }
+      } finally {
+        this.showMarkPaidConfirm = false;
+      }
+    },
+    async handleRefund(order: any) { if (!confirm("Refund?")) return; try { await api.put(`/orders/${order.id}/status`, { status: 'Cancelled' }); order.status = 'Cancelled'; const orig = this.orders.find(x => x.id === order.id); if (orig) orig.status = 'Cancelled'; this.showToast("Refunded"); this.closeDetails(); } catch { this.showToast("Failed"); } },
     filterOrdersByRange(range: string) { const now = new Date(); return this.orders.filter(o => { const d = new Date(o.date); if (range === 'Today') return d.toDateString() === now.toDateString(); if (range === 'This Month') return d.getMonth() === now.getMonth(); return true; }); },
     exportCSV(range: string) { exportCSVService(this.filterOrdersByRange(range), range, this.formatDate); this.showToast("CSV Exported"); },
-    async generateInvoice(order: any) { this.showToast("Preparing..."); const { data } = await axios.get(`${API_BASE}/orders/${order.id}`, this.getAuthHeader()); downloadInvoiceService(data, this.formatMoney, this.formatDate); },
+    async generateInvoice(order: any) { this.showToast("Preparing..."); const { data } = await api.get(`/orders/${order.id}`); downloadInvoiceService(data, this.formatMoney, this.formatDate); },
     generateFinancialReport(range: string) { generateFinancialReportService(this.filterOrdersByRange(range), range, this.formatMoney); this.showToast("PDF Exported"); }
+  },
+  watch: {
+    globalSearch(newVal) {
+      this.q = newVal;
+    }
   },
   mounted() { this.fetchOrders(); }
 });

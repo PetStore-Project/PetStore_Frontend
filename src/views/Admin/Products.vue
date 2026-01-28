@@ -1,6 +1,6 @@
 <template>
   <div class="w-full min-h-screen">
-    
+
     <!-- Header -->
     <AdminPageHeader title="Inventory" description="Manage your products, stock levels, and pricing.">
       <template #actions>
@@ -12,9 +12,9 @@
     </AdminPageHeader>
 
     <!-- Filters -->
-    <AdminFilterBar 
-      v-model="filters.search" 
-      placeholder="Search products..." 
+    <AdminFilterBar
+      v-model="filters.search"
+      placeholder="Search products..."
       :show-reset="activeFiltersCount > 0"
       @reset="resetFilters"
     >
@@ -80,7 +80,7 @@
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import axios from 'axios';
+import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
 
@@ -90,15 +90,13 @@ import AdminPageHeader from '@/components/Admin/Shared/AdminPageHeader.vue';
 import AdminFilterBar from '@/components/Admin/Shared/AdminFilterBar.vue';
 import ProductFormModal from '@/components/Admin/Products/ProductFormModal.vue';
 
-const API_BASE = "https://petstore-backend-api.onrender.com/api";
-
 export default defineComponent({
   name: "Products",
-  components: { 
-    AdminProductCard, 
-    AdminPageHeader, 
-    AdminFilterBar, 
-    ProductFormModal 
+  components: {
+    AdminProductCard,
+    AdminPageHeader,
+    AdminFilterBar,
+    ProductFormModal
   },
   props: ['globalSearch'],
   setup(props) {
@@ -107,7 +105,7 @@ export default defineComponent({
     const products = ref<any[]>([]);
     const isLoading = ref(true);
     const isSaving = ref(false);
-    
+
     // --- UPLOAD STATE ---
     const previewImage = ref<string | undefined>(undefined);
     const selectedFile = ref<File | null>(null);
@@ -135,20 +133,11 @@ export default defineComponent({
       brand: 'PetStore+'
     });
 
-    const getAuthHeader = () => {
-      let token = authStore.token;
-      if (!token) {
-         const stored = localStorage.getItem('userInfo');
-         if (stored) token = JSON.parse(stored).token;
-      }
-      return { headers: { Authorization: `Bearer ${token}` } };
-    };
-
     // --- API CALLS ---
     const fetchProducts = async () => {
       isLoading.value = true;
       try {
-        const { data } = await axios.get(`${API_BASE}/products`);
+        const { data } = await api.get('/products');
         products.value = data;
       } catch (error) {
         console.error(error);
@@ -214,7 +203,7 @@ export default defineComponent({
           name: '',
           price: 0,
           category: 'Food',
-          stockQuantity: 0, 
+          stockQuantity: 0,
           description: ''
         });
         previewImage.value = undefined;
@@ -236,28 +225,31 @@ export default defineComponent({
       previewImage.value = undefined;
     };
 
-    const saveProduct = async () => {
+    const saveProduct = async (updatedData: any) => {
       isSaving.value = true;
       try {
         const formData = new FormData();
-        formData.append('name', form.name);
-        formData.append('price', String(form.price));
-        formData.append('category', form.category);
-        formData.append('stockQuantity', String(form.stockQuantity));
-        formData.append('description', form.description);
+        formData.append('name', updatedData.name);
+        formData.append('price', String(updatedData.price));
+        formData.append('category', updatedData.category);
+        formData.append('stockQuantity', String(updatedData.stockQuantity));
+        formData.append('description', updatedData.description);
         formData.append('brand', 'PetStore+');
 
         if (selectedFile.value) {
           formData.append('image', selectedFile.value);
         }
 
-        const config = getAuthHeader();
+        // Overriding headers for file upload
+        const config = {
+           headers: { 'Content-Type': 'multipart/form-data' }
+        };
 
         if (modal.mode === 'create') {
-          await axios.post(`${API_BASE}/products`, formData, config);
+          await api.post('/products', formData, config);
           toast.success("Product Created!");
         } else {
-          await axios.put(`${API_BASE}/products/${modal.id}`, formData, config);
+          await api.put(`/products/${modal.id}`, formData, config);
           toast.success("Product Updated!");
         }
 
@@ -275,7 +267,7 @@ export default defineComponent({
     const confirmDelete = async (product: any) => {
       if(confirm(`Are you sure you want to delete ${product.name}?`)) {
         try {
-          await axios.delete(`${API_BASE}/products/${product._id}`, getAuthHeader());
+          await api.delete(`/products/${product._id}`);
           toast.success("Product Deleted");
           fetchProducts();
         } catch(e) { toast.error("Delete Failed"); }

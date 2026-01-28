@@ -10,12 +10,12 @@ export const useCartStore = defineStore('cart', {
   }),
 
   getters: {
-    // Count total items (e.g., 2 shirts + 1 hat = 3 items)
+    // Count total items
     totalItems: (state) => state.items.reduce((total, item) => total + item.quantity, 0),
     // Calculate total price
     subtotal: (state) => state.items.reduce((total, item) => total + (item.price * item.quantity), 0),
 
-    // Dynamic Discount Calculation
+    // Discount Calculation
     discountAmount: (state): number => {
       if (!state.promoCode) return 0;
       const subtotal = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -38,8 +38,6 @@ export const useCartStore = defineStore('cart', {
 
       if (existingItem) {
         if (existingItem.quantity + 1 > stockLimit) {
-          // Optional: You could return false or throw error here to show toast in UI
-          // For now, we max out at stock limit
           return;
         }
         existingItem.quantity++;
@@ -49,7 +47,7 @@ export const useCartStore = defineStore('cart', {
         existingItem.hasDiscount = product.hasDiscount;
         existingItem.stockQuantity = stockLimit; // Keep updated
       } else {
-        if (1 > stockLimit) return; // Should be handled by UI disabled button, but double check
+        if (1 > stockLimit) return;
 
         this.items.push({
           _id: product._id,
@@ -64,7 +62,7 @@ export const useCartStore = defineStore('cart', {
         });
       }
       this.saveToLocalStorage();
-      return true; // Success indicator
+      return true;
     },
 
     removeFromCart(productId: string) {
@@ -118,7 +116,7 @@ export const useCartStore = defineStore('cart', {
       this.saveToLocalStorage();
     },
 
-    // Manual saving function (Works without plugins)
+    // Manual saving function
     saveToLocalStorage() {
       localStorage.setItem('cartItems', JSON.stringify(this.items));
       localStorage.setItem('cartPromoCode', this.promoCode);

@@ -42,10 +42,10 @@
           </template>
         </StatsCard>
 
-        <StatsCard 
-          label="Inventory" 
-          :value="stats.products" 
-          color="purple" 
+        <StatsCard
+          label="Inventory"
+          :value="stats.products"
+          color="purple"
           class="cursor-pointer hover:border-purple-200 transition"
           @click="$router.push('/admin/products?filter=low_stock')"
         >
@@ -72,11 +72,11 @@
       </AdminStatsGrid>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        
-        <RevenueChart 
+
+        <RevenueChart
           v-model:mode="chartMode"
-          :current-mode="chartMode" 
-          :data-points="currentRevenueSeries" 
+          :current-mode="chartMode"
+          :data-points="currentRevenueSeries"
           :labels="chartLabels"
         />
 
@@ -85,9 +85,9 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <TopProducts 
-          v-model="topProductsFilter" 
+
+        <TopProducts
+          v-model="topProductsFilter"
           :products="topProducts"
         />
 
@@ -214,7 +214,7 @@ const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: "Dashboard",
-  components: { 
+  components: {
     AdminStatsGrid,
     StatsCard,
     RevenueChart,
@@ -228,7 +228,7 @@ export default defineComponent({
 
     const chartMode = ref<'daily' | 'monthly' | 'yearly'>('monthly');
 
-    // --- DASHBOARD STATS STATE ---
+    // Dashboard Stats State
     const stats = ref({
       revenue: 0,
       orders: 0,
@@ -248,12 +248,12 @@ export default defineComponent({
     const allPromos = ref<any[]>([]);
 
     const topProductsFilter = ref('All Time');
-    
+
     // Top Promos State
     const showAllPromosModal = ref(false);
     const allPerformingPromos = ref<any[]>([]);
 
-    // --- TOP PRODUCTS LOGIC ---
+    // Top Products Logic
     const topProducts = computed(() => {
       const now = new Date();
       let filtered = allOrders.value;
@@ -277,7 +277,7 @@ export default defineComponent({
       }
 
       const itemMap: Record<string, number> = {};
-      
+
       filtered.forEach((o: any) => {
         if (o.isPaid) {
            if (o.orderItems && Array.isArray(o.orderItems)) {
@@ -293,10 +293,10 @@ export default defineComponent({
         .map(([name, qty]) => ({ name, qty }))
         .filter(i => i.qty > 0)
         .sort((a, b) => b.qty - a.qty)
-        .slice(0, 5); 
+        .slice(0, 5);
 
       const max = sorted.length > 0 && sorted[0]? sorted[0].qty : 1;
-      
+
       return sorted.map(i => ({
         ...i,
         percent: Math.round((i.qty / max) * 100)
@@ -320,7 +320,7 @@ export default defineComponent({
       revenue: 0
     });
 
-    // --- REVENUE CHART LOGIC ---
+    // Revenue New Chart Logic
     const revenueSeries = ref(new Array(12).fill(0));
     const dailyRevenue = ref(new Array(7).fill(0));
     const weeklyRevenue = ref(new Array(8).fill(0)); // Keep for structure if needed, but not used in toggle
@@ -362,7 +362,7 @@ export default defineComponent({
       return new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
     });
 
-    // --- FORMATTERS ---
+    // Formatters
     const formatMoney = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
     const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -375,7 +375,7 @@ export default defineComponent({
       return { headers: { Authorization: `Bearer ${token}` } };
     };
 
-    // --- API DATA FETCH ---
+    // API Data Fetch
     const loadData = async () => {
       isLoading.value = true;
       try {
@@ -398,7 +398,7 @@ export default defineComponent({
         const completedCount = orders.filter((o: any) => completedStatuses.includes(o.status)).length;
         const processCount = orders.filter((o: any) => processStatuses.includes(o.status)).length;
         const pendingCount = orders.filter((o: any) => pendingStatuses.includes(o.status)).length;
-        
+
         const totalBase = orders.length || 1;
         const totalRev = orders.filter((o: any) => o.isPaid).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
 
@@ -427,14 +427,14 @@ export default defineComponent({
           products: products.length,
           customers: users.length,
           newCustomers: users.filter((u: any) => new Date(u.createdAt).toDateString() === new Date().toDateString()).length,
-          lowStock: products.filter((p: any) => (p.stockQuantity || p.stock || 0) <= 5).length, 
-          processingOrders: processCount, 
-          pendingOrders: pendingCount, 
-          
+          lowStock: products.filter((p: any) => (p.stockQuantity || p.stock || 0) <= 5).length,
+          processingOrders: processCount,
+          pendingOrders: pendingCount,
+
           completedPercent: Math.round((completedCount / totalBase) * 100),
           processPercent: Math.round((processCount / totalBase) * 100),
           pendingPercent: Math.round((pendingCount / totalBase) * 100),
-          
+
           trend: Math.round(trend * 10) / 10
         };
 
@@ -443,7 +443,7 @@ export default defineComponent({
 
         // Revenue Graphs
         const currentYear = new Date().getFullYear();
-        
+
         // Monthly
         const monthlyRev = new Array(12).fill(0);
         orders.forEach((o: any) => {
@@ -508,7 +508,7 @@ export default defineComponent({
         const performantPromos = promos
           .filter((p: any) => (p.usageCount || 0) > 0)
           .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0));
-          
+
         topPromos.value = performantPromos.slice(0, 5);
         allPerformingPromos.value = performantPromos;
 
@@ -519,7 +519,7 @@ export default defineComponent({
       }
     };
 
-    // --- EXPORT REPORT ---
+    // Export Report
     const generateReport = () => {
       generateDashboardReportService(
         stats.value,

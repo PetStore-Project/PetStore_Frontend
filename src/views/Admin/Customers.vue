@@ -5,10 +5,10 @@
     <AdminPageHeader title="Customers" description="View and manage your user base.">
       <template #actions>
         <div class="relative">
-          <input 
-            v-model="search" 
-            type="text" 
-            placeholder="Search customers..." 
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Search customers..."
             class="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none w-64 shadow-sm transition"
           >
           <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -60,8 +60,8 @@
     </AdminStatsGrid>
 
 
-    <CustomerListTable 
-      :customers="filteredCustomers" 
+    <CustomerListTable
+      :customers="filteredCustomers"
       :loading="loading"
       @open-details="openUserDetails"
       @toggle-block="toggleBlock"
@@ -105,11 +105,11 @@ const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: 'Customers',
-  components: { 
-    AdminPageHeader, 
-    AdminStatsGrid, 
-    CustomerListTable, 
-    CustomerDetailsModal 
+  components: {
+    AdminPageHeader,
+    AdminStatsGrid,
+    CustomerListTable,
+    CustomerDetailsModal
   },
   props: ['globalSearch'],
   setup(props) {
@@ -140,7 +140,7 @@ export default defineComponent({
       return { headers: { Authorization: `Bearer ${token}` } };
     };
 
-    // --- API CALLS ---
+    // API Calls
     const fetchCustomers = async () => {
       loading.value = true;
       try {
@@ -153,7 +153,7 @@ export default defineComponent({
       }
     };
 
-    // --- SEARCH LOGIC ---
+    // Search Logic
     const filteredCustomers = computed(() => {
       if (!search.value) return customers.value;
       const q = search.value.toLowerCase();
@@ -174,7 +174,7 @@ export default defineComponent({
       setTimeout(() => { toast.value = ''; }, 3000);
     };
 
-    // --- USER ACTIONS ---
+    // User Actions
     const toggleBlock = async (user: any) => {
       const newStatus = !user.isBlocked;
       try {
@@ -228,11 +228,11 @@ export default defineComponent({
 
     onMounted(fetchCustomers);
 
-    return { 
-      customers, loading, search, filteredCustomers, 
+    return {
+      customers, loading, search, filteredCustomers,
       newTodayCount, toggleBlock, toast,
       showModal, selectedUser, openUserDetails, closeModal,
-      userOrders, loadingOrders, 
+      userOrders, loadingOrders,
       adminNotes, saveNotes
     };
   }

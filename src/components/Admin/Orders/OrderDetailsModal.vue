@@ -54,8 +54,8 @@
             </div>
             <div class="space-y-3">
               <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Order Status</label>
-              <div class="relative" :title="!order.isPaid ? 'Order must be paid before changing status' : (order.status === 'Cancelled' || order.status === 'Delivered' ? 'Final status cannot be changed' : '')">
-                <select :value="order.status" @change="$emit('update-status', order, $event)" :disabled="!order.isPaid || order.status === 'Cancelled' || order.status === 'Delivered'" class="w-full px-4 py-3 rounded-xl text-sm font-bold border outline-none appearance-none transition-all" :class="[statusPill(order.status), (!order.isPaid || order.status === 'Cancelled' || order.status === 'Delivered') ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer']">
+              <div class="relative" :title="(!order.isPaid && order.paymentMethod !== 'COD') ? 'Order must be paid before changing status' : (order.status === 'Cancelled' || order.status === 'Delivered' ? 'Final status cannot be changed' : '')">
+                <select :value="order.status" @change="$emit('update-status', order, $event)" :disabled="(!order.isPaid && order.paymentMethod !== 'COD') || order.status === 'Cancelled' || order.status === 'Delivered'" class="w-full px-4 py-3 rounded-xl text-sm font-bold border outline-none appearance-none transition-all" :class="[statusPill(order.status), ((!order.isPaid && order.paymentMethod !== 'COD') || order.status === 'Cancelled' || order.status === 'Delivered') ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer']">
                   <option v-for="s in ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']" :key="s" :value="s">{{ s }}</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-current opacity-50"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
