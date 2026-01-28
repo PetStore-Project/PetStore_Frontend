@@ -162,8 +162,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import heroImage from '../assets/images/about_page_img.png';
-import storyImage from '../assets/photos/shop.png';
+import heroImage from '@/assets/images/about_page_img.png';
+import storyImage from '@/assets/photos/shop.png';
 
 export default defineComponent({
   name: 'AboutPage',

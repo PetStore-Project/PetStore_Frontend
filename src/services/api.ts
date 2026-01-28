@@ -10,7 +10,6 @@ const api = axios.create({
   },
 });
 
-// 🟢 REQUEST INTERCEPTOR
 // Automatically attaches the token to every request
 api.interceptors.request.use(
   (config) => {
@@ -23,7 +22,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 🔴 RESPONSE INTERCEPTOR (The Real World Safety Net)
 api.interceptors.response.use(
   (response) => response,
   (error) => {

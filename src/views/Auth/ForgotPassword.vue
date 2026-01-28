@@ -141,10 +141,10 @@ import { defineComponent, ref } from 'vue'
 import api from '@/services/api'
 
 // Using the exact same assets as Login.vue to ensure they load
-import sloganImage from '../assets/photos/texts.png'
-import birdhouseImage from '../assets/photos/birdhouse.png'
-import pawsImage from '../assets/photos/paws.png'
-import petsImage from '../assets/photos/pets.png'
+import sloganImage from '../../assets/photos/texts.png'
+import birdhouseImage from '../../assets/photos/birdhouse.png'
+import pawsImage from '../../assets/photos/paws.png'
+import petsImage from '../../assets/photos/pets.png'
 
 export default defineComponent({
   name: 'ForgotPassword',

@@ -127,8 +127,8 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, h, watch } from 'vue' // Added watch
-import api from '../services/api'
-import ProductCard from '../components/ProductCard.vue'
+import api from '../../services/api'
+import ProductCard from '../../components/ProductCard.vue'
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from "vue-toastification";
 

@@ -2,20 +2,20 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 // Views
-import Home from '../views/Home.vue'
-import Shop from '../views/Shop.vue'
-import About from '../views/About.vue'
-import Contact from '../views/Contact.vue'
-import Register from '../views/Register.vue'
-import Login from '../views/Login.vue'
-import ProductDetail from '@/views/ProductDetail.vue'
-import Cart from '@/views/Cart.vue'
-import Wishlist from '@/views/Wishlist.vue'
-import Checkout from '@/views/Checkout.vue'
-import OrderHistory from '@/views/OrderHistory.vue'
-import UserProfile from '@/views/UserProfile.vue'
-import ForgotPassword from '@/views/ForgotPassword.vue'
-import ResetPassword from '../views/ResetPassword.vue'
+import Home from '@/views/Customer/Home.vue'
+import Shop from '@/views/Customer/Shop.vue'
+import About from '@/views/Site/About.vue'
+import Contact from '@/views/Site/Contact.vue'
+import Register from '@/views/Auth/Register.vue'
+import Login from '@/views/Auth/Login.vue'
+import ProductDetail from '@/views/Customer/ProductDetail.vue'
+import Cart from '@/views/Customer/Cart.vue'
+import Wishlist from '@/views/User/Wishlist.vue'
+import Checkout from '@/views/User/Checkout.vue'
+import OrderHistory from '@/views/User/OrderHistory.vue'
+import UserProfile from '@/views/User/UserProfile.vue'
+import ForgotPassword from '@/views/Auth/ForgotPassword.vue'
+import ResetPassword from '@/views/Auth/ResetPassword.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -48,9 +48,9 @@ const router = createRouter({
         { path: 'about', name: 'about', component: About },
         { path: 'contact', name: 'contact', component: Contact },
         { path: 'product-detail/:id', name: 'product-detail', component: ProductDetail },
-        { path: 'faqs', name: 'faqs', component: () => import('@/views/FAQs.vue') },
-        { path: 'privacy-policy', name: 'privacy-policy', component: () => import('@/views/PrivacyPolicy.vue') },
-        { path: 'terms-conditions', name: 'terms-conditions', component: () => import('@/views/TermsConditions.vue') },
+        { path: 'faqs', name: 'faqs', component: () => import('@/views/Site/FAQs.vue') },
+        { path: 'privacy-policy', name: 'privacy-policy', component: () => import('@/views/Site/PrivacyPolicy.vue') },
+        { path: 'terms-conditions', name: 'terms-conditions', component: () => import('@/views/Site/TermsConditions.vue') },
 
         // --- PROTECTED ROUTES ---
         { path: 'profile', name: 'profile', component: UserProfile, meta: { requiresAuth: true } },

@@ -266,10 +266,10 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 // Images (Restored Original)
-import sloganImage from '../assets/photos/texts.png'
-import birdhouseImage from '../assets/photos/birdhouse.png'
-import pawsImage from '../assets/photos/paws.png'
-import petsImage from '../assets/photos/pets.png'
+import sloganImage from '@/assets/photos/texts.png'
+import birdhouseImage from '@/assets/photos/birdhouse.png'
+import pawsImage from '@/assets/photos/paws.png'
+import petsImage from '@/assets/photos/pets.png'
 
 export default defineComponent({
   name: 'TheLogin',
