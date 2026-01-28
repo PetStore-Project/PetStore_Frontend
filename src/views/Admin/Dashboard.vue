@@ -198,8 +198,12 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue';
-import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { useOrderStore } from '@/stores/order';
+import { useProductStore } from '@/stores/product';
+import { useCustomerStore } from '@/stores/customer';
+import { usePromotionStore } from '@/stores/promotion';
+
 import { generateDashboardReportService } from '@/services/dashboardExport';
 
 // New Components
@@ -209,8 +213,6 @@ import RevenueChart from '@/components/Admin/Dashboard/RevenueChart.vue';
 import OrderStatusChart from '@/components/Admin/Dashboard/OrderStatusChart.vue';
 import TopProducts from '@/components/Admin/Dashboard/TopProducts.vue';
 import RecentTransactions from '@/components/Admin/Dashboard/RecentTransactions.vue';
-
-const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: "Dashboard",
@@ -224,8 +226,12 @@ export default defineComponent({
   },
   setup() {
     const authStore = useAuthStore();
-    const isLoading = ref(true);
+    const orderStore = useOrderStore();
+    const productStore = useProductStore();
+    const customerStore = useCustomerStore();
+    const promotionStore = usePromotionStore();
 
+    const isLoading = ref(true);
     const chartMode = ref<'daily' | 'monthly' | 'yearly'>('monthly');
 
     // Dashboard Stats State
@@ -244,9 +250,6 @@ export default defineComponent({
       processingOrders: 0
     });
 
-    const allOrders = ref<any[]>([]);
-    const allPromos = ref<any[]>([]);
-
     const topProductsFilter = ref('All Time');
 
     // Top Promos State
@@ -256,7 +259,8 @@ export default defineComponent({
     // Top Products Logic
     const topProducts = computed(() => {
       const now = new Date();
-      let filtered = allOrders.value;
+      // Use orderStore.orders directly
+      let filtered = orderStore.orders;
 
       if (topProductsFilter.value !== 'All Time') {
         filtered = filtered.filter((o: any) => {
@@ -303,8 +307,23 @@ export default defineComponent({
       }));
     });
 
-    const recentOrders = ref<any[]>([]);
-    const topPromos = ref<any[]>([]);
+    const recentOrders = computed(() => orderStore.orders.slice(0, 5));
+
+    // Top Promos Logic
+    const topPromos = computed(() => {
+        const performantPromos = promotionStore.promotions
+          .filter((p: any) => (p.usageCount || 0) > 0)
+          .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0));
+        return performantPromos.slice(0, 5);
+    });
+
+    // We need to sync allPerformingPromos somehow or just use computed
+    // Originally it was set in loadData. Let's make it computed.
+    const allPerformingPromosComputed = computed(() => {
+        return promotionStore.promotions
+          .filter((p: any) => (p.usageCount || 0) > 0)
+          .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0));
+    });
 
     interface PromoStats {
       active: number;
@@ -313,17 +332,30 @@ export default defineComponent({
       revenue: number;
     }
 
-    const promoStats = ref<PromoStats>({
-      active: 0,
-      totalRedemptions: 0,
-      estimatedSavings: 0,
-      revenue: 0
+    const promoStats = computed<PromoStats>(() => {
+        const now = new Date();
+        const activePromos = promotionStore.promotions.filter((p: any) =>
+          new Date(p.startDate) <= now && new Date(p.endDate) >= now
+        );
+
+        const ordersWithDiscount = orderStore.orders.filter((o: any) =>
+          (o.discountAmount && o.discountAmount > 0) || o.promoCode
+        );
+
+        const apiRedemptions = promotionStore.promotions.reduce((sum: number, p: any) => sum + (p.usageCount || 0), 0);
+        const totalRedemptions = Math.max(ordersWithDiscount.length, apiRedemptions);
+
+        return {
+          active: activePromos.length,
+          totalRedemptions: totalRedemptions,
+          estimatedSavings: promotionStore.promotions.reduce((sum: number, p: any) => sum + (p.totalSavings || 0), 0),
+          revenue: promotionStore.promotions.reduce((sum: number, p: any) => sum + (p.revenue || 0), 0)
+        };
     });
 
     // Revenue New Chart Logic
     const revenueSeries = ref(new Array(12).fill(0));
     const dailyRevenue = ref(new Array(7).fill(0));
-    const weeklyRevenue = ref(new Array(8).fill(0)); // Keep for structure if needed, but not used in toggle
     const yearlyRevenue = ref(new Array(5).fill(0));
 
     // Chart helpers
@@ -364,32 +396,56 @@ export default defineComponent({
 
     // Formatters
     const formatMoney = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
-    const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-    const getAuthHeader = () => {
-      let token = authStore.token || localStorage.getItem('userToken');
-      if (!token) {
-         const stored = localStorage.getItem('userInfo');
-         if (stored) token = JSON.parse(stored).token;
-      }
-      return { headers: { Authorization: `Bearer ${token}` } };
+    // Calc Revenue Data from Store
+    const calculateRevenueData = () => {
+         const orders = orderStore.orders;
+         const currentYear = new Date().getFullYear();
+
+         // Monthly
+         const monthlyRev = new Array(12).fill(0);
+         orders.forEach((o: any) => {
+           const d = new Date(o.createdAt);
+           if (d.getFullYear() === currentYear && o.isPaid) {
+             monthlyRev[d.getMonth()] += (o.totalPrice || 0);
+           }
+         });
+         revenueSeries.value = monthlyRev;
+
+         // Daily
+         const today = new Date();
+         const dailyRev = new Array(7).fill(0);
+         for (let i = 0; i < 7; i++) {
+           const targetDate = new Date(today);
+           targetDate.setDate(today.getDate() - (6 - i));
+           const dateStr = targetDate.toDateString();
+           orders.forEach((o: any) => {
+             if (new Date(o.createdAt).toDateString() === dateStr && o.isPaid) {
+               dailyRev[i] += (o.totalPrice || 0);
+             }
+           });
+         }
+         dailyRevenue.value = dailyRev;
+
+         // Yearly
+         const yearlyRev = new Array(5).fill(0);
+         for (let i = 0; i < 5; i++) {
+           const year = currentYear - (4 - i);
+           orders.forEach((o: any) => {
+             const orderDate = new Date(o.createdAt);
+             if (orderDate.getFullYear() === year && o.isPaid) {
+               yearlyRev[i] += (o.totalPrice || 0);
+             }
+           });
+         }
+         yearlyRevenue.value = yearlyRev;
     };
 
-    // API Data Fetch
-    const loadData = async () => {
-      isLoading.value = true;
-      try {
-        const [ordersRes, productsRes, usersRes, promosRes] = await Promise.all([
-          axios.get(`${API_BASE}/orders`, getAuthHeader()),
-          axios.get(`${API_BASE}/products`),
-          axios.get(`${API_BASE}/auth/users`, getAuthHeader()),
-          axios.get(`${API_BASE}/promotions`, getAuthHeader()).catch(() => ({ data: [] }))
-        ]);
-
-        const orders = ordersRes.data;
-        const products = productsRes.data;
-        const users = usersRes.data;
-        const promos = promosRes.data || [];
+    // Calculate Main Stats
+    const calculateMainStats = () => {
+        const orders = orderStore.orders;
+        const products = productStore.products;
+        const users = customerStore.customers;
 
         const completedStatuses = ['Delivered', 'Shipped', 'Refunded'];
         const processStatuses = ['Paid', 'Processing'];
@@ -437,80 +493,21 @@ export default defineComponent({
 
           trend: Math.round(trend * 10) / 10
         };
+    };
 
-        allOrders.value = orders;
-        allPromos.value = promos;
+    // API Data Fetch
+    const loadData = async () => {
+      isLoading.value = true;
+      try {
+        await Promise.all([
+           orderStore.fetchOrders(),
+           productStore.fetchProducts(),
+           customerStore.fetchCustomers(),
+           promotionStore.fetchPromotions()
+        ]);
 
-        // Revenue Graphs
-        const currentYear = new Date().getFullYear();
-
-        // Monthly
-        const monthlyRev = new Array(12).fill(0);
-        orders.forEach((o: any) => {
-          const d = new Date(o.createdAt);
-          if (d.getFullYear() === currentYear && o.isPaid) {
-            monthlyRev[d.getMonth()] += (o.totalPrice || 0);
-          }
-        });
-        revenueSeries.value = monthlyRev;
-
-        // Daily
-        const today = new Date();
-        const dailyRev = new Array(7).fill(0);
-        for (let i = 0; i < 7; i++) {
-          const targetDate = new Date(today);
-          targetDate.setDate(today.getDate() - (6 - i));
-          const dateStr = targetDate.toDateString();
-          orders.forEach((o: any) => {
-            if (new Date(o.createdAt).toDateString() === dateStr && o.isPaid) {
-              dailyRev[i] += (o.totalPrice || 0);
-            }
-          });
-        }
-        dailyRevenue.value = dailyRev;
-
-        // Yearly
-        const yearlyRev = new Array(5).fill(0);
-        for (let i = 0; i < 5; i++) {
-          const year = currentYear - (4 - i);
-          orders.forEach((o: any) => {
-            const orderDate = new Date(o.createdAt);
-            if (orderDate.getFullYear() === year && o.isPaid) {
-              yearlyRev[i] += (o.totalPrice || 0);
-            }
-          });
-        }
-        yearlyRevenue.value = yearlyRev;
-
-        recentOrders.value = orders.slice(0, 5);
-
-        // Promo Stats
-        const now = new Date();
-        const activePromos = promos.filter((p: any) =>
-          new Date(p.startDate) <= now && new Date(p.endDate) >= now
-        );
-
-        const ordersWithDiscount = orders.filter((o: any) =>
-          (o.discountAmount && o.discountAmount > 0) || o.promoCode
-        );
-
-        const apiRedemptions = promos.reduce((sum: number, p: any) => sum + (p.usageCount || 0), 0);
-        const totalRedemptions = Math.max(ordersWithDiscount.length, apiRedemptions);
-
-        promoStats.value = {
-          active: activePromos.length,
-          totalRedemptions: totalRedemptions,
-          estimatedSavings: promos.reduce((sum: number, p: any) => sum + (p.totalSavings || 0), 0),
-          revenue: promos.reduce((sum: number, p: any) => sum + (p.revenue || 0), 0)
-        };
-
-        // Top Promos
-        const performantPromos = promos
-          .filter((p: any) => (p.usageCount || 0) > 0)
-          .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0));
-
-        topPromos.value = performantPromos.slice(0, 5);
-        allPerformingPromos.value = performantPromos;
+        calculateRevenueData();
+        calculateMainStats();
 
       } catch (error) {
         console.error("Dashboard Load Error:", error);
@@ -537,7 +534,7 @@ export default defineComponent({
       chartMode, currentRevenueSeries, chartLabels, chartMaxValue,
       topProductsFilter, topProducts,
       recentOrders,
-      promoStats, topPromos, allPerformingPromos, showAllPromosModal,
+      promoStats, topPromos, allPerformingPromos: allPerformingPromosComputed, showAllPromosModal,
       generateReport
     };
   }

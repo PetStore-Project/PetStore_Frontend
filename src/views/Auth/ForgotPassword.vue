@@ -138,7 +138,7 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
-import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 
 // Using the exact same assets as Login.vue to ensure they load
 import sloganImage from '../../assets/photos/texts.png'
@@ -149,6 +149,7 @@ import petsImage from '../../assets/photos/pets.png'
 export default defineComponent({
   name: 'ForgotPassword',
   setup() {
+    const authStore = useAuthStore()
     const email = ref('')
     const isLoading = ref(false)
     const notification = ref({ visible: false, message: '', type: 'success' })
@@ -168,18 +169,12 @@ export default defineComponent({
 
       isLoading.value = true
       try {
-        // NOTE: Ensure your backend has this route: POST /api/auth/forgot-password
-        await api.post('/auth/forgot-password', { email: email.value })
+        await authStore.forgotPassword(email.value)
 
         showNotification('If an account exists, a reset link has been sent!', 'success')
         email.value = ''
       } catch (error: any) {
-        // If 404, it means the backend route doesn't exist yet.
-        const msg =
-          error.response?.status === 404
-            ? 'Server Error: Route not found (404)'
-            : error.response?.data?.message || 'Failed to send reset link.'
-
+        const msg = error.response?.data?.message || 'Failed to send reset link.'
         showNotification(msg, 'error')
       } finally {
         isLoading.value = false

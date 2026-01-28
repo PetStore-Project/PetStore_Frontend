@@ -2,8 +2,8 @@
   <header class="w-full h-20 flex items-center justify-between px-6 lg:px-10 bg-[#F8FAFC] sticky top-0 z-30">
 
     <div class="flex items-center gap-4">
-      <button 
-        @click="$emit('toggle-sidebar')" 
+      <button
+        @click="$emit('toggle-sidebar')"
         class="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-xl transition"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -146,11 +146,11 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useOrderStore } from '@/stores/order';
+import { useProductStore } from '@/stores/product';
+import { useCustomerStore } from '@/stores/customer';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
 import { useToast } from 'vue-toastification';
-
-const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: "AdminNavigation",
@@ -161,6 +161,8 @@ export default defineComponent({
   emits: ["search-change", "toggle-sidebar"],
   setup(props, { emit }) {
     const authStore = useAuthStore();
+    const orderStore = useOrderStore();
+    const productStore = useProductStore();
     const router = useRouter();
     const query = ref("");
     const menuOpen = ref(false);
@@ -190,30 +192,24 @@ export default defineComponent({
       return first + second;
     });
 
-    const getAuthHeader = () => {
-      let token = authStore.token || localStorage.getItem('token');
-      if (!token) {
-        const stored = localStorage.getItem('userInfo');
-        if (stored) token = JSON.parse(stored).token;
-      }
-      return { headers: { Authorization: `Bearer ${token}` } };
-    };
-
     const fetchNotifications = async () => {
       try {
         const now = new Date();
         const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-        // Fetch data in parallel
-        const [ordersRes, productsRes, usersRes] = await Promise.all([
-          axios.get(`${API_BASE}/orders`, getAuthHeader()),
-          axios.get(`${API_BASE}/products`),
-          axios.get(`${API_BASE}/auth/users`, getAuthHeader()).catch(() => ({ data: [] }))
+        // Fetch data using stores (this will also update global state)
+        // We use Promise.all to fetch in parallel
+        await Promise.all([
+           orderStore.fetchOrders(),
+           productStore.fetchProducts(),
+           // For users/customers, we might not always have permission or it might be heavy,
+           // but assuming Admin has access.
+           useCustomerStore().fetchCustomers().catch(() => {})
         ]);
 
-        const orders = ordersRes.data;
-        const products = productsRes.data;
-        const users = usersRes.data;
+        const orders = orderStore.orders;
+        const products = productStore.products;
+        const customers = useCustomerStore().customers;
 
         // Calculate notifications
         notifications.value = {
@@ -222,11 +218,11 @@ export default defineComponent({
           // Orders awaiting payment
           pendingPayments: orders.filter((o: any) => !o.isPaid && o.status !== 'Cancelled').length,
           // Products with low stock (< 5)
-          lowStock: products.filter((p: any) => p.stockQuantity < 5).length,
+          lowStock: products.filter((p: any) => (p.stockQuantity !== undefined ? p.stockQuantity : (p.stock || 0)) < 5).length,
           // Products added in last 24 hours
           newProducts: products.filter((p: any) => new Date(p.createdAt) >= yesterday).length,
           // Users registered today
-          newCustomers: users.filter((u: any) => new Date(u.createdAt).toDateString() === now.toDateString()).length
+          newCustomers: customers.filter((u: any) => new Date(u.createdAt).toDateString() === now.toDateString()).length
         };
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
@@ -245,13 +241,10 @@ export default defineComponent({
 
     const handleLogout = () => {
       // Clear any active toasts (free shipping, etc)
-      const toast = useToast(); 
+      const toast = useToast();
       toast.clear();
-      
+
       authStore.logout();
-      localStorage.removeItem('userToken');
-      localStorage.removeItem('userInfo');
-      router.push('/login');
     };
 
     // Close dropdowns on click outside

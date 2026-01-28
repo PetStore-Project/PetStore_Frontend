@@ -64,7 +64,7 @@
                 <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
            </div>
-           
+
            <div class="grid gap-4">
               <!-- Bakong KHQR -->
               <div @click="selectPaymentMethod('Bakong')" class="flex items-center gap-4 p-4 border-2 border-gray-100 rounded-2xl cursor-pointer hover:border-red-100 hover:bg-red-50/30 transition shadow-sm hover:shadow-md">
@@ -85,7 +85,7 @@
                         <p class="text-sm text-gray-500">Visa, Mastercard</p>
                     </div>
                  </div>
-                 
+
                  <!-- Stripe Elements Mount Point -->
                  <div v-show="activePaymentMethod === 'Card'" class="mt-2" @click.stop>
                      <div id="card-element-history" class="p-4 bg-white rounded-xl border border-gray-200"></div>
@@ -168,7 +168,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, onUnmounted } from 'vue';
-import api from '@/services/api';
+import { useOrderStore } from '@/stores/order';
 import { useToast } from "vue-toastification";
 import { loadStripe } from '@stripe/stripe-js';
 import StatusBadge from '@/components/UI/StatusBadge.vue';
@@ -177,11 +177,12 @@ export default defineComponent({
   name: 'OrderHistory',
   components: { StatusBadge },
   setup() {
+    const orderStore = useOrderStore();
     const orders = ref<any[]>([]);
     const loading = ref(true);
 
     const toast = useToast();
-    
+
     // Payment Modal State
     const showBakongModal = ref(false);
     const showPaymentMethodModal = ref(false);
@@ -192,7 +193,7 @@ export default defineComponent({
     const activePaymentMethod = ref('');
     const isProcessing = ref(false);
     const currentTime = ref(new Date());
-    
+
     // Stripe
     const stripePromise = loadStripe('pk_test_51SqrHNRy9Ghp6pibtv9MeH7KlqLVHpNwTL4qVXY9wmjDFgAi2n9q9WZWYUQYUtRKOpKjzoy5di5UnTRqIfma0acR001Bkl2B0n');
     let stripe: any = null;
@@ -204,19 +205,12 @@ export default defineComponent({
     let autoSuccessTimer: any = null;
     let tickerInterval: any = null;
 
-    // --- LocalStorage Helpers Removed (Using Secure Backend) ---
-    /*
-    const getLocalOverrides = () => ...
-    const saveLocalOverride = () => ...
-    */
-    // -----------------------------------------------------------
-
     const formatDate = (dateString: string) => {
       return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric'
       });
     };
-    
+
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
@@ -235,7 +229,7 @@ export default defineComponent({
         showPaymentMethodModal.value = false;
         activePaymentMethod.value = '';
     };
-    
+
     const startTimer = () => {
         timeLeft.value = 900;
         timerInterval = setInterval(() => {
@@ -251,9 +245,8 @@ export default defineComponent({
         startTimer();
         pollingInterval = setInterval(async () => {
             try {
-                // Now accessing the secure public endpoint (if implemented) or just check via GET
-                const res = await api.get(`/orders/${orderId}/payment`);
-                if (res.data.isPaid) handleSuccess(false, true); // From server
+                const res = await orderStore.fetchOrderPayment(orderId);
+                if (res.isPaid) handleSuccess(false, true);
             } catch (e) { }
         }, 3000);
 
@@ -263,30 +256,29 @@ export default defineComponent({
                 console.log("Simulating success!");
                 handleSuccess(true);
             }
-        }, 5000); 
+        }, 5000);
     };
 
     // fromPolling=true means backend already confirmed it
     const handleSuccess = async (simulated = false, fromPolling = false) => {
         clearIntervals();
-        
+
         if (selectedOrder.value) {
              const method = activePaymentMethod.value || (showBakongModal.value ? 'Bakong' : 'Card');
-             
+
              if (simulated && !fromPolling) {
-                // Call our NEW Secure Endpoint
-                try { 
-                    await api.put(`/orders/${selectedOrder.value._id}/pay`, { 
+                try {
+                    await orderStore.payOrder(selectedOrder.value._id, {
                         paymentMethod: method,
-                        isPaid: true 
+                        isPaid: true
                     });
-                    
-                    selectedOrder.value.isPaid = true; 
+
+                    selectedOrder.value.isPaid = true;
                     selectedOrder.value.paymentMethod = method;
                 } catch(e) { console.error("Update failed", e); }
              }
         }
-        
+
         showBakongModal.value = false;
         showPaymentMethodModal.value = false;
         activePaymentMethod.value = '';
@@ -304,28 +296,26 @@ export default defineComponent({
     const selectPaymentMethod = async (method: string) => {
         if (!selectedOrder.value) return;
         activePaymentMethod.value = method;
-        
+
         if (method === 'Bakong') {
              try {
-                 const fullOrder = selectedOrder.value; 
-                 dynamicQR.value = fullOrder.qrImage || "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=bakong_mock_payment"; 
+                 const fullOrder = selectedOrder.value;
+                 dynamicQR.value = fullOrder.qrImage || "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=bakong_mock_payment";
                  showPaymentMethodModal.value = false;
                  showBakongModal.value = true;
                  startPolling(fullOrder._id);
              } catch(e) { toast.error("Error initiating payment"); }
-        } 
+        }
         else if (method === 'Cash') {
-            // Updated to use SECURE BACKEND call
-            // We invoke /pay but pass isPaid: false (handled by controller to just update method to COD)
-            try { 
-                await api.put(`/orders/${selectedOrder.value._id}/pay`, { 
+            try {
+                await orderStore.payOrder(selectedOrder.value._id, {
                     paymentMethod: 'Cash', // Controller converts to COD if needed
-                    isPaid: false 
+                    isPaid: false
                 });
-                
+
                 selectedOrder.value.paymentMethod = 'COD'; // Optimistic update
                 selectedOrder.value.status = 'Pending';
-                
+
                 toast.success("Order confirmed as Cash on Delivery.");
                 showPaymentMethodModal.value = false;
                 fetchOrders();
@@ -358,15 +348,15 @@ export default defineComponent({
         isProcessing.value = true;
         try {
             const paymentItems = selectedOrder.value.orderItems.map((item: any) => ({
-                _id: item.product, 
+                _id: item.product,
                 qty: item.quantity
             }));
-            const { data: { clientSecret } } = await api.post('/payment/create-payment-intent', { items: paymentItems });
-            
+            const { clientSecret } = await orderStore.createPaymentIntent(paymentItems);
+
             const result = await stripe.confirmCardPayment(clientSecret, {
                 payment_method: { card: cardElement, billing_details: { name: 'Customer' } }
             });
-            
+
             if (result.error) throw new Error(result.error.message);
             if (result.paymentIntent.status === 'succeeded') {
                 handleSuccess(true); // Will call API
@@ -382,18 +372,18 @@ export default defineComponent({
     const getExpiration = (order: any) => {
         // Strict check: Only expire if Pending AND Unpaid AND Not Cash/COD
         if (order.paymentMethod !== 'Later' || order.isPaid || order.status !== 'Pending') return null;
-        
+
         const created = new Date(order.createdAt);
-        const expiresAt = new Date(created.getTime() + 24 * 60 * 60 * 1000); 
-        
+        const expiresAt = new Date(created.getTime() + 24 * 60 * 60 * 1000);
+
         const diffMs = expiresAt.getTime() - currentTime.value.getTime();
-        
-        if (diffMs <= 0) return null; 
-        
+
+        if (diffMs <= 0) return null;
+
         const h = Math.floor(diffMs / (1000 * 60 * 60));
         const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((diffMs % (1000 * 60)) / 1000);
-        
+
         return `${h}h ${m}m ${s}s`;
     };
 
@@ -413,8 +403,8 @@ export default defineComponent({
 
     const fetchOrders = async () => {
       try {
-        const response = await api.get('/orders/myorders');
-        orders.value = response.data;
+        const data = await orderStore.fetchMyOrders();
+        orders.value = data;
         checkExpirations(orders.value);
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -427,15 +417,15 @@ export default defineComponent({
         fetchOrders();
         tickerInterval = setInterval(() => { currentTime.value = new Date(); }, 1000);
     });
-    
+
     onUnmounted(() => {
         clearIntervals();
         if (tickerInterval) clearInterval(tickerInterval);
     });
-    
-    return { 
+
+    return {
       orders, loading, formatDate, formatTime, getExpiration,
-      showBakongModal, dynamicQR, payAmount, timeLeft, 
+      showBakongModal, dynamicQR, payAmount, timeLeft,
       showPaymentMethodModal, openPayment, selectPaymentMethod, closeBakongModal,
       activePaymentMethod, isProcessing, processCardPayment
     };

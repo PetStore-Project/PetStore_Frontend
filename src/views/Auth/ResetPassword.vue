@@ -213,7 +213,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 
 import sloganImage from '../../assets/photos/texts.png'
 import birdhouseImage from '../../assets/photos/birdhouse.png'
@@ -223,6 +223,7 @@ import petsImage from '../../assets/photos/pets.png'
 export default defineComponent({
   name: 'ResetPassword',
   setup() {
+    const authStore = useAuthStore()
     const route = useRoute()
     const router = useRouter()
 
@@ -269,10 +270,7 @@ export default defineComponent({
 
       isLoading.value = true
       try {
-        await api.post('/auth/reset-password', {
-          token: token.value,
-          newPassword: password.value,
-        })
+        await authStore.resetPassword({ token: token.value, password: password.value })
 
         showNotification('Password updated! Redirecting...', 'success')
         setTimeout(() => router.push('/login'), 2000)

@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
-
-const API_BASE = "https://petstore-backend-api.onrender.com/api";
+import api from '@/services/api';
 
 interface DiscountInfo {
     type: 'percent' | 'fixed';
@@ -64,7 +62,7 @@ export const useDiscountStore = defineStore('discount', {
 
             this.isLoading = true;
             try {
-                const { data } = await axios.get(`${API_BASE}/promotions/product-discounts`);
+                const { data } = await api.get('/promotions/product-discounts');
                 this.discountMap = data;
                 this.isLoaded = true;
             } catch (error) {

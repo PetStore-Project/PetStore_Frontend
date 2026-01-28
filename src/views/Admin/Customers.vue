@@ -92,16 +92,14 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
-import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { useCustomerStore } from '@/stores/customer'; // Import Store
 
 // Components
 import AdminPageHeader from '@/components/Admin/Shared/AdminPageHeader.vue';
 import AdminStatsGrid from '@/components/Admin/Shared/AdminStatsGrid.vue';
 import CustomerListTable from '@/components/Admin/Customers/CustomerListTable.vue';
 import CustomerDetailsModal from '@/components/Admin/Customers/CustomerDetailsModal.vue';
-
-const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: 'Customers',
@@ -114,8 +112,7 @@ export default defineComponent({
   props: ['globalSearch'],
   setup(props) {
     const authStore = useAuthStore();
-    const customers = ref<any[]>([]);
-    const loading = ref(true);
+    const customerStore = useCustomerStore(); // Init Store
     const search = ref('');
     const toast = ref('');
 
@@ -127,37 +124,16 @@ export default defineComponent({
     // Modal state
     const showModal = ref(false);
     const selectedUser = ref<any>(null);
-    const userOrders = ref<any[]>([]);
-    const loadingOrders = ref(false);
+    // const userOrders = ref<any[]>([]); // Moved to store
+    // const loadingOrders = ref(false);  // Moved to store
     const adminNotes = ref('');
 
-    const getAuthHeader = () => {
-      let token = authStore.token;
-      if (!token) {
-         const stored = localStorage.getItem('userInfo');
-         if (stored) token = JSON.parse(stored).token;
-      }
-      return { headers: { Authorization: `Bearer ${token}` } };
-    };
-
-    // API Calls
-    const fetchCustomers = async () => {
-      loading.value = true;
-      try {
-        const { data } = await axios.get(`${API_BASE}/auth/users`, getAuthHeader());
-        customers.value = data;
-      } catch (error) {
-        console.error(error);
-      } finally {
-        loading.value = false;
-      }
-    };
 
     // Search Logic
     const filteredCustomers = computed(() => {
-      if (!search.value) return customers.value;
+      if (!search.value) return customerStore.customers;
       const q = search.value.toLowerCase();
-      return customers.value.filter(c =>
+      return customerStore.customers.filter(c =>
         c.firstName?.toLowerCase().includes(q) ||
         c.lastName?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q)
@@ -166,7 +142,7 @@ export default defineComponent({
 
     const newTodayCount = computed(() => {
       const today = new Date().toDateString();
-      return customers.value.filter(c => new Date(c.createdAt).toDateString() === today).length;
+      return customerStore.customers.filter(c => new Date(c.createdAt).toDateString() === today).length;
     });
 
     const showToast = (msg: string) => {
@@ -176,32 +152,11 @@ export default defineComponent({
 
     // User Actions
     const toggleBlock = async (user: any) => {
-      const newStatus = !user.isBlocked;
       try {
-        await axios.put(`${API_BASE}/auth/users/${user._id}/block`, { isBlocked: newStatus }, getAuthHeader());
-        user.isBlocked = newStatus;
+        const newStatus = await customerStore.toggleBlockStatus(user);
         showToast(newStatus ? 'User blocked' : 'User unblocked');
       } catch (error: any) {
-        if (error.response?.status === 404) {
-          user.isBlocked = newStatus;
-          showToast(`${newStatus ? 'Blocked' : 'Unblocked'} (API not available)`);
-        } else {
-          console.error(error);
-          showToast('Failed to update user status');
-        }
-      }
-    };
-
-    const fetchUserOrders = async (userId: string) => {
-      loadingOrders.value = true;
-      userOrders.value = [];
-      try {
-        const { data } = await axios.get(`${API_BASE}/orders`, getAuthHeader());
-        userOrders.value = data.filter((o: any) => o.user?._id === userId);
-      } catch (error) {
-        console.error('Failed to load orders:', error);
-      } finally {
-        loadingOrders.value = false;
+         showToast('Failed to update user status');
       }
     };
 
@@ -209,13 +164,15 @@ export default defineComponent({
       selectedUser.value = user;
       showModal.value = true;
       adminNotes.value = localStorage.getItem(`admin_notes_${user._id}`) || '';
-      await fetchUserOrders(user._id);
+      await customerStore.fetchUserOrders(user._id);
     };
 
     const closeModal = () => {
       showModal.value = false;
       selectedUser.value = null;
-      userOrders.value = [];
+      customerStore.userOrders = []; // Clear store/view? View usually clears. Store logic left valid.
+      // Manually clear to prevent stale flash if next load slow
+      // Actually actions usually reset. Our action resets it.
     };
 
     // Save admin note
@@ -226,13 +183,19 @@ export default defineComponent({
       }
     };
 
-    onMounted(fetchCustomers);
+    onMounted(() => {
+        customerStore.fetchCustomers();
+    });
 
     return {
-      customers, loading, search, filteredCustomers,
+      customerStore, // Expose store
+      customers: computed(() => customerStore.customers), // Keep for template compat if needed, or use store directly
+      loading: computed(() => customerStore.isLoading),
+      search, filteredCustomers,
       newTodayCount, toggleBlock, toast,
       showModal, selectedUser, openUserDetails, closeModal,
-      userOrders, loadingOrders,
+      userOrders: computed(() => customerStore.userOrders),
+      loadingOrders: computed(() => customerStore.isLoadingOrders),
       adminNotes, saveNotes
     };
   }

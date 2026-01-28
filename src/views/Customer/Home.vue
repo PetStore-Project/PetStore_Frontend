@@ -180,7 +180,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/services/api'
+import { useProductStore } from '@/stores/product'
 import ProductCard from '@/components/ProductCard.vue'
 
 // Images
@@ -198,6 +198,7 @@ export default defineComponent({
   components: { ProductCard },
   setup() {
     const router = useRouter()
+    const productStore = useProductStore()
     const trendingProducts = ref<any[]>([])
     const loading = ref(true)
 
@@ -211,7 +212,7 @@ export default defineComponent({
 
     const fetchTrending = async () => {
       try {
-        const { data } = await api.get('/products/top');
+        const data = await productStore.fetchTopProducts();
         trendingProducts.value = data;
       } catch (error) {
         console.error("Failed to load trending products", error);

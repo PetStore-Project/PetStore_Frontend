@@ -126,11 +126,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed, h, watch } from 'vue' // Added watch
-import api from '../../services/api'
+import { defineComponent, ref, onMounted, computed, watch } from 'vue' // Added watch
+import { useProductStore } from '@/stores/product'
 import ProductCard from '../../components/ProductCard.vue'
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from "vue-toastification";
+import { storeToRefs } from 'pinia';
 
 export default defineComponent({
   name: 'ShopPage',
@@ -139,18 +140,20 @@ export default defineComponent({
     const route = useRoute();
     const router = useRouter();
     const toast = useToast();
+    const productStore = useProductStore();
+
+    // Use store state
+    const { products, isLoading: loading, error } = storeToRefs(productStore);
 
     const topTabs = ['All', 'Cat', 'Dog', 'Small Pet', 'Bird', 'Fish'];
     const categoryItems = ['All', 'Food', 'Toys', 'Furniture', 'Accessories', 'Treats'];
     const sortItems = ['Default', 'Price: Low to High', 'Price: High to Low', 'Name: A-Z'];
 
     const showMobileFilters = ref(false);
-    const products = ref<any[]>([]);
-    const loading = ref(true);
-    const error = ref('');
+
     // Sync Category from URL (Species -> activeTab, Item Type -> selectedCategory)
     const initCategory = (route.query.category as string) || '';
-    
+
     // Helper to find matching tab (case-insensitive)
     const findTab = (name: string) => topTabs.find(t => t.toLowerCase() === name.toLowerCase());
     const findCat = (name: string) => categoryItems.find(c => c.toLowerCase() === name.toLowerCase());
@@ -176,7 +179,7 @@ export default defineComponent({
         if (matchedCat) {
           selectedCategory.value = matchedCat;
           // Optional: Keep activeTab or reset? Usually reset to search broadly.
-          // activeTab.value = 'All'; 
+          // activeTab.value = 'All';
         }
       }
     });
@@ -184,19 +187,9 @@ export default defineComponent({
 
 
     const fetchProducts = async () => {
-      loading.value = true;
-      try {
-        const response = await api.get('/products');
-        products.value = response.data.map((item: any) => ({
-          ...item,
-          image: item.imageUrl
-        }));
-      } catch (err) {
-        console.error(err);
-        error.value = 'Unable to connect to the server.';
-      } finally {
-        loading.value = false;
-      }
+      // Allow manual refresh if needed, usually store handles it.
+      // Ensuring loading state mirrors store
+      await productStore.fetchProducts();
     };
 
     const filteredProducts = computed(() => {
@@ -210,11 +203,11 @@ export default defineComponent({
                          product.name.includes(activeTab.value) ||
                          product.description.includes(activeTab.value) ||
                          (activeTab.value === 'Small Pet' && (product.category === 'Hamster' || product.description.includes('small')));
-        
-        // 🆕 Check for specific product names (e.g. from "Shop Bundles")
+
+        // Check for specific product names (e.g. from "Shop Bundles")
         const productsParam = route.query.products as string;
         let productMatch = true;
-        
+
         if (productsParam) {
            const targetNames = productsParam.split(',').map(n => n.trim().toLowerCase());
            // If product name is in the target list
@@ -238,9 +231,9 @@ export default defineComponent({
 
     const hasActiveFilters = computed(() => {
       const hasQuery = Object.keys(route.query).length > 0;
-      return activeTab.value !== 'All' || 
-             selectedCategory.value !== 'All' || 
-             selectedSort.value !== 'Default' || 
+      return activeTab.value !== 'All' ||
+             selectedCategory.value !== 'All' ||
+             selectedSort.value !== 'Default' ||
              hasQuery;
     });
 
@@ -273,7 +266,7 @@ export default defineComponent({
 <style>
 /* 1. Push the Container Down (Below Navbar) */
 .Vue-Toastification__container.top-right {
-    top: 90px !important; /* Adjust based on your header height */
+    top: 90px !important;
 }
 
 /* 2. Increase Toast Size & Padding */

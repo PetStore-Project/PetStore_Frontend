@@ -231,8 +231,8 @@
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useCartStore } from '@/stores/cart';
+import { useOrderStore } from '@/stores/order';
 import { useRouter } from 'vue-router';
-import api from '@/services/api';
 import { loadStripe } from '@stripe/stripe-js';
 import { useToast } from "vue-toastification";
 
@@ -240,6 +240,7 @@ export default defineComponent({
   name: 'CheckoutView',
   setup() {
     const cartStore = useCartStore();
+    const orderStore = useOrderStore();
     const router = useRouter();
     const toast = useToast();
 
@@ -311,8 +312,8 @@ export default defineComponent({
         startTimer();
         pollingInterval = setInterval(async () => {
             try {
-                const res = await api.get(`/orders/${orderId}/payment`);
-                if (res.data.paid) {
+                const res = await orderStore.fetchOrderPayment(orderId);
+                if (res.paid) {
                     if (orderSuccess.value) return; // Prevent duplicate success triggers
                     clearIntervals();
                     showBakongModal.value = false;
@@ -339,7 +340,7 @@ export default defineComponent({
       }
 
       isProcessing.value = true;
-      
+
       // Pay Later Confirmation Intercept
       if (form.paymentMethod === 'Later') {
          isProcessing.value = false;
@@ -371,7 +372,7 @@ export default defineComponent({
             }));
 
             // Call backend to get clientSecret (Backend calculates real total)
-            const { data: { clientSecret } } = await api.post('/payment/create-payment-intent', { items: paymentItems });
+            const { clientSecret } = await orderStore.createPaymentIntent(paymentItems);
 
             // Confirm payment with Stripe
             const result = await stripe.confirmCardPayment(clientSecret, {
@@ -404,7 +405,7 @@ export default defineComponent({
           paidAt: paymentInfo.paidAt
         };
 
-        const { data } = await api.post('/orders', orderPayload);
+        const data = await orderStore.createOrder(orderPayload);
 
         // 3. BAKONG FLOW
         if (form.paymentMethod === 'Bakong' && data.isBakong) {
@@ -418,7 +419,7 @@ export default defineComponent({
 
         // 4. PAY LATER / CASH / COD / CARD Success
         // For 'Later', no extra steps needed, order created as pending/unpaid.
-        
+
         cartStore.clearCart();
         orderSuccess.value = true;
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -437,7 +438,7 @@ export default defineComponent({
     return {
       cartStore, form, isProcessing, orderSuccess,
       shippingCost, totalCost, handleCheckout, setPaymentMethod, goToHistory, closeSuccessModal,
-      showBakongModal, dynamicQR, closeBakongModal, timeLeft, formatTime, 
+      showBakongModal, dynamicQR, closeBakongModal, timeLeft, formatTime,
       showPayLaterConfirm, confirmPayLater
     };
   }

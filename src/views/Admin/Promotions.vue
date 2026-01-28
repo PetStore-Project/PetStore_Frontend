@@ -204,8 +204,9 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
-import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
+import { usePromotionStore } from '@/stores/promotion'; // Promos
+import { useProductStore } from '@/stores/product'; // For product picker
 import { useToast } from 'vue-toastification';
 
 // Components
@@ -226,10 +227,11 @@ export default defineComponent({
   },
   setup() {
     const authStore = useAuthStore();
+    const promotionStore = usePromotionStore(); // Init Promo Store
+    const productStore = useProductStore();     // Init Product Store (for dropdown)
     const toast = useToast();
-    const promotions = ref<any[]>([]);
-    const products = ref<any[]>([]);
-    const isLoading = ref(true);
+
+    // Local UI state
     const showModal = ref(false);
 
     // Form State
@@ -249,47 +251,25 @@ export default defineComponent({
     const editingId = ref<string | null>(null);
     const sendingPromoId = ref<string | null>(null);
 
-    // API Calls
-    const fetchPromotions = async () => {
-      isLoading.value = true;
-      try {
-        const { data } = await api.get('/promotions');
-        promotions.value = data;
-      } catch (error) {
-        console.error(error);
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
-    const fetchProducts = async () => {
-      try {
-        const { data } = await api.get('/products');
-        products.value = data;
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    // Stats Logic
+    // Stats Logic (using store data)
     const activeCount = computed(() => {
       const now = new Date();
-      return promotions.value.filter(p =>
+      return promotionStore.promotions.filter(p =>
         new Date(p.startDate) <= now && new Date(p.endDate) >= now
       ).length;
     });
 
     const scheduledCount = computed(() => {
       const now = new Date();
-      return promotions.value.filter(p => new Date(p.startDate) > now).length;
+      return promotionStore.promotions.filter(p => new Date(p.startDate) > now).length;
     });
 
     const totalRedemptions = computed(() => {
-      return promotions.value.reduce((sum, p) => sum + (p.usageCount || 0), 0);
+      return promotionStore.promotions.reduce((sum, p) => sum + (p.usageCount || 0), 0);
     });
 
     const estimatedSavings = computed(() => {
-      return promotions.value.reduce((sum, p) => sum + (p.totalSavings || calculatePromoSavings(p)), 0);
+      return promotionStore.promotions.reduce((sum, p) => sum + (p.totalSavings || calculatePromoSavings(p)), 0);
     });
 
     const calculatePromoSavings = (promo: any) => {
@@ -323,10 +303,9 @@ export default defineComponent({
       showEmailConfirm.value = false;
       sendingPromoId.value = id;
       try {
-        const { data } = await api.post(`/promotions/${id}/broadcast`, {});
+        const data = await promotionStore.broadcastPromotion(id);
         toast.info(data.message || "Broadcast started!");
       } catch (error: any) {
-        console.error("Broadcast failed", error);
         toast.error(error.response?.data?.message || "Failed to start broadcast");
       } finally {
         sendingPromoId.value = null;
@@ -336,7 +315,6 @@ export default defineComponent({
 
     // CRUD Actions
     const savePromotion = async (updatedData: any) => {
-      // Use updatedData instead of form
       if(!updatedData.code || !updatedData.value || !updatedData.endDate) {
         toast.error("Please fill all required fields");
         return;
@@ -354,17 +332,15 @@ export default defineComponent({
         };
 
         if (isEditing.value && editingId.value) {
-          await api.put(`/promotions/${editingId.value}`, payload);
+          await promotionStore.updatePromotion(editingId.value, payload);
           toast.success("Campaign Updated!");
         } else {
-          await api.post('/promotions', payload);
+          await promotionStore.createPromotion(payload);
           toast.success("Campaign Created!");
         }
 
         closeModal();
-        fetchPromotions();
       } catch (error: any) {
-        console.error(error);
         toast.error(error.response?.data?.message || "Failed to save");
       }
     };
@@ -416,9 +392,8 @@ export default defineComponent({
     const confirmDelete = async () => {
       if (!pendingDeleteId.value) return;
       try {
-        await api.delete(`/promotions/${pendingDeleteId.value}`);
+        await promotionStore.deletePromotion(pendingDeleteId.value);
         toast.success("Deleted");
-        fetchPromotions();
       } catch (e) {
         toast.error("Delete failed");
       } finally {
@@ -460,12 +435,17 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      fetchPromotions();
-      fetchProducts();
+      promotionStore.fetchPromotions();
+      productStore.fetchProducts(); // Use product store to populate dropdown
     });
 
     return {
-      promotions, products, isLoading, showModal, form, isEditing,
+      promotionStore, // Expose for template
+      promotions: computed(() => promotionStore.promotions),
+      isLoading: computed(() => promotionStore.isLoading),
+      products: computed(() => productStore.products), // Expose product store list
+
+      showModal, form, isEditing,
       openModal, closeModal, savePromotion, editPromo, deletePromo,
       formatDate, formatMoney, getStatusText, getStatusClass, copyCode,
       activeCount, scheduledCount, totalRedemptions, estimatedSavings, calculatePromoSavings,

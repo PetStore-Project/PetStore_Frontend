@@ -121,7 +121,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import api from '@/services/api'
+import { useOrderStore } from '@/stores/order'
 import { useRouter } from 'vue-router'
 import { useToast } from "vue-toastification";
 
@@ -129,10 +129,11 @@ export default defineComponent({
   name: 'UserProfile',
   setup() {
     const authStore = useAuthStore()
+    const orderStore = useOrderStore();
     const router = useRouter()
     const toast = useToast()
     const loading = ref(false)
-    const orderCount = ref(0)
+    const orderCount = ref(0) // Could technically be in orderStore, but local ref is fine for count
 
     const formData = ref({ firstName: '', lastName: '', email: '', address: '', phone: '' })
     const passwordData = ref({ current: '', new: '', confirm: '' })
@@ -142,15 +143,18 @@ export default defineComponent({
 
     const fetchUserProfile = async () => {
         try {
-            const { data } = await api.get('/auth/profile');
+            const data = await authStore.fetchProfile();
             formData.value = { ...data };
-            authStore.user = { ...authStore.user, ...data };
-            localStorage.setItem('user', JSON.stringify(authStore.user));
+            // authStore.user is updated in fetchProfile action usually, or we ensure it here
+            // The action I saw earlier updates local state: 'if (this.user) { ... }'
         } catch (error) { console.error("Failed to load profile", error); }
     }
 
     const fetchOrderCount = async () => {
-      try { const res = await api.get('/orders/myorders'); orderCount.value = res.data.length; } catch (e) { console.error(e) }
+      try {
+         const orders = await orderStore.fetchMyOrders();
+         orderCount.value = orders.length;
+      } catch (e) { console.error(e) }
     }
 
     const saveChanges = async () => {
@@ -162,10 +166,9 @@ export default defineComponent({
       loading.value = true
       try {
         const payload = { ...formData.value, ...(passwordData.value.new ? { currentPassword: passwordData.value.current, newPassword: passwordData.value.new } : {}) }
-        const response = await api.put('/auth/profile', payload)
-        authStore.user = response.data
-        localStorage.setItem('user', JSON.stringify(response.data))
-        formData.value = { ...formData.value, ...response.data };
+        const data = await authStore.updateProfile(payload);
+
+        formData.value = { ...formData.value, ...data };
         passwordData.value = { current: '', new: '', confirm: '' }
         toast.success("Profile updated successfully!");
       } catch (error: any) {
@@ -174,9 +177,9 @@ export default defineComponent({
     }
 
     const cancelChanges = () => { fetchUserProfile(); passwordData.value = { current: '', new: '', confirm: '' }; }
-    const logout = () => { 
+    const logout = () => {
       toast.clear();
-      authStore.logout(); 
+      authStore.logout();
     }
 
     onMounted(() => { fetchUserProfile(); fetchOrderCount(); })

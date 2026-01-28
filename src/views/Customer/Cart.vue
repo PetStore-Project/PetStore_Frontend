@@ -182,15 +182,14 @@
 <script lang="ts">
 import { defineComponent, computed, ref } from 'vue';
 import { useCartStore } from '@/stores/cart';
-import axios from 'axios';
+import { usePromotionStore } from '@/stores/promotion';
 import { useToast } from 'vue-toastification';
-
-const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: 'CartView',
   setup() {
     const cartStore = useCartStore();
+    const promotionStore = usePromotionStore();
     const toast = useToast();
 
     const couponCode = ref("");
@@ -207,12 +206,13 @@ export default defineComponent({
     const applyCoupon = async () => {
       if (!couponCode.value) return;
       isLoadingPromo.value = true;
-      
+
       try {
-        const { data } = await axios.post(`${API_BASE}/promotions/validate`, {
-          code: couponCode.value,
-          cartTotal: subtotal.value
-        });
+        const data = await promotionStore.validatePromotion(
+            couponCode.value,
+            subtotal.value,
+            cartStore.items
+        );
 
         if (data.success) {
           cartStore.applyPromo(couponCode.value, data.type, data.value);

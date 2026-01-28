@@ -80,8 +80,8 @@
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
+import { useProductStore } from '@/stores/product'; // Import Store
 import { useToast } from 'vue-toastification';
 
 // Components
@@ -101,10 +101,10 @@ export default defineComponent({
   props: ['globalSearch'],
   setup(props) {
     const authStore = useAuthStore();
+    const productStore = useProductStore(); // Init Store
     const toast = useToast();
-    const products = ref<any[]>([]);
-    const isLoading = ref(true);
-    const isSaving = ref(false);
+
+    const isSaving = ref(false); // Keep local for button state
 
     // --- UPLOAD STATE ---
     const previewImage = ref<string | undefined>(undefined);
@@ -133,22 +133,9 @@ export default defineComponent({
       brand: 'PetStore+'
     });
 
-    // --- API CALLS ---
-    const fetchProducts = async () => {
-      isLoading.value = true;
-      try {
-        const { data } = await api.get('/products');
-        products.value = data;
-      } catch (error) {
-        console.error(error);
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
     // --- SEARCH / FILTER LOGIC ---
     const filteredProducts = computed(() => {
-      return products.value.filter(p => {
+      return productStore.products.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(filters.search.toLowerCase());
         const matchesCategory = filters.category ? p.category === filters.category : true;
 
@@ -174,7 +161,7 @@ export default defineComponent({
     // --- LIFECYCLE ---
     const route = useRoute();
     onMounted(() => {
-      fetchProducts();
+      productStore.fetchProducts();
       if (route.query.filter === 'low_stock') {
         filters.stock = 'low';
       }
@@ -240,21 +227,19 @@ export default defineComponent({
           formData.append('image', selectedFile.value);
         }
 
-        // Overriding headers for file upload
-        const config = {
-           headers: { 'Content-Type': 'multipart/form-data' }
-        };
+        // Config is handled in store now
 
         if (modal.mode === 'create') {
-          await api.post('/products', formData, config);
+          await productStore.createProduct(formData);
           toast.success("Product Created!");
         } else {
-          await api.put(`/products/${modal.id}`, formData, config);
+          await productStore.updateProduct(modal.id, formData);
           toast.success("Product Updated!");
         }
 
         closeModal();
-        fetchProducts();
+        // fetchProducts(); // Store updates optimistically or we can re-fetch if we want strict sync
+        // productStore.createProduct already pushes to list
 
       } catch (error: any) {
         console.error(error);
@@ -267,15 +252,16 @@ export default defineComponent({
     const confirmDelete = async (product: any) => {
       if(confirm(`Are you sure you want to delete ${product.name}?`)) {
         try {
-          await api.delete(`/products/${product._id}`);
+          await productStore.deleteProduct(product._id);
           toast.success("Product Deleted");
-          fetchProducts();
         } catch(e) { toast.error("Delete Failed"); }
       }
     }
 
     return {
-      products, isLoading, isSaving, modal, form, filters, filteredProducts, activeFiltersCount,
+      productStore, // Expose store
+      isLoading: computed(() => productStore.isLoading), // Map loading
+      isSaving, modal, form, filters, filteredProducts, activeFiltersCount,
       openModal, closeModal, saveProduct, confirmDelete, resetFilters,
       handleFileSelect, previewImage, removeImage
     };

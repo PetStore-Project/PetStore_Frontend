@@ -328,7 +328,6 @@
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 
 // Import Assets
 import { useAuthStore } from '@/stores/auth'
@@ -387,18 +386,12 @@ export default defineComponent({
       isLoading.value = true
 
       try {
-        // Changed to port 5000 to match your server logs
-        const response = await axios.post('https://petstore-backend-api.onrender.com/api/auth/register', {
-          email: email.value,
-          password: password.value,
-        })
+        await authStore.register(email.value, password.value)
 
-        if (response.status === 201) {
-          showNotification('Registration Successful! Redirecting...', 'success')
-          setTimeout(() => {
-            router.push('/login')
-          }, 1500)
-        }
+        showNotification('Registration Successful! Redirecting...', 'success')
+        setTimeout(() => {
+          router.push('/login')
+        }, 1500)
       } catch (error: any) {
         console.error(error)
         if (error.response) {

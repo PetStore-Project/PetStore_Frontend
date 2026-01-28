@@ -88,7 +88,7 @@
         >
           <template #pagination>
              <AdminPagination
-                v-if="!isLoading && orders.length > 0"
+                v-if="!isLoading && orderStore.orders.length > 0"
                 v-model:currentPage="page"
                 :totalPages="totalPages"
              />
@@ -161,9 +161,10 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import api from '@/services/api';
+
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
+import { useOrderStore } from '../../stores/order'; // Import Store
 
 // Components
 import AdminPageHeader from '../../components/Admin/Shared/AdminPageHeader.vue';
@@ -188,7 +189,7 @@ export default defineComponent({
   props: ['globalSearch'],
   data() {
     return {
-      orders: [] as any[], isLoading: false, toast: "", q: "", activeStatus: "all", page: 1, pageSize: 8, showDetails: false, selected: null as any,
+      toast: "", q: "", activeStatus: "all", page: 1, pageSize: 8, showDetails: false, selected: null as any,
       showCancelConfirm: false, pendingCancelOrder: null as any, showMarkPaidConfirm: false, pendingPaidOrder: null as any,
       activePaymentFilter: 'all', showExportMenu: false, showReportMenu: false, exportOptions: ['All Time', 'Today', 'This Week', 'This Month', 'This Year'],
       showStatusUpdateConfirm: false, pendingStatusUpdate: null as any,
@@ -197,19 +198,47 @@ export default defineComponent({
   setup() {
     const route = useRoute();
     const authStore = useAuthStore();
-    return { route, authStore };
+    const orderStore = useOrderStore(); // Initialize Store
+
+    return { route, authStore, orderStore };
   },
   computed: {
     // Status Tabs
-    statusTabs() { return [{ key: "all", label: "All", count: this.orders.length }, { key: "Pending", label: "Pending", count: this.orders.filter(o => o.status === 'Pending').length }, { key: "Processing", label: "Processing", count: this.orders.filter(o => o.status === 'Processing').length }, { key: "Shipped", label: "Shipped", count: this.orders.filter(o => o.status === 'Shipped').length }, { key: "Delivered", label: "Delivered", count: this.orders.filter(o => o.status === 'Delivered').length }, { key: "Cancelled", label: "Cancelled", count: this.orders.filter(o => o.status === 'Cancelled').length }]; },
+    statusTabs() { return [{ key: "all", label: "All", count: this.orderStore.orders.length }, { key: "Pending", label: "Pending", count: this.orderStore.orders.filter(o => o.status === 'Pending').length }, { key: "Processing", label: "Processing", count: this.orderStore.orders.filter(o => o.status === 'Processing').length }, { key: "Shipped", label: "Shipped", count: this.orderStore.orders.filter(o => o.status === 'Shipped').length }, { key: "Delivered", label: "Delivered", count: this.orderStore.orders.filter(o => o.status === 'Delivered').length }, { key: "Cancelled", label: "Cancelled", count: this.orderStore.orders.filter(o => o.status === 'Cancelled').length }]; },
 
-    // Filter Logic
-    filteredSorted() { let list = this.orders; if (this.activeStatus !== "all") list = list.filter(o => o.status === this.activeStatus); if (this.activePaymentFilter === 'paid') list = list.filter(o => o.isPaid); if (this.activePaymentFilter === 'unpaid') list = list.filter(o => !o.isPaid); const search = this.q.toLowerCase().trim(); if (search) list = list.filter(o => o.id.toLowerCase().includes(search) || o.customer.toLowerCase().includes(search)); return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); },
+    // Filter Logic using Store Data
+    filteredSorted() {
+      let list = this.orderStore.orders; // Use store orders
+      if (this.activeStatus !== "all") list = list.filter(o => o.status === this.activeStatus);
+      if (this.activePaymentFilter === 'paid') list = list.filter(o => o.isPaid);
+      if (this.activePaymentFilter === 'unpaid') list = list.filter(o => !o.isPaid);
+      const search = this.q.toLowerCase().trim();
+      if (search) list = list.filter(o => o.id.toLowerCase().includes(search) || o.customer.toLowerCase().includes(search));
+      return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    },
 
-    // Stats Calculation
+    // Stats Calculation using Store Data or Store Helper
     totalPages() { return Math.max(1, Math.ceil(this.filteredSorted.length / this.pageSize)); },
     paged() { return this.filteredSorted.slice((this.page - 1) * this.pageSize, this.page * this.pageSize); },
-    stats() { const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered']; return { total: this.orders.length, revenue: this.orders.filter(o => paidStatuses.includes(o.status)).reduce((s, o) => s + (o.total || 0), 0), paidCount: this.orders.filter(o => o.isPaid).length, unpaidCount: this.orders.filter(o => !o.isPaid).length, pending: this.orders.filter(o => o.status === 'Pending').length, delivered: this.orders.filter(o => o.status === 'Delivered').length }; }
+
+    // Map directly to store getter if applicable, or keep logic here for specific view filters
+    stats() {
+      // We can use the store getter `orderStore.stats` but our local view might filter differently.
+      // To match existing UI exactly, we'll keep using the local `filteredSorted` or full list logic as before.
+      // Actually, existing UI used `this.orders` (all fetched).
+      const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered'];
+      return {
+        total: this.orderStore.orders.length,
+        revenue: this.orderStore.orders.filter(o => paidStatuses.includes(o.status)).reduce((s, o) => s + (o.total || 0), 0),
+        paidCount: this.orderStore.orders.filter(o => o.isPaid).length,
+        unpaidCount: this.orderStore.orders.filter(o => !o.isPaid).length,
+        pending: this.orderStore.orders.filter(o => o.status === 'Pending').length,
+        delivered: this.orderStore.orders.filter(o => o.status === 'Delivered').length
+      };
+    },
+
+    // Map loading state
+    isLoading() { return this.orderStore.isLoading; }
   },
   methods: {
     formatMoney(amt: number) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amt || 0); },
@@ -222,52 +251,59 @@ export default defineComponent({
     openDetails(order: any) { this.selected = { ...order }; this.showDetails = true; },
     closeDetails() { this.showDetails = false; this.selected = null; },
 
-    // API Calls
-    async fetchOrders() { this.isLoading = true; try { const { data } = await api.get(`/orders`); this.orders = data.map((o: any) => ({ id: o._id, customer: o.user ? `${o.user.firstName} ${o.user.lastName}` : 'Guest', email: o.user ? o.user.email : 'N/A', date: o.createdAt, total: o.totalPrice, status: o.status || 'Pending', orderItems: o.orderItems || [], isPaid: o.isPaid || false, paidAt: o.paidAt, paymentMethod: o.paymentMethod || 'N/A', shippingAddress: o.shippingAddress })); } finally { this.isLoading = false; } },
+    // API Calls -> Store Actions
+    async fetchOrders() {
+       await this.orderStore.fetchOrders();
+    },
+
     async updateStatus(o: any, e: any) {
       const s = e.target ? e.target.value : e;
       if (o.status === 'Cancelled') { this.showToast("Cannot modify a cancelled order."); return; }
       this.pendingStatusUpdate = { order: o, newStatus: s, event: e };
       this.showStatusUpdateConfirm = true;
-      if (e.target) e.target.value = o.status;
+      if (e.target) e.target.value = o.status; // Revert visually until confirmed
     },
     cancelStatusUpdateConfirm() { this.showStatusUpdateConfirm = false; this.pendingStatusUpdate = null; },
+
     async confirmStatusUpdate() {
       if (!this.pendingStatusUpdate) return;
       const { order, newStatus } = this.pendingStatusUpdate;
       try {
-        await api.put(`/orders/${order.id}/status`, { status: newStatus });
-
-        // Update local state by finding the exact index for reactivity
-        const index = this.orders.findIndex(x => x.id === order.id);
-        if (index !== -1) {
-          this.orders[index].status = newStatus;
-        }
-
+        await this.orderStore.updateStatus(order.id, newStatus);
         this.showToast(`Updated to ${newStatus}`);
       } catch {
-        this.showToast("Failed");
+        this.showToast("Failed to update status");
       } finally {
         this.cancelStatusUpdateConfirm();
       }
     },
-    async confirmCancelOrder() { if (!this.pendingCancelOrder) return; try { await api.put(`/orders/${this.pendingCancelOrder.id}/status`, { status: 'Cancelled' }); this.pendingCancelOrder.status = 'Cancelled'; const orig = this.orders.find(x => x.id === this.pendingCancelOrder.id); if (orig) orig.status = 'Cancelled'; this.showToast("Cancelled"); } finally { this.showCancelConfirm = false; } },
+
+    async confirmCancelOrder() {
+      if (!this.pendingCancelOrder) return;
+      try {
+        // We reused updateStatus logic for cancel in original, or we can use specific action if created.
+        // Original logic was: api.put status 'Cancelled'.
+        await this.orderStore.updateStatus(this.pendingCancelOrder.id, 'Cancelled');
+        this.showToast("Cancelled");
+      } catch {
+          this.showToast("Failed to cancel");
+      } finally {
+        this.showCancelConfirm = false;
+      }
+    },
+
     triggerMarkPaid(order: any) { this.pendingPaidOrder = order; this.showMarkPaidConfirm = true; },
+
     async confirmMarkPaid() {
       if (!this.pendingPaidOrder) return;
       try {
-        await api.put(`/orders/${this.pendingPaidOrder.id}/pay`, {});
-
-        this.pendingPaidOrder.isPaid = true;
-        const orig = this.orders.find(x => x.id === this.pendingPaidOrder.id);
-        if (orig) orig.isPaid = true;
+        await this.orderStore.markAsPaid(this.pendingPaidOrder.id);
         this.showToast("Paid");
       } catch (err: any) {
         console.error(err);
         if (err.response && err.response.status === 403) {
            this.showToast("Permission Denied: Admin rights required.");
         } else {
-           // Handle other errors
            const status = err.response ? `(${err.response.status})` : '';
            const msg = err.response?.data?.message || `Failed to update payment status ${status}`;
            this.showToast(msg);
@@ -276,16 +312,29 @@ export default defineComponent({
         this.showMarkPaidConfirm = false;
       }
     },
-    async handleRefund(order: any) { if (!confirm("Refund?")) return; try { await api.put(`/orders/${order.id}/status`, { status: 'Cancelled' }); order.status = 'Cancelled'; const orig = this.orders.find(x => x.id === order.id); if (orig) orig.status = 'Cancelled'; this.showToast("Refunded"); this.closeDetails(); } catch { this.showToast("Failed"); } },
-    filterOrdersByRange(range: string) { const now = new Date(); return this.orders.filter(o => { const d = new Date(o.date); if (range === 'Today') return d.toDateString() === now.toDateString(); if (range === 'This Month') return d.getMonth() === now.getMonth(); return true; }); },
+
+    async handleRefund(order: any) {
+        if (!confirm("Refund?")) return;
+        try {
+            await this.orderStore.updateStatus(order.id, 'Cancelled');
+            this.showToast("Refunded");
+            this.closeDetails();
+        } catch {
+            this.showToast("Failed");
+        }
+    },
+
+    filterOrdersByRange(range: string) { const now = new Date(); return this.orderStore.orders.filter(o => { const d = new Date(o.date); if (range === 'Today') return d.toDateString() === now.toDateString(); if (range === 'This Month') return d.getMonth() === now.getMonth(); return true; }); },
     exportCSV(range: string) { exportCSVService(this.filterOrdersByRange(range), range, this.formatDate); this.showToast("CSV Exported"); },
-    async generateInvoice(order: any) { this.showToast("Preparing..."); const { data } = await api.get(`/orders/${order.id}`); downloadInvoiceService(data, this.formatMoney, this.formatDate); },
+    async generateInvoice(order: any) { this.showToast("Preparing..."); try { const data = await this.orderStore.fetchOrder(order.id); downloadInvoiceService(data, this.formatMoney, this.formatDate); } catch { this.showToast("Failed to generate invoice"); } },
     generateFinancialReport(range: string) { generateFinancialReportService(this.filterOrdersByRange(range), range, this.formatMoney); this.showToast("PDF Exported"); }
   },
   watch: {
     globalSearch(newVal) {
       this.q = newVal;
-    }
+    },
+    activeStatus() { this.page = 1; },
+    activePaymentFilter() { this.page = 1; }
   },
   mounted() { this.fetchOrders(); }
 });

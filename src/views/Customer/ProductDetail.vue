@@ -225,7 +225,7 @@ import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
-import api from '@/services/api';
+import { useProductStore } from '@/stores/product';
 import { useToast } from "vue-toastification";
 
 // Define your backend URL constant
@@ -238,6 +238,7 @@ export default defineComponent({
     const router = useRouter();
     const cartStore = useCartStore();
     const authStore = useAuthStore();
+    const productStore = useProductStore();
     const toast = useToast();
 
     const user = computed(() => authStore.user);
@@ -267,8 +268,10 @@ export default defineComponent({
     const fetchProduct = async () => {
       loading.value = true;
       try {
-        const response = await api.get(`/products/${route.params.id}`);
-        product.value = response.data;
+        const id = route.params.id as string;
+        const data = await productStore.fetchProduct(id);
+        product.value = data;
+
         if (product.value) {
             // Use the helper immediately so 'mainImage' is always a valid URL
             const rawPath = product.value.imageUrl || product.value.image || '';
@@ -287,8 +290,13 @@ export default defineComponent({
     const fetchRecommendedProducts = async () => {
       recommendedLoading.value = true;
       try {
-        const response = await api.get('/products');
-        allProducts.value = response.data;
+        // We can reuse fetchProducts from store.
+        // If store already has products, use them. Else fetch.
+        // Assuming fetchProducts populates state.products
+        if (productStore.products.length === 0) {
+            await productStore.fetchProducts();
+        }
+        allProducts.value = productStore.products;
 
         // Filter products by same category, exclude current product, limit to 4
         if (product.value) {
@@ -313,10 +321,12 @@ export default defineComponent({
           return;
       }
       try {
-        await api.post(`/products/${route.params.id}/reviews`, {
-          rating: rating.value,
+        const id = route.params.id as string;
+        await productStore.addReview(id, {
+          rating: parseInt(rating.value),
           comment: comment.value
         });
+
         comment.value = '';
         rating.value = '5';
         await fetchProduct();
@@ -371,7 +381,7 @@ export default defineComponent({
     );
 
     const isOutOfStock = computed(() => {
-        return (product.value.stockQuantity || 0) <= 0;
+        return (product.value?.stockQuantity || 0) <= 0;
     });
 
     return {

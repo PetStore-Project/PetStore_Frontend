@@ -111,6 +111,51 @@ export const useAuthStore = defineStore('auth', {
 
       // Redirect to login
       router.push('/login');
+    },
+
+    async updateProfile(userData: Partial<User> & { currentPassword?: string, newPassword?: string }) {
+        try {
+            const { data } = await api.put('/auth/profile', userData);
+
+            // Update local state if user info changed
+            if (this.user) {
+                this.user = { ...this.user, ...data };
+                localStorage.setItem('user', JSON.stringify(this.user));
+            }
+            return data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    async fetchProfile() {
+        try {
+            const { data } = await api.get('/auth/profile');
+            // Update local state
+             if (this.user) {
+                this.user = { ...this.user, ...data };
+                localStorage.setItem('user', JSON.stringify(this.user));
+            }
+            return data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    async forgotPassword(email: string) {
+        try {
+            await api.post('/auth/forgot-password', { email });
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    async resetPassword(payload: { token: string, password: string }) {
+        try {
+            await api.post('/auth/reset-password', payload);
+        } catch (error) {
+            throw error;
+        }
     }
   }
 });
