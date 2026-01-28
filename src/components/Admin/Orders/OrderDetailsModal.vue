@@ -49,14 +49,24 @@
               <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Payment Status</label>
               <div class="flex items-center gap-3">
                 <div class="flex-1 px-4 py-3 rounded-xl text-sm font-bold border" :class="order.isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'">{{ order.isPaid ? 'Paid' : 'Awaiting Payment' }}</div>
-                <button v-if="!order.isPaid" @click="$emit('mark-paid', order)" class="px-4 py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-100">Mark Paid</button>
+                <button v-if="!order.isPaid && order.status !== 'Cancelled'" @click="$emit('mark-paid', order)" class="px-4 py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-100">Mark Paid</button>
               </div>
             </div>
             <div class="space-y-3">
               <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Order Status</label>
-              <div class="relative"><select :value="order.status" @change="$emit('update-status', order, $event)" class="w-full px-4 py-3 rounded-xl text-sm font-bold border outline-none cursor-pointer appearance-none transition-all" :class="statusPill(order.status)"><option v-for="s in ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']" :key="s" :value="s">{{ s }}</option></select><div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-current opacity-50"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div></div>
+              <div class="relative" :title="!order.isPaid ? 'Order must be paid before changing status' : (order.status === 'Cancelled' || order.status === 'Delivered' ? 'Final status cannot be changed' : '')">
+                <select :value="order.status" @change="$emit('update-status', order, $event)" :disabled="!order.isPaid || order.status === 'Cancelled' || order.status === 'Delivered'" class="w-full px-4 py-3 rounded-xl text-sm font-bold border outline-none appearance-none transition-all" :class="[statusPill(order.status), (!order.isPaid || order.status === 'Cancelled' || order.status === 'Delivered') ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer']">
+                  <option v-for="s in ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']" :key="s" :value="s">{{ s }}</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-current opacity-50"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+              </div>
             </div>
           </div>
+          <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+             <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Payment Method</h4>
+             <p class="text-sm font-bold text-slate-900">{{ order.paymentMethod || 'N/A' }}</p>
+          </div>
+
         </div>
         <div class="p-6 bg-slate-50 border-t border-slate-100 flex flex-wrap justify-between gap-3">
           <div class="flex gap-2">

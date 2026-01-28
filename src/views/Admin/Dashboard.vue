@@ -20,9 +20,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-
-        <!-- Revenue -->
+      <AdminStatsGrid>
         <StatsCard label="Total Revenue" :value="formatMoney(stats.revenue)" color="emerald">
           <template #icon>
             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05 1.18 1.91 2.53 1.91 1.29 0 2.13-.81 2.13-1.88 0-1.1-.68-1.57-1.75-1.82l-2.02-.46c-1.75-.41-3.04-1.5-3.04-3.56 0-1.77 1.29-3.06 3.2-3.4V3h2.67v1.93c1.38.3 2.48 1.34 2.63 3.03h-1.97c-.09-.86-.82-1.54-1.92-1.54-1.21 0-1.87.82-1.87 1.63 0 1.05.79 1.57 2.02 1.83l1.8.41c1.92.46 3.1 1.58 3.1 3.73 0 1.78-1.18 3.27-3.16 3.69z"></path></svg>
@@ -35,7 +33,6 @@
           </template>
         </StatsCard>
 
-        <!-- Orders -->
         <StatsCard label="Total Orders" :value="stats.orders" color="blue">
           <template #icon>
             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"></path></svg>
@@ -45,8 +42,6 @@
           </template>
         </StatsCard>
 
-        <!-- Inventory -->
-        <!-- Inventory -->
         <StatsCard 
           label="Inventory" 
           :value="stats.products" 
@@ -64,7 +59,6 @@
           </template>
         </StatsCard>
 
-        <!-- Customers -->
         <StatsCard label="Customers" :value="stats.customers" color="amber">
           <template #icon>
             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
@@ -75,291 +69,32 @@
             <span class="text-xs text-slate-400 font-medium">Today</span>
           </template>
         </StatsCard>
-
-      </div>
+      </AdminStatsGrid>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        
+        <RevenueChart 
+          v-model:mode="chartMode"
+          :current-mode="chartMode" 
+          :data-points="currentRevenueSeries" 
+          :labels="chartLabels"
+        />
 
-        <div class="lg:col-span-2 bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-black text-slate-900">Revenue Analytics</h3>
-            <!-- Period Toggle -->
-            <div class="flex bg-slate-100 rounded-xl p-1 gap-1">
-              <button
-                v-for="mode in (['daily', 'monthly', 'yearly'] as const)"
-                :key="mode"
-                @click="chartMode = mode"
-                class="px-3 py-1.5 text-xs font-bold rounded-lg capitalize transition-all"
-                :class="chartMode === mode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-              >
-                {{ mode }}
-              </button>
-            </div>
-          </div>
+        <OrderStatusChart :stats="stats" />
 
-          <!-- Chart Container with Y-axis labels -->
-          <div class="overflow-x-auto pt-12 pb-2">
-            <div class="flex gap-4 min-w-[600px]">
-              <!-- Y-Axis Labels - matches h-64 chart area for perfect alignment -->
-              <div class="flex flex-col justify-between text-xs font-medium text-slate-400 w-16 text-right h-64 sticky left-0 bg-white/95 backdrop-blur-sm z-20">
-                <span>{{ formatChartValue(chartMaxValue) }}</span>
-                <span>{{ formatChartValue(chartMaxValue * 0.75) }}</span>
-                <span>{{ formatChartValue(chartMaxValue * 0.5) }}</span>
-                <span>{{ formatChartValue(chartMaxValue * 0.25) }}</span>
-                <span>$0</span>
-              </div>
-
-              <!-- Chart Area -->
-              <div 
-                class="relative h-64 w-full"
-                @mousemove="handleChartHover"
-                @mouseleave="chartHoverIndex = -1"
-              >
-                <!-- Grid Lines -->
-                <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                  <div v-for="i in 5" :key="i" class="w-full h-px bg-slate-100"></div>
-                </div>
-
-                <!-- SVG Chart with explicit viewBox for proper coordinate mapping -->
-                <svg class="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/>
-                      <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path :d="areaPath" fill="url(#chartGradient)" />
-                  <path :d="linePath" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke" />
-                </svg>
-
-                <!-- Circle marker - placed OUTSIDE SVG to maintain perfect circle shape -->
-                <div
-                  v-if="chartHoverIndex >= 0 && peakValleyIndices.includes(chartHoverIndex) && points[chartHoverIndex]"
-                  class="absolute w-4 h-4 bg-white border-[3px] border-emerald-500 rounded-full shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
-                  :style="{
-                    left: `${points[chartHoverIndex]?.x}%`,
-                    top: `${points[chartHoverIndex]?.y}%`
-                  }"
-                ></div>
-
-                <!-- Visible Data Points (Always visible) -->
-                 <div
-                   v-for="(point, i) in points"
-                   :key="i"
-                   class="absolute w-2 h-2 bg-emerald-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                   :style="{
-                     left: `${point.x}%`,
-                     top: `${point.y}%`
-                   }"
-                 ></div>
-
-                <!-- Hover Vertical Line & Tooltip -->
-                <div
-                  v-if="chartHoverIndex >= 0"
-                  class="absolute top-0 bottom-0 pointer-events-none z-10"
-                  :style="{ left: `${(chartHoverIndex * (100 / Math.max(chartLabels.length, 1))) + (100 / Math.max(chartLabels.length, 1) / 2)}%` }"
-                >
-                  <!-- Vertical Line -->
-                  <div class="h-full w-px bg-emerald-500 mx-auto"></div>
-
-                  <!-- Tooltip -->
-                   <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap">
-                    {{ formatMoney(currentRevenueSeries[chartHoverIndex] || 0) }}
-                    <div class="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
-                  </div>
-
-                  <!-- Date Label -->
-                  <div
-                    class="absolute -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow"
-                    :style="{ bottom: '-28px' }"
-                  >
-                    {{ chartLabels[chartHoverIndex] }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- X-Axis Labels - aligned to match chart data points -->
-            <div class="flex gap-4 mt-4 min-w-[600px]">
-              <div class="w-16 sticky left-0 z-20 bg-white/95"></div>
-              <div class="flex-1 flex text-xs font-semibold text-slate-400">
-                <span
-                  v-for="(label, idx) in chartLabels"
-                  :key="idx"
-                  class="text-center flex-1"
-                >{{ label }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
-          <h3 class="text-lg font-black text-slate-900 mb-6">Order Status</h3>
-
-          <div class="overflow-x-auto min-h-[300px] flex flex-col justify-center">
-            <div class="relative flex-1 flex items-center justify-center min-w-[280px]">
-              <svg viewBox="0 0 36 36" class="w-48 h-48 transform -rotate-90 overflow-visible">
-                <!-- Background Ring -->
-                <path class="text-slate-100" 
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  stroke-width="3.8" 
-                />
-                
-                <!-- Completed Segment (Green) -->
-                <path class="text-emerald-500 drop-shadow-lg transition-all duration-1000"
-                  :stroke-dasharray="`${stats.completedPercent}, 100`"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none" 
-                  stroke="currentColor" 
-                  stroke-width="3.8" 
-                />
-                
-                <!-- To Process Segment (Blue) -->
-                <path class="text-blue-500 transition-all duration-1000"
-                  :stroke-dasharray="`${stats.processPercent}, 100`"
-                  :stroke-dashoffset="`-${stats.completedPercent}`"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none" 
-                  stroke="currentColor" 
-                  stroke-width="3.8" 
-                />
-
-                <!-- Pending Segment (Amber) -->
-                <path class="text-amber-400 transition-all duration-1000"
-                  :stroke-dasharray="`${stats.pendingPercent}, 100`"
-                  :stroke-dashoffset="`-${stats.completedPercent + stats.processPercent}`"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none" 
-                  stroke="currentColor" 
-                  stroke-width="3.8" 
-                />
-              </svg>
-              <div class="absolute text-center z-10">
-                <span class="block text-3xl font-black text-slate-900">{{ stats.orders }}</span>
-                <span class="text-xs font-bold text-slate-400 uppercase">Total</span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-3 mt-8 min-w-[280px]">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-                  <span class="text-sm font-bold text-slate-600">Completed</span>
-                </div>
-                <span class="text-xs font-bold text-slate-400">{{ stats.completedPercent }}%</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span class="text-sm font-bold text-slate-600">To Process (Action)</span>
-                </div>
-                <span class="text-xs font-bold text-slate-400">{{ stats.processPercent }}%</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full bg-amber-400"></div>
-                  <span class="text-sm font-bold text-slate-600">Pending Payment</span>
-                </div>
-                <span class="text-xs font-bold text-slate-400">{{ stats.pendingPercent }}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <TopProducts 
+          v-model="topProductsFilter" 
+          :products="topProducts"
+        />
 
-        <div class="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-black text-slate-900">Top Selling Products</h3>
-            <div class="relative">
-              <button 
-                @click="showTopProductsFilterMenu = !showTopProductsFilterMenu" 
-                class="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition"
-              >
-                {{ topProductsFilter }}
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-              </button>
-              
-              <!-- Dropdown -->
-              <div v-if="showTopProductsFilterMenu" class="absolute right-0 mt-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-20 overflow-hidden">
-                <button 
-                  v-for="opt in ['All Time', 'Today', 'This Week', 'This Month', 'This Year']" 
-                  :key="opt"
-                  @click="topProductsFilter = opt; showTopProductsFilterMenu = false"
-                  class="w-full text-left px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition"
-                  :class="{'text-emerald-600 bg-emerald-50': topProductsFilter === opt}"
-                >
-                  {{ opt }}
-                </button>
-              </div>
-              <!-- Backdrop -->
-              <div v-if="showTopProductsFilterMenu" @click="showTopProductsFilterMenu = false" class="fixed inset-0 z-10 cursor-default"></div>
-            </div>
-          </div>
-          <div class="space-y-5">
-            <div v-for="(p, i) in topProducts" :key="i" class="flex flex-col gap-2">
-              <div class="flex justify-between text-sm font-bold text-slate-700">
-                <span>{{ p.name }}</span>
-                <span>{{ p.qty }} sold</span>
-              </div>
-              <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div class="h-full bg-slate-800 rounded-full" :style="{ width: p.percent + '%' }"></div>
-              </div>
-            </div>
-            <div v-if="topProducts.length === 0" class="flex flex-col items-center justify-center py-8 text-center">
-              <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-300">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-              </div>
-              <p class="text-slate-400 text-sm font-medium">No products sold yet</p>
-              <p class="text-slate-300 text-xs mt-1">Sales data will appear here</p>
-            </div>
-          </div>
-        </div>
+        <RecentTransactions :orders="recentOrders" />
 
-        <div class="lg:col-span-2 bg-white rounded-[32px] border border-slate-100 shadow-sm p-8 flex flex-col">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-bold text-slate-900">Recent Transactions</h3>
-            <router-link to="/admin/orders" class="text-sm font-bold text-blue-600 hover:underline">View All</router-link>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[600px]">
-              <thead>
-                <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                  <th class="pb-3">ID</th>
-                  <th class="pb-3">Customer</th>
-                  <th class="pb-3">Date</th>
-                  <th class="pb-3 text-right">Amount</th>
-                  <th class="pb-3 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody class="text-sm font-medium text-slate-600">
-                <tr v-if="recentOrders.length === 0">
-                  <td colspan="5" class="py-6 text-center text-slate-400">No orders yet</td>
-                </tr>
-                <tr v-for="order in recentOrders" :key="order._id" class="group hover:bg-slate-50 transition-colors">
-                  <td class="py-3 border-b border-slate-50 font-mono text-slate-400 text-xs">#{{ order._id.slice(-6).toUpperCase() }}</td>
-                  <td class="py-3 border-b border-slate-50 text-slate-900 font-bold">
-                    {{ order.user ? order.user.firstName + ' ' + order.user.lastName : 'Guest' }}
-                  </td>
-                  <td class="py-3 border-b border-slate-50 text-slate-500">{{ formatDate(order.createdAt) }}</td>
-                  <td class="py-3 text-right text-slate-900 font-bold border-b border-slate-50">{{ formatMoney(order.totalPrice) }}</td>
-                  <td class="py-3 text-right border-b border-slate-50">
-                    <span class="px-2 py-1 rounded-lg text-[10px] font-bold border" :class="statusClass(order.status)">
-                      {{ order.status }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
-      <!-- Promotion Effectiveness Section -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-[32px] p-8 text-white shadow-lg">
           <div class="flex items-center justify-between mb-6">
@@ -425,7 +160,6 @@
     </main>
 
 
-    <!-- All Promos Modal -->
     <div v-if="showAllPromosModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAllPromosModal = false"></div>
       <div class="relative bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
@@ -466,23 +200,35 @@
 import { defineComponent, ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { generateDashboardReportService } from '@/services/dashboardExport';
+
+// New Components
+import AdminStatsGrid from '@/components/Admin/Shared/AdminStatsGrid.vue';
 import StatsCard from '@/components/Admin/StatsCard.vue';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import RevenueChart from '@/components/Admin/Dashboard/RevenueChart.vue';
+import OrderStatusChart from '@/components/Admin/Dashboard/OrderStatusChart.vue';
+import TopProducts from '@/components/Admin/Dashboard/TopProducts.vue';
+import RecentTransactions from '@/components/Admin/Dashboard/RecentTransactions.vue';
 
 const API_BASE = "https://petstore-backend-api.onrender.com/api";
 
 export default defineComponent({
   name: "Dashboard",
-  components: { StatsCard },
+  components: { 
+    AdminStatsGrid,
+    StatsCard,
+    RevenueChart,
+    OrderStatusChart,
+    TopProducts,
+    RecentTransactions
+  },
   setup() {
     const authStore = useAuthStore();
     const isLoading = ref(true);
 
-    // Chart mode for Revenue Analytics (removed 'weekly')
     const chartMode = ref<'daily' | 'monthly' | 'yearly'>('monthly');
 
-    // Stats Container
+    // --- DASHBOARD STATS STATE ---
     const stats = ref({
       revenue: 0,
       orders: 0,
@@ -498,49 +244,39 @@ export default defineComponent({
       processingOrders: 0
     });
 
-    // Store all orders for chart calculations
     const allOrders = ref<any[]>([]);
     const allPromos = ref<any[]>([]);
 
-    // Top Products Filtering State
     const topProductsFilter = ref('All Time');
-    const showTopProductsFilterMenu = ref(false);
-
+    
     // Top Promos State
     const showAllPromosModal = ref(false);
     const allPerformingPromos = ref<any[]>([]);
 
-    // Compute Top Products Reactively
+    // --- TOP PRODUCTS LOGIC ---
     const topProducts = computed(() => {
       const now = new Date();
-      
       let filtered = allOrders.value;
 
-      // 1. Filter by Time Range
       if (topProductsFilter.value !== 'All Time') {
         filtered = filtered.filter((o: any) => {
           const d = new Date(o.createdAt);
           switch (topProductsFilter.value) {
-            case 'Today':
-              return d.toDateString() === now.toDateString();
+            case 'Today': return d.toDateString() === now.toDateString();
             case 'This Week': {
                const weekStart = new Date(now);
                weekStart.setDate(now.getDate() - now.getDay());
                weekStart.setHours(0,0,0,0);
                return d >= weekStart;
             }
-            case 'This Month':
-              return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            case 'This Year':
-              return d.getFullYear() === now.getFullYear();
+            case 'This Month': return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            case 'This Year': return d.getFullYear() === now.getFullYear();
             default: return true;
           }
         });
       }
 
-      // 2. Count Items (Paid Only)
       const itemMap: Record<string, number> = {};
-      const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered'];
       
       filtered.forEach((o: any) => {
         if (o.isPaid) {
@@ -557,7 +293,7 @@ export default defineComponent({
         .map(([name, qty]) => ({ name, qty }))
         .filter(i => i.qty > 0)
         .sort((a, b) => b.qty - a.qty)
-        .slice(0, 5); // Top 5
+        .slice(0, 5); 
 
       const max = sorted.length > 0 && sorted[0]? sorted[0].qty : 1;
       
@@ -584,16 +320,51 @@ export default defineComponent({
       revenue: 0
     });
 
-
-
-    // Revenue Data for Chart (storage for different modes)
+    // --- REVENUE CHART LOGIC ---
     const revenueSeries = ref(new Array(12).fill(0));
-    const dailyRevenue = ref(new Array(7).fill(0));   // Last 7 days
-    const weeklyRevenue = ref(new Array(8).fill(0));  // Last 8 weeks
-    const yearlyRevenue = ref(new Array(5).fill(0));  // Last 5 years
+    const dailyRevenue = ref(new Array(7).fill(0));
+    const weeklyRevenue = ref(new Array(8).fill(0)); // Keep for structure if needed, but not used in toggle
+    const yearlyRevenue = ref(new Array(5).fill(0));
 
-    // Chart hover state
-    const chartHoverIndex = ref(-1);
+    // Chart helpers
+    const currentRevenueSeries = computed(() => {
+      if (chartMode.value === 'daily') return dailyRevenue.value;
+      if (chartMode.value === 'yearly') return yearlyRevenue.value;
+      return revenueSeries.value;
+    });
+
+    const chartLabels = computed(() => {
+      if (chartMode.value === 'daily') {
+        const labels = [];
+        const today = new Date();
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(today.getDate() - i);
+          labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+        }
+        return labels;
+      }
+      if (chartMode.value === 'yearly') {
+        const labels = [];
+        const cur = new Date().getFullYear();
+        for (let i = 4; i >= 0; i--) labels.push((cur - i).toString());
+        return labels;
+      }
+      return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    });
+
+    const chartMaxValue = computed(() => {
+      const max = Math.max(...currentRevenueSeries.value);
+      return Math.ceil(max / 100) * 100 || 100;
+    });
+
+    const currentDate = computed(() => {
+      return new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    });
+
+    // --- FORMATTERS ---
+    const formatMoney = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
+    const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
     const getAuthHeader = () => {
       let token = authStore.token || localStorage.getItem('userToken');
@@ -604,10 +375,10 @@ export default defineComponent({
       return { headers: { Authorization: `Bearer ${token}` } };
     };
 
+    // --- API DATA FETCH ---
     const loadData = async () => {
       isLoading.value = true;
       try {
-        // 1. Fetch ALL Data
         const [ordersRes, productsRes, usersRes, promosRes] = await Promise.all([
           axios.get(`${API_BASE}/orders`, getAuthHeader()),
           axios.get(`${API_BASE}/products`),
@@ -620,38 +391,17 @@ export default defineComponent({
         const users = usersRes.data;
         const promos = promosRes.data || [];
 
-        // --- CALCULATE KPI ---
-        // New Strategy: Action-Oriented Buckets
-        // 1. Completed: Delivered, Shipped, Refunded (Done)
-        // 2. To Process (Action Needed): Paid, Processing
-        // 3. Pending (Opportunity): Pending
-        // 4. Dead: Cancelled (Excluded from chart usually or lumped into Pending logic slightly difference)
-
-        // Let's define the buckets
         const completedStatuses = ['Delivered', 'Shipped', 'Refunded'];
-        const processStatuses = ['Paid', 'Processing']; // You have money, now do the work!
-        const pendingStatuses = ['Pending']; // Waiting for money
+        const processStatuses = ['Paid', 'Processing'];
+        const pendingStatuses = ['Pending'];
 
-        // Counts
         const completedCount = orders.filter((o: any) => completedStatuses.includes(o.status)).length;
         const processCount = orders.filter((o: any) => processStatuses.includes(o.status)).length;
         const pendingCount = orders.filter((o: any) => pendingStatuses.includes(o.status)).length;
         
-        // Total valid orders for chart (excluding cancelled to make the chart meaningful "Active Pipeline")
-        // Or keep Total = All Orders. Let's use All Orders for percentage to sum to < 100 if cancelled exists, 
-        // OR normalize to (Total - Cancelled).
-        // Let's us Total Orders (including Cancelled) as the base denominator so percentages add up to <= 100.
-        // Remainder is Cancelled.
         const totalBase = orders.length || 1;
-
-        // Calculate dynamic trend (this month vs last month) - Real Revenue
-        // CRITICAL: Use isPaid flag, NOT status. 'Pending' orders can be paid!
         const totalRev = orders.filter((o: any) => o.isPaid).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
-        
-        // Unpaid count (for stats, though we display Pending Orders elsewhere)
-        const unpaidCount = orders.filter((o: any) => !o.isPaid).length;
 
-        // Calculate dynamic trend (this month vs last month) - Real Revenue
         const trendNow = new Date();
         const thisMonth = trendNow.getMonth();
         const thisYear = trendNow.getFullYear();
@@ -668,9 +418,6 @@ export default defineComponent({
           return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear && o.isPaid;
         }).reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
 
-        // Calculate percentage change
-        // If lastMonthRev is 0, we treat it as 1 to allow calculating a "growth" percentage 
-        // rather than capping at 100%, satisfying the user request "do not limit".
         const prevRev = lastMonthRev || 1;
         const trend = ((thisMonthRev - prevRev) / prevRev) * 100;
 
@@ -680,28 +427,25 @@ export default defineComponent({
           products: products.length,
           customers: users.length,
           newCustomers: users.filter((u: any) => new Date(u.createdAt).toDateString() === new Date().toDateString()).length,
-          lowStock: products.filter((p: any) => (p.stockQuantity || p.stock || 0) <= 5).length, // Standardized: <= 5
-          processingOrders: processCount, // Count of Paid + Processing orders
-          pendingOrders: pendingCount, // Count of Unpaid/Pending orders
+          lowStock: products.filter((p: any) => (p.stockQuantity || p.stock || 0) <= 5).length, 
+          processingOrders: processCount, 
+          pendingOrders: pendingCount, 
           
-          // Chart Data
           completedPercent: Math.round((completedCount / totalBase) * 100),
           processPercent: Math.round((processCount / totalBase) * 100),
           pendingPercent: Math.round((pendingCount / totalBase) * 100),
           
-          trend: Math.round(trend * 10) / 10 // Round to 1 decimal place
+          trend: Math.round(trend * 10) / 10
         };
 
-        // Store orders and promos for chart calculations
         allOrders.value = orders;
         allPromos.value = promos;
 
-        // --- CALCULATE REVENUE GRAPH (Monthly - default) ---
-        // Only include Real Money orders
+        // Revenue Graphs
         const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth();
+        
+        // Monthly
         const monthlyRev = new Array(12).fill(0);
-
         orders.forEach((o: any) => {
           const d = new Date(o.createdAt);
           if (d.getFullYear() === currentYear && o.isPaid) {
@@ -710,8 +454,7 @@ export default defineComponent({
         });
         revenueSeries.value = monthlyRev;
 
-        // --- CALCULATE DAILY REVENUE (Last 7 days) ---
-        // Only include Real Money orders
+        // Daily
         const today = new Date();
         const dailyRev = new Array(7).fill(0);
         for (let i = 0; i < 7; i++) {
@@ -726,24 +469,7 @@ export default defineComponent({
         }
         dailyRevenue.value = dailyRev;
 
-        // --- CALCULATE WEEKLY REVENUE (Last 8 weeks) ---
-        const weeklyRev = new Array(8).fill(0);
-        for (let i = 0; i < 8; i++) {
-          const weekStart = new Date(today);
-          weekStart.setDate(today.getDate() - (7 - i) * 7);
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekStart.getDate() + 7);
-          orders.forEach((o: any) => {
-            const orderDate = new Date(o.createdAt);
-            if (orderDate >= weekStart && orderDate < weekEnd && o.isPaid) {
-              weeklyRev[i] += (o.totalPrice || 0);
-            }
-          });
-        }
-        weeklyRevenue.value = weeklyRev;
-
-        // --- CALCULATE YEARLY REVENUE (Last 5 years) ---
-        // Only include Real Money orders
+        // Yearly
         const yearlyRev = new Array(5).fill(0);
         for (let i = 0; i < 5; i++) {
           const year = currentYear - (4 - i);
@@ -756,17 +482,9 @@ export default defineComponent({
         }
         yearlyRevenue.value = yearlyRev;
 
-        // Recent Orders
         recentOrders.value = orders.slice(0, 5);
 
-        // --- CALCULATE PROMO STATS ---
-        // (Keeping existing promo logic but could refine to paid only if needed)
-        // ... (Existing logic below is block-replaced, need to include it or cut off here)
-        // Wait, I must provide *complete* replacement for the chunk or valid context.
-        // My EndLine is 608 (finally block).
-        // I need to be careful not to delete Promo Stats logic.
-        // I will copy the Promo Stats logic from the previous view (Lines 546-602).
-
+        // Promo Stats
         const now = new Date();
         const activePromos = promos.filter((p: any) =>
           new Date(p.startDate) <= now && new Date(p.endDate) >= now
@@ -779,11 +497,6 @@ export default defineComponent({
         const apiRedemptions = promos.reduce((sum: number, p: any) => sum + (p.usageCount || 0), 0);
         const totalRedemptions = Math.max(ordersWithDiscount.length, apiRedemptions);
 
-        const estSavingsFromOrders = orders.reduce((sum: number, o: any) => {
-          return sum + (o.discountAmount || 0);
-        }, 0);
-
-        // Update Promo Stats with Real Data
         promoStats.value = {
           active: activePromos.length,
           totalRedemptions: totalRedemptions,
@@ -791,331 +504,41 @@ export default defineComponent({
           revenue: promos.reduce((sum: number, p: any) => sum + (p.revenue || 0), 0)
         };
 
-        const avgOrderValue = stats.value.orders > 0 ? stats.value.revenue / stats.value.orders : 50;
-        const estSavingsFromPromos = promos.reduce((sum: number, p: any) => {
-          // Use real totalSavings if available (new logic), else fallback to old estimate
-          if (p.totalSavings !== undefined) return sum + p.totalSavings;
-          
-          const uses = p.usageCount || 0;
-          if (p.type === 'percent') {
-            return sum + (p.value / 100) * avgOrderValue * uses;
-          }
-          return sum + p.value * uses;
-        }, 0);
-
-        const promoUsageMap: Record<string, number> = {};
-        const promoRevenueMap: Record<string, number> = {}; // Track revenue per code
-        
-        // Calculate Total Promo Revenue (Sum of orders using ANY promo)
-        let totalPromoRevenue = 0;
-
-        orders.forEach((o: any) => {
-          if (o.promoCode) {
-            const code = o.promoCode.toUpperCase();
-            promoUsageMap[code] = (promoUsageMap[code] || 0) + 1;
-            
-            // Fix: Use Pure Revenue (Items - Discount) to match Backend Logic
-            // Fallback: If itemsPrice missing, use totalPrice (but backend usually provides itemsPrice)
-            const pureRevenue = (o.itemsPrice || o.totalPrice) - (o.discountAmount || 0);
-            
-            promoRevenueMap[code] = (promoRevenueMap[code] || 0) + pureRevenue; 
-            totalPromoRevenue += pureRevenue;
-          }
-        });
-
-        promoStats.value = {
-          active: activePromos.length,
-          totalRedemptions,
-          estimatedSavings: Math.max(estSavingsFromOrders, estSavingsFromPromos),
-          revenue: totalPromoRevenue // New Metric
-        };
-
-        const promosWithUsage = promos.map((p: any) => ({
-          ...p,
-          usageCount: Math.max(p.usageCount || 0, promoUsageMap[p.code?.toUpperCase()] || 0),
-          // Fix: Use Math.max to preserve DB revenue for automatic campaigns (which have no promoCode on order)
-          revenue: Math.max(p.revenue || 0, promoRevenueMap[p.code?.toUpperCase()] || 0)
-        }));
-
-        topPromos.value = promosWithUsage
+        // Top Promos
+        const performantPromos = promos
           .filter((p: any) => (p.usageCount || 0) > 0)
-          .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0)) // Sort by Revenue Impact
-          .slice(0, 3); // Top 3
-
-        // Store full list for Modal
-        allPerformingPromos.value = promosWithUsage
-           .filter((p: any) => (p.usageCount || 0) > 0)
-           .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0));
+          .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0));
+          
+        topPromos.value = performantPromos.slice(0, 5);
+        allPerformingPromos.value = performantPromos;
 
       } catch (error) {
-        console.error("Dashboard Load Error", error);
+        console.error("Dashboard Load Error:", error);
       } finally {
         isLoading.value = false;
       }
     };
 
-    // Dynamic chart data based on selected mode
-    // Data is limited to current date (no future data shown, but padded to match label count)
-    const currentRevenueSeries = computed(() => {
-      const today = new Date();
-      const currentMonth = today.getMonth();
-
-      switch (chartMode.value) {
-        case 'daily':
-          return dailyRevenue.value; // Already shows last 7 days
-        case 'yearly':
-          return yearlyRevenue.value; // 5 years
-        case 'monthly':
-        default:
-          // Only show up to current month (slice from Jan to current month inclusive)
-          // Future months will be empty in the series, so no line is drawn
-          const sliced = revenueSeries.value.slice(0, currentMonth + 1);
-          return sliced;
-      }
-    });
-
-    // Dynamic chart labels based on selected mode
-    // Always show full label set (12 months, 7 days, 5 years)
-    const chartLabels = computed(() => {
-      const today = new Date();
-      const allMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-      switch (chartMode.value) {
-        case 'daily':
-          // Last 7 days
-          return Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(today);
-            d.setDate(today.getDate() - (6 - i));
-            return d.toLocaleDateString('en-US', { weekday: 'short' });
-          });
-        case 'yearly':
-          // Last 5 years (up to and including current year)
-          const currentYear = today.getFullYear();
-          return Array.from({ length: 5 }, (_, i) => String(currentYear - (4 - i)));
-        case 'monthly':
-        default:
-          // Always show all 12 months
-          return allMonths;
-      }
-    });
-
-    // Chart max value for Y-axis labels - MUST be defined before points!
-    const chartMaxValue = computed(() => {
-      const max = Math.max(...currentRevenueSeries.value, 100);
-      // Round up to nice number for display
-      const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
-      return Math.ceil(max / magnitude) * magnitude;
-    });
-
-    // SVG Graph Math - uses currentRevenueSeries for dynamic data
-    // Chart scales from 0 to chartMaxValue for proper Y-axis alignment
-    // Uses numeric values (0-100) to match SVG viewBox="0 0 100 100"
-    const points = computed(() => {
-      const series = currentRevenueSeries.value;
-      const max = chartMaxValue.value; // Use chartMaxValue for consistent scaling with Y-axis
-      const count = chartLabels.value.length;
-      const slotWidth = 100 / count;
-
-      return series.map((val, i) => ({
-        x: (i * slotWidth) + (slotWidth / 2),  // Center in slot
-        y: 100 - (val / max) * 100  // 100 = bottom ($0), 0 = top (max)
-      }));
-    });
-
-    const linePath = computed(() => {
-      const series = currentRevenueSeries.value;
-      const max = chartMaxValue.value; // Use chartMaxValue for consistent scaling
-      const count = chartLabels.value.length;
-      const slotWidth = 100 / count;
-
-      const data = series.map((val, i) => {
-        const x = (i * slotWidth) + (slotWidth / 2);
-        const y = 100 - (val / max) * 100;
-        return `${x},${y}`;
-      });
-
-      if (data.length === 0) return '';
-
-      // Anchor to bottom-left (0,100) to ensure line is visible even for single point
-      return `M 0,100 L ${data.join(" L ")}`;
-    });
-
-    const areaPath = computed(() => {
-      const series = currentRevenueSeries.value;
-      const data = points.value;
-      if (!data.length) return "";
-      const last = data[data.length - 1];
-      if (!last) return ""; // Check if last exists
-      // Close the area: Start 0,100 -> LinePath (which starts 0,100) -> LastPoint -> LastPointX,100 -> Close
-      // Since linePath already starts with M 0,100, we just append the close
-      return `${linePath.value} L ${last?.x},100 Z`;
-    });
-
-    // Detect peaks and valleys (trend change points)
-    const peakValleyIndices = computed(() => {
-      const series = currentRevenueSeries.value;
-      const indices: number[] = [];
-
-      // Always include first and last points
-      if (series.length > 0) indices.push(0);
-
-      // Find peaks and valleys
-      for (let i = 1; i < series.length - 1; i++) {
-        const prev = series[i - 1];
-        const curr = series[i];
-        const next = series[i + 1];
-
-        // Peak: current is higher than both neighbors
-        // Valley: current is lower than both neighbors
-        if ((curr > prev && curr > next) || (curr < prev && curr < next)) {
-          indices.push(i);
-        }
-      }
-
-      // Always include last point if series has items
-      if (series.length > 1) indices.push(series.length - 1);
-
-      return indices;
-    });
-
-    // Detect peaks and valleys (trend change points)
-
-    // Format chart Y-axis values (compact format)
-    const formatChartValue = (n: number) => {
-      if (n >= 1000000) return `$${(n / 1000000).toFixed(1)}M`;
-      if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
-      return `$${n.toFixed(0)}`;
-    };
-
-    // Handle chart hover for tooltip
-    const handleChartHover = (event: MouseEvent) => {
-      const target = event.currentTarget as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const percentage = x / rect.width;
-
-      // Calculate index based on equal slots
-      const count = chartLabels.value.length;
-      const index = Math.floor(percentage * count);
-
-      // Allow hovering valid label indices
-      chartHoverIndex.value = Math.max(0, Math.min(index, count - 1));
-    };
-
-    // Helpers
-    const formatMoney = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
-    const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 'short', day: 'numeric' });
-    const currentDate = new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-    const statusClass = (status: string) => {
-      const map: any = {
-        'Paid': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        'Pending': 'bg-amber-50 text-amber-700 border-amber-200',
-        'Processing': 'bg-blue-50 text-blue-700 border-blue-200',
-        'Cancelled': 'bg-rose-50 text-rose-700 border-rose-200',
-      };
-      return map[status] || 'bg-slate-50 text-slate-600';
-    };
-
-    // PDF Report Generation
+    // --- EXPORT REPORT ---
     const generateReport = () => {
-      const doc = new jsPDF();
-      
-      // Title
-      doc.setFontSize(22);
-      doc.setTextColor(0, 77, 41); // PetStore Green
-      doc.text('PetStore+ Analytics Report', 14, 22);
-      
-      doc.setFontSize(10);
-      doc.setTextColor(100);
-      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
-
-      // 1. Sales Overview
-      doc.setFontSize(14);
-      doc.setTextColor(0);
-      doc.text('1. Sales Overview', 14, 45);
-      
-      const salesData = [
-         ['Total Revenue', formatMoney(stats.value.revenue), 'Total Orders', stats.value.orders.toString()],
-         ['Processing Orders', stats.value.processingOrders.toString(), 'Pending Orders', stats.value.pendingOrders.toString()],
-         ['Avg Order Value', formatMoney(stats.value.revenue / (stats.value.orders || 1)), 'New Customers', stats.value.newCustomers.toString()]
-      ];
-
-      autoTable(doc, {
-        startY: 50,
-        head: [['Metric', 'Value', 'Metric', 'Value']],
-        body: salesData,
-        theme: 'striped',
-        headStyles: { fillColor: [0, 146, 0] },
-        styles: { fontSize: 10 }
-      });
-
-      // 2. Top Products
-      let finalY = (doc as any).lastAutoTable.finalY + 15;
-      doc.setFontSize(14);
-      doc.text(`2. Top Selling Products (${topProductsFilter.value})`, 14, finalY);
-      
-      const productData = topProducts.value.map(p => [p.name, p.qty, p.percent + '%']);
-      
-      if (productData.length === 0) {
-        productData.push(['No sales data for this period', '-', '-']);
-      }
-
-      autoTable(doc, {
-        startY: finalY + 5,
-        head: [['Product Name', 'Quantity Sold', 'Popularity']],
-        body: productData,
-        theme: 'grid',
-        headStyles: { fillColor: [0, 146, 0] },
-      });
-
-      // 3. Promotions
-      finalY = (doc as any).lastAutoTable.finalY + 15;
-      doc.setFontSize(14);
-      doc.text('3. Promotion Effectiveness', 14, finalY);
-
-      const promoData = [
-        ['Active Campaigns', promoStats.value.active],
-        ['Total Redemptions', promoStats.value.totalRedemptions],
-        ['Impact Sales', formatMoney(promoStats.value.revenue || 0)], // Show Revenue in PDF
-        ['Est. Savings Given', formatMoney(promoStats.value.estimatedSavings)]
-      ];
-
-      autoTable(doc, {
-        startY: finalY + 5,
-        head: [['Metric', 'Value']],
-        body: promoData,
-        theme: 'striped',
-        headStyles: { fillColor: [0, 146, 0] }
-      });
-
-      // Footer
-      const pageCount = (doc as any).internal.getNumberOfPages();
-      for(let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(`Page ${i} of ${pageCount}`, 196, 285, { align: 'right' });
-      }
-
-      doc.save('petstore-analytics-report.pdf');
+      generateDashboardReportService(
+        stats.value,
+        topProducts.value,
+        topProductsFilter.value,
+        promoStats.value,
+        formatMoney
+      );
     };
 
-    onMounted(() => { loadData(); });
+    onMounted(loadData);
 
     return {
-      isLoading, stats, recentOrders, topProducts, loadData, revenueSeries,
-      formatMoney, formatDate, statusClass, currentDate, generateReport,
-      points, linePath, areaPath,
-      promoStats, topPromos,
-      // Chart mode functionality
-      chartMode, currentRevenueSeries, chartLabels,
-      dailyRevenue, yearlyRevenue,
-      // Chart hover and peak/valley functionality
-      chartHoverIndex, chartMaxValue, formatChartValue, handleChartHover,
-      peakValleyIndices,
-      topProductsFilter, showTopProductsFilterMenu, // Added filter state
-      showAllPromosModal, allPerformingPromos // Added modal state
+      isLoading, currentDate, stats, loadData, formatMoney,
+      chartMode, currentRevenueSeries, chartLabels, chartMaxValue,
+      topProductsFilter, topProducts,
+      recentOrders,
+      promoStats, topPromos, allPerformingPromos, showAllPromosModal,
+      generateReport
     };
   }
 });
