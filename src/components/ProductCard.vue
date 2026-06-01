@@ -1,236 +1,149 @@
 <template>
-  <div class="product-card group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-4 transition-all duration-300 hover:shadow-xl hover:border-green-500 hover:-translate-y-1">
-
-    <!-- Discount Badge -->
-    <div
-      v-if="hasProductDiscount"
-      class="absolute top-3 left-3 z-20 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-black shadow-lg"
+  <article
+    class="group flex h-full flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+  >
+    <router-link
+      :to="{ name: 'product-detail', params: { id: itemId } }"
+      class="relative block h-48 overflow-hidden bg-[#fff7ed]"
     >
-      {{ discountLabel }}
-    </div>
+      <img
+        :src="resolvedImage"
+        :alt="product.name"
+        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+      />
+      <span
+        class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-gray-700"
+      >
+        {{ product.category }}
+      </span>
 
-    <!-- Low Stock Badge (Show even if discounted, just move down) -->
-    <div
-      v-if="isLowStock"
-      class="absolute left-3 z-20 bg-amber-500 text-white px-2 py-1 rounded-lg text-xs font-black shadow-lg flex items-center gap-1"
-      :class="hasProductDiscount ? 'top-12' : 'top-3'"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-      </svg>
-      Low {{ realTimeStock }}
-    </div>
+      <button
+        @click.stop.prevent="toggleWishlist"
+        class="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 shadow-sm transition hover:border-red-200 hover:text-red-500"
+        :class="isWishlisted ? 'border-red-200 text-red-500' : ''"
+        :title="isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'"
+      >
+        <HeartSolidIcon v-if="isWishlisted" class="h-5 w-5" />
+        <HeartIcon v-else class="h-5 w-5" />
+      </button>
+    </router-link>
 
-    <button
-      @click.prevent="toggleWishlist"
-      class="absolute top-4 right-4 z-10 transition-colors duration-200 p-1"
-      :class="isWishlisted ? 'text-red-500' : 'text-gray-300 hover:text-red-500'"
-      title="Add to Wishlist"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg"
-        :fill="isWishlisted ? 'currentColor' : 'none'"
-        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-      </svg>
-    </button>
-
-    <div class="w-full h-48 flex items-center justify-center mb-4 overflow-hidden rounded-lg cursor-pointer">
-      <router-link :to="{ name: 'product-detail', params: { id: product._id } }" class="w-full h-full">
-        <img
-          :src="resolvedImage"
-          :alt="product.name"
-          class="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
-        />
-      </router-link>
-    </div>
-
-    <div class="flex flex-col flex-grow">
-
-      <div class="flex gap-1 mb-2">
-        <span v-for="i in 5" :key="i" class="text-sm" :class="i <= (product.rating || 0) ? 'text-yellow-400' : 'text-gray-200'">★</span>
+    <div class="flex flex-1 flex-col p-4 sm:p-5">
+      <div class="mb-2 flex items-center justify-between">
+        <h3 class="line-clamp-1 text-base font-bold text-gray-900 sm:text-lg">
+          {{ product.name }}
+        </h3>
+        <span class="rounded-full bg-brand-primary px-3 py-1 text-sm font-bold text-white">
+          ${{ Number(product.price).toFixed(2) }}
+        </span>
       </div>
 
-      <h3 class="font-bold text-lg text-gray-900 mb-1 leading-tight">{{ product.name }}</h3>
+      <p class="line-clamp-2 text-sm text-gray-500">{{ product.description }}</p>
 
-      <p class="text-xs text-gray-400 mb-4 line-clamp-2">
-        {{ product.description }}
-      </p>
-
-      <div class="mt-auto flex items-end justify-between">
-        <div>
-          <!-- Price with strikethrough for discounts -->
-          <div v-if="hasProductDiscount" class="flex items-center gap-2">
-            <span class="text-sm text-gray-400 line-through">${{ formattedOriginalPrice }}</span>
-            <span class="text-2xl font-bold text-red-500">${{ formattedDiscountedPrice }}</span>
-          </div>
-          <span v-else class="block text-2xl font-bold text-[#009200]">${{ formattedOriginalPrice }}</span>
-          <span class="text-[10px] uppercase tracking-wide text-gray-400">{{ product.category || 'Product' }}</span>
+      <div class="mt-4 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-xs text-gray-500">
+          <StarIcon class="h-4 w-4 text-amber-500" />
+          <span>{{ Number(product.rating || 0).toFixed(1) }}</span>
+          <span class="text-gray-300">•</span>
+          <span>{{ product.prepTime || '15 min' }}</span>
         </div>
 
         <button
-          @click.prevent="!isOutOfStock && addToCart()"
-          :disabled="isOutOfStock"
-          class="p-3 rounded-lg shadow-md transition-colors flex items-center justify-center"
-          :class="isOutOfStock ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#009200] hover:bg-[#007a00] text-white active:scale-95'"
-          :title="isOutOfStock ? 'Out of Stock' : 'Add to Cart'"
+          @click.prevent="addToCart"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary text-white transition hover:bg-red-600 active:scale-95"
+          title="Add to cart"
         >
-          <svg v-if="!isOutOfStock" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-          </svg>
-          <span v-else class="text-xs font-bold px-1">Sold Out</span>
+          <PlusIcon class="h-5 w-5" />
         </button>
       </div>
     </div>
-  </div>
-
+  </article>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed, onMounted } from 'vue';
-import { useCartStore } from '@/stores/cart';
-import { useWishlistStore } from '@/stores/wishlist';
-import { useDiscountStore } from '@/stores/discount';
-import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
-import { useToast } from 'vue-toastification';
+<script lang="ts" setup>
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { HeartIcon } from '@heroicons/vue/24/outline'
+import { HeartIcon as HeartSolidIcon, PlusIcon, StarIcon } from '@heroicons/vue/24/solid'
+import { useToast } from 'vue-toastification'
+import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
+import { useWishlistStore } from '@/stores/wishlist'
 
-const BACKEND_URL = "https://petstore-backend-api.onrender.com";
+const props = defineProps<{ product: any }>()
 
-export default defineComponent({
-  name: 'ProductCard',
-  props: {
-    product: {
-      type: Object,
-      required: true
-    }
-  },
-  setup(props) {
-    const cartStore = useCartStore();
-    const wishlistStore = useWishlistStore();
-    const discountStore = useDiscountStore();
-    const authStore = useAuthStore();
-    const router = useRouter();
-    const toast = useToast();
+const router = useRouter()
+const toast = useToast()
+const authStore = useAuthStore()
+const cartStore = useCartStore()
+const wishlistStore = useWishlistStore()
 
-    // Fetch discounts if not loaded
-    onMounted(() => {
-      if (!discountStore.isLoaded) {
-        discountStore.fetchProductDiscounts();
-      }
-    });
+const itemId = computed(() => props.product.id || props.product._id)
+const isWishlisted = computed(() => wishlistStore.isInWishlist(String(itemId.value || '')))
 
-    // Check if product has discount
-    const hasProductDiscount = computed(() => {
-      return discountStore.hasDiscount(props.product._id);
-    });
+const resolvedImage = computed(() => {
+  const path = props.product.image || props.product.imageUrl
+  if (!path) return 'https://via.placeholder.com/600x400?text=Food+Item'
+  if (String(path).startsWith('http')) return path
+  return `https://petstore-backend-api.onrender.com${path}`
+})
 
-    // Get discount label (e.g., "-20%")
-    const discountLabel = computed(() => {
-      return discountStore.getDiscountLabel(props.product._id);
-    });
-
-    // Get quantity currently in cart
-    const cartQuantity = computed(() => {
-      const item = cartStore.items.find((i: any) => i._id === props.product._id);
-      return item ? item.quantity : 0;
-    });
-
-    // Real-time Available Stock (Database Stock - Cart Quantity)
-    const realTimeStock = computed(() => {
-      const totalStock = props.product.stockQuantity || 0;
-      return Math.max(0, totalStock - cartQuantity.value);
-    });
-
-    // Check for Low Stock (e.g., <= 5 items) based on AVAILABLE stock
-    const isLowStock = computed(() => {
-      return realTimeStock.value > 0 && realTimeStock.value <= 5;
-    });
-
-    const isOutOfStock = computed(() => {
-      // It's out of stock if Real Time Stock is 0
-      return realTimeStock.value <= 0;
-    });
-
-    // Original price formatted
-    const formattedOriginalPrice = computed(() => {
-      return Number(props.product.price).toFixed(2);
-    });
-
-    // Discounted price formatted
-    const formattedDiscountedPrice = computed(() => {
-      const discountedPrice = discountStore.getDiscountedPrice(props.product._id, props.product.price);
-      return discountedPrice.toFixed(2);
-    });
-
-    // 👇 Helper to fix image URL (handles relative/absolute/missing)
-    const resolvedImage = computed(() => {
-      const path = props.product.imageUrl || props.product.image;
-      if (!path) return 'https://via.placeholder.com/300';
-      if (path.startsWith('http')) return path;
-      return `${BACKEND_URL}${path}`;
-    });
-
-    const isWishlisted = computed(() => {
-      return wishlistStore.isInWishlist(props.product._id);
-    });
-
-    const addToCart = () => {
-      // Check if user is authenticated
-      if (!authStore.isAuthenticated) {
-        router.push('/login');
-        return;
-      }
-
-      // Pass the discounted price if applicable
-      const finalPrice = hasProductDiscount.value
-        ? discountStore.getDiscountedPrice(props.product._id, props.product.price)
-        : props.product.price;
-
-      const success = cartStore.addToCart({
-        ...props.product,
-        image: resolvedImage.value,
-        originalPrice: props.product.price,
-        price: finalPrice,
-        hasDiscount: hasProductDiscount.value
-      });
-      
-      if (!success) {
-         toast.warning("Max Stock Limit Reached");
-      } else {
-         toast.success("Added to Cart");
-      }
-    };
-
-    const toggleWishlist = () => {
-      wishlistStore.toggleWishlist({
-        ...props.product,
-        image: resolvedImage.value // Force use of the resolved URL
-      });
-    };
-
-    return {
-      formattedOriginalPrice,
-      formattedDiscountedPrice,
-      addToCart,
-      isWishlisted,
-      toggleWishlist,
-      resolvedImage,
-      hasProductDiscount,
-      discountLabel,
-      isLowStock,
-      isOutOfStock,
-      realTimeStock
-    };
+const addToCart = () => {
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+    return
   }
-});
+
+  const success = cartStore.addToCart({
+    _id: itemId.value,
+    name: props.product.name,
+    price: Number(props.product.price),
+    image: resolvedImage.value,
+    category: props.product.category,
+    stockQuantity: props.product.stockQuantity || 50,
+  })
+
+  if (!success) {
+    toast.warning('Maximum quantity reached for this item')
+    return
+  }
+
+  toast.success('Added to your order')
+}
+
+const toggleWishlist = () => {
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+    return
+  }
+
+  const wasWishlisted = isWishlisted.value
+
+  wishlistStore.toggleWishlist({
+    _id: String(itemId.value || ''),
+    name: props.product.name,
+    category: props.product.category,
+    price: Number(props.product.price),
+    image: resolvedImage.value,
+    stockQuantity: props.product.stockQuantity || 0,
+  })
+
+  toast.info(wasWishlisted ? 'Removed from wishlist' : 'Added to wishlist')
+}
 </script>
 
 <style scoped>
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .line-clamp-2 {
   display: -webkit-box;
-  line-clamp: 2;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 </style>
-

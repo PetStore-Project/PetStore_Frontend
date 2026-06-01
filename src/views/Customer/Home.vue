@@ -1,298 +1,220 @@
 <template>
-  <div class="home-wrapper font-poppins overflow-x-hidden bg-[#F9FDF9]">
-    <div class="lantern-container pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <img v-for="i in 8" :key="i" :src="lanternImg" class="lantern" :style="getLanternStyle(i)" />
-    </div>
+  <main class="min-h-screen bg-brand-background font-sans">
+    <section class="relative overflow-hidden px-4 pb-10 pt-8 sm:px-6 lg:px-8">
+      <div
+        class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(224,0,37,0.1),_transparent_45%)]"
+      ></div>
 
-    <!-- HERO SECTION -->
-    <section class="relative w-full min-h-[600px] lg:min-h-[85vh] flex items-center justify-center overflow-hidden py-12 lg:py-0">
-      <div class="absolute inset-0 bg-gradient-to-br from-[#F0FDF4] via-[#DCFCE7] to-[#F0FDF4] -z-10"></div>
-      <div class="absolute top-[-20%] right-[-10%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-[#FFD700] opacity-10 blur-[80px] md:blur-[120px] rounded-full"></div>
-
-      <div class="max-w-[1400px] w-full px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-8 relative z-10">
-
-        <!-- Text Content -->
-        <div class="space-y-6 md:space-y-8 relative text-center lg:text-left order-2 lg:order-1">
-          <div class="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 md:px-5 md:py-2 rounded-full shadow-sm border border-green-100 mx-auto lg:mx-0">
-            <span class="w-2 h-2 rounded-full bg-[#D00000] animate-pulse"></span>
-            <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-[#006837]">Lunar New Year Event</span>
-          </div>
-
-          <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] text-[#1a1a1a] tracking-tight">
-            Give Your Pet An <br />
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#D00000] to-[#F5AC27]">Ang Pao</span>
-          </h1>
-
-          <p class="text-sm sm:text-base md:text-lg text-gray-600 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-            Celebrate new beginnings with our "Lucky Green" collection. Premium treats and accessories for a prosperous year.
-          </p>
-
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-            <button
-              @click="router.push('/shop')"
-              class="w-full sm:w-auto px-8 py-4 bg-[#D00000] text-white rounded-full font-bold text-base md:text-lg shadow-lg shadow-red-600/20 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 group"
+      <div
+        class="relative mx-auto max-w-6xl rounded-3xl bg-white p-6 shadow-sm sm:p-10 border border-gray-100"
+      >
+        <div class="grid gap-8 lg:grid-cols-2 lg:items-center">
+          <div class="space-y-6">
+            <span
+              class="inline-flex rounded-full bg-red-50 px-4 py-1 text-xs font-bold uppercase tracking-wider text-brand-primary"
             >
-              Get Lucky Deal
-              <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-            </button>
-
-            <button
-              @click="router.push('/shop')"
-              class="w-full sm:w-auto px-8 py-4 bg-white border border-[#009200] text-[#009200] rounded-full font-bold text-base md:text-lg hover:bg-[#009200] hover:text-white transition-all duration-300"
-            >
-              View Collection
-            </button>
-          </div>
-        </div>
-
-        <!-- Hero Image -->
-        <div class="relative h-[350px] sm:h-[450px] lg:h-[600px] w-full flex items-center justify-center order-1 lg:order-2">
-          <div class="relative z-10 w-full h-full flex items-center justify-center">
-            <img
-              src="/src/assets/lunar_new_year_dog.jpg"
-              alt="Golden Retriever Lucky"
-              class="max-h-full w-auto shadow-2xl hover:scale-105 transition-transform duration-700 rounded-[30px] md:rounded-[40px] border-[6px] md:border-8 border-red-500 object-cover"
-            />
-          </div>
-
-          <!-- Floating Badge (Hidden on mobile) -->
-          <div class="absolute bottom-10 -left-6 z-20 bg-white/90 backdrop-blur-xl p-5 rounded-2xl shadow-[0_20px_50px_rgba(0,146,0,0.1)] border border-green-50 animate-bounce-slow hidden xl:block">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-[#D00000]">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                  <path d="M22 6l-10 7L2 6" />
-                </svg>
-              </div>
-              <div>
-                <p class="font-bold text-[#006837] text-sm">Lucky Ang Pao</p>
-                <p class="text-xs bg-gradient-to-r from-[#009200] to-[#FFD700] bg-clip-text text-transparent">Free shipping over 50$</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CATEGORIES SECTION -->
-    <section class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl md:text-4xl font-extrabold text-[#1a1a1a] mb-4">Shop By Category</h2>
-        <p class="text-gray-500">Find everything for your furry, feathered, or scaled friends.</p>
-      </div>
-
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-8">
-        <div
-          v-for="(cat, index) in petCategory"
-          :key="index"
-          @click="goToCategory(cat.name)"
-          class="group cursor-pointer flex flex-col items-center gap-4"
-        >
-          <div class="w-full aspect-square bg-[#F0FDF4] rounded-[2rem] border border-green-50 flex items-center justify-center p-6 transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-2 group-hover:bg-[#DCFCE7] relative overflow-hidden">
-            <div class="absolute inset-0 bg-[#009200] opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
-            <img :src="cat.img" :alt="cat.name" class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110" />
-          </div>
-          <span class="font-bold text-lg text-gray-700 group-hover:text-[#009200] transition-colors">{{ cat.name }}</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- PROSPERITY BUNDLES -->
-    <section class="w-full px-4 md:px-8 pb-24 relative z-10">
-      <div class="max-w-[1400px] mx-auto bg-[#004d29] rounded-[40px] overflow-hidden relative shadow-2xl">
-        <!-- Background Pattern -->
-        <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 p-8 md:p-16 lg:p-20 items-center relative z-10">
-          <!-- Text -->
-          <div class="text-white text-center lg:text-left order-2 lg:order-1">
-            <div class="inline-block bg-[#FFD700] text-[#004d29] px-4 py-1 rounded-sm text-xs font-bold uppercase tracking-wider mb-6">
-              Fortune & Fun
-            </div>
-            <h2 class="text-4xl md:text-5xl lg:text-7xl font-extrabold mb-6 leading-tight">
-              Prosperity <br />
-              Bundles 🧧
-            </h2>
-            <p class="text-green-100 text-base md:text-lg mb-10 max-w-md mx-auto lg:mx-0 leading-relaxed">
-              We've paired our best-selling green toys with lucky red treats. The perfect balance for your pet.
+              🇰🇭 Kean24 • Authentic Khmer Flavor
+            </span>
+            <h1 class="text-4xl font-black leading-tight text-gray-900 sm:text-6xl">
+              Delicious Local Food <span class="text-brand-primary">At Your Door</span>
+            </h1>
+            <p class="text-base text-gray-600">
+              From street-side favorites to gourmet Khmer dishes. Fresh, hot, and delivered in 24
+              minutes.
             </p>
-            <button
-              @click="router.push({ name: 'shop', query: { products: 'Jade Collar,Lucky Chew' } })"
-              class="bg-white text-[#004d29] px-10 py-4 rounded-full font-bold text-lg hover:bg-[#FFD700] transition-colors duration-300 shadow-lg"
-            >
-              Shop Bundles
-            </button>
-          </div>
 
-          <!-- Flying Cards -->
-          <div class="relative h-[350px] md:h-[400px] w-full flex items-center justify-center order-1 lg:order-2">
-            <!-- Jade Collar -->
-            <div class="absolute left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-10 top-0 w-56 md:w-64 bg-white p-5 rounded-2xl shadow-xl transform -rotate-6 hover:rotate-0 hover:z-30 transition-all duration-500 cursor-pointer border-l-4 border-[#009200] group z-20">
-              <div class="h-32 md:h-40 rounded-xl overflow-hidden mb-4 bg-gray-50 flex items-center justify-center p-4">
-                <img :src="collarImg" class="w-full h-full object-contain group-hover:scale-110 transition-transform" />
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-bold text-gray-900 text-sm md:text-base">Jade Collar</p>
-                <span class="text-lg font-bold text-[#009200]">$8.99</span>
-              </div>
+            <div
+              class="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-2 focus-within:border-brand-primary transition-all"
+            >
+              <MagnifyingGlassIcon class="h-5 w-5 ml-2 text-gray-400" />
+              <input
+                v-model="searchTerm"
+                type="text"
+                placeholder="Search Nom Banh Chok, Bai Sach Chrouk..."
+                class="w-full border-none bg-transparent text-sm text-gray-700 outline-none p-2"
+              />
+              <button
+                class="rounded-xl bg-brand-primary px-6 py-2.5 text-sm font-bold text-white transition hover:brightness-110 shadow-md"
+              >
+                Search
+              </button>
             </div>
 
-            <!-- Lucky Chews -->
-            <div class="absolute left-1/2 -translate-x-1/2 lg:translate-x-0 lg:right-10 bottom-0 top-auto lg:top-auto w-56 md:w-64 bg-white p-5 rounded-2xl shadow-xl transform rotate-6 hover:rotate-0 hover:z-30 transition-all duration-500 cursor-pointer border-l-4 border-[#D00000] group z-10 lg:mt-32">
-              <div class="h-32 md:h-40 rounded-xl overflow-hidden mb-4 bg-gray-50 flex items-center justify-center p-4">
-                <img :src="chewsImg" class="w-full h-full object-contain group-hover:scale-110 transition-transform" />
-              </div>
-              <div class="flex justify-between items-center">
-                <p class="font-bold text-gray-900 text-sm md:text-base">Lucky Chew</p>
-                <span class="text-lg font-bold text-[#D00000]">$5.99</span>
-              </div>
+            <div class="flex flex-wrap gap-2 pt-2">
+              <button
+                v-for="filter in quickFilters"
+                :key="filter"
+                @click="activeFilter = filter"
+                class="rounded-xl px-5 py-2 text-sm font-bold transition-all border"
+                :class="
+                  activeFilter === filter
+                    ? 'bg-brand-primary border-brand-primary text-white shadow-lg'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-brand-primary hover:text-brand-primary'
+                "
+              >
+                {{ filter }}
+              </button>
+            </div>
+          </div>
+
+          <div class="relative rounded-3xl overflow-hidden shadow-2xl">
+            <img
+              src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80"
+              alt="Authentic Khmer Food"
+              class="h-72 w-full object-cover sm:h-[450px]"
+            />
+            <div
+              class="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-2xl shadow-lg"
+            >
+              <p class="text-xs font-bold text-gray-800">🔥 Most Ordered Today</p>
+              <p class="text-sm font-black text-brand-primary">Grilled Pork & Rice</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TRENDING SECTION -->
-    <section class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-32 relative z-10">
-      <div class="flex items-center gap-3 mb-12">
-        <h2 class="text-3xl md:text-4xl font-extrabold text-[#1a1a1a]">Trending Now</h2>
-        <svg class="w-8 h-8 text-orange-500 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M13.5 3C16.5 5.5 18 8.5 18 11.5C18 14.5 15.5 17 12.5 17H11.5C8.5 17 6 14.5 6 11.5C6 10.5 6.2 9.5 6.6 8.6C4.6 10.1 3.5 12.4 3.5 15C3.5 19.1 6.9 22.5 11 22.5C15.1 22.5 18.5 19.1 18.5 15C18.5 12.7 17.5 10.6 15.8 9.2C15.8 9.2 13.5 3 13.5 3Z" />
-          <path d="M12.5 6C14.5 7.5 15.5 9.5 15.5 11.5C15.5 13.5 13.5 15 11.5 15H10.5C8.5 15 7 13.5 7 11.5C7 10.5 7.2 9.5 7.6 8.6C5.6 10.1 4.5 12.4 4.5 15C4.5 19.1 7.9 22.5 12 22.5C16.1 22.5 19.5 19.1 19.5 15C19.5 12.7 18.5 10.6 16.8 9.2C16.8 9.2 14.5 3 12.5 6Z" fill="orange" opacity="0.6" />
-        </svg>
+    <section class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8">
+      <div class="mb-8 flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-black text-gray-900">Popular on Kean24</h2>
+          <p class="text-gray-500 text-sm">Our top-rated dishes this week</p>
+        </div>
+        <button
+          @click="router.push('/shop')"
+          class="group flex items-center gap-1 text-sm font-bold text-brand-primary"
+        >
+          View full menu
+          <span class="transition-transform group-hover:translate-x-1">→</span>
+        </button>
       </div>
 
-      <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-         <div v-for="n in 4" :key="n" class="h-[400px] bg-gray-100 rounded-[32px] animate-pulse"></div>
+      <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-for="n in 6" :key="n" class="h-80 animate-pulse rounded-3xl bg-gray-200"></div>
       </div>
 
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <ProductCard
-          v-for="product in trendingProducts"
-          :key="product._id"
-          :product="product"
-        />
+      <div v-else class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <ProductCard v-for="item in khmerItems" :key="item.id" :product="item" />
       </div>
     </section>
-  </div>
+  </main>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
+import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useProductStore } from '@/stores/product'
+import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import ProductCard from '@/components/ProductCard.vue'
-
-// Images
-import petImg1 from '@/assets/petImage/Rectangle 131.png'
-import petImg2 from '@/assets/petImage/Rectangle 131 (1).png'
-import petImg3 from '@/assets/petImage/Rectangle 131 (2).png'
-import petImg4 from '@/assets/petImage/Rectangle 131 (3).png'
-import petImg5 from '@/assets/petImage/Rectangle 131 (4).png'
-import lanternImg from '@/assets/lantern.png'
-import collarImg from '@/assets/jade_collar.png'
-import chewsImg from '@/assets/lucky_chews.png'
+import { useProductStore } from '@/stores/product'
 
 export default defineComponent({
   name: 'Home',
-  components: { ProductCard },
+  components: { ProductCard, MagnifyingGlassIcon },
   setup() {
     const router = useRouter()
     const productStore = useProductStore()
-    const trendingProducts = ref<any[]>([])
-    const loading = ref(true)
 
-    const petCategory = [
-      { img: petImg1, name: 'Cat' },
-      { img: petImg2, name: 'Dog' },
-      { img: petImg3, name: 'Small Pet' },
-      { img: petImg4, name: 'Bird' },
-      { img: petImg5, name: 'Fish' },
+    const loading = ref(true)
+    const searchTerm = ref('')
+    const activeFilter = ref('All')
+
+    // Updated for Khmer Food
+    const quickFilters = ['All', 'Khmer Food', 'Burgers', 'Drinks', 'Breakfast']
+
+    // HARDCODED KHMER DATA for your presentation
+    const khmerMockData = [
+      {
+        id: 'k1',
+        name: 'Special Bai Sach Chrouk',
+        description: 'Authentic grilled pork with broken rice, pickled veggies, and soup.',
+        price: 2.5,
+        category: 'Breakfast',
+        rating: 4.9,
+        prepTime: '10 min',
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500',
+      },
+      {
+        id: 'k2',
+        name: 'Fish Amok (Steam)',
+        description: 'Classic Khmer steam curry with river fish and coconut milk.',
+        price: 4.5,
+        category: 'Khmer Food',
+        rating: 4.8,
+        prepTime: '25 min',
+        image: 'https://images.unsplash.com/photo-1567121938596-6d9d015d3cf8?q=80&w=500',
+      },
+      {
+        id: 'k3',
+        name: 'Nom Banh Chok',
+        description: 'Traditional Khmer noodles with green curry fish gravy.',
+        price: 2.0,
+        category: 'Khmer Food',
+        rating: 4.7,
+        prepTime: '15 min',
+        image: 'https://images.unsplash.com/photo-1583210129047-ee3d10787431?q=80&w=500',
+      },
+      {
+        id: 'k4',
+        name: 'Iced Coffee with Milk',
+        description: 'Strong local brew with sweet condensed milk and ice.',
+        price: 1.25,
+        category: 'Drinks',
+        rating: 5.0,
+        prepTime: '5 min',
+        image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=500',
+      },
+      {
+        id: 'k5',
+        name: 'Angkor Burger',
+        description: 'Beef patty with local spices, fresh greens, and house sauce.',
+        price: 3.75,
+        category: 'Burgers',
+        rating: 4.6,
+        prepTime: '20 min',
+        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500',
+      },
+      {
+        id: 'k6',
+        name: 'Kuy Teav Phnom Penh',
+        description: 'Rice noodle soup with pork bone broth and fresh herbs.',
+        price: 3.0,
+        category: 'Breakfast',
+        rating: 4.8,
+        prepTime: '12 min',
+        image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?q=80&w=500',
+      },
     ]
 
-    const fetchTrending = async () => {
-      try {
-        const data = await productStore.fetchTopProducts();
-        trendingProducts.value = data;
-      } catch (error) {
-        console.error("Failed to load trending products", error);
-      } finally {
-        loading.value = false;
-      }
-    }
+    const khmerItems = computed(() => {
+      const query = searchTerm.value.trim().toLowerCase()
 
-    const goToCategory = (name: string) => {
-      // Navigate to Shop page with category filter
-      router.push({ name: 'shop', query: { category: name } })
-    }
+      const sourceItems = productStore.products.length > 0 ? productStore.products : khmerMockData
 
-    // Lantern Animation Styles
-    const getLanternStyle = (i: number) => {
-      const left = Math.random() * 100
-      const delay = Math.random() * 5
-      const duration = 15 + Math.random() * 10
-      return {
-        left: `${left}%`,
-        animationDelay: `${delay}s`,
-        animationDuration: `${duration}s`,
-      }
-    }
-
-    onMounted(() => {
-      fetchTrending()
+      return sourceItems.filter((item) => {
+        const bySearch = !query || item.name.toLowerCase().includes(query)
+        const byFilter = activeFilter.value === 'All' || item.category === activeFilter.value
+        return bySearch && byFilter
+      })
     })
 
+    const load = async () => {
+      loading.value = true
+      // Still fetch products in background if you want,
+      // but khmerItems uses hardcoded data for now.
+      await productStore.fetchProducts()
+      loading.value = false
+    }
+
+    onMounted(load)
+
     return {
-      petCategory,
-      goToCategory,
       router,
-      getLanternStyle,
-      trendingProducts,
       loading,
-      lanternImg,
-      collarImg,
-      chewsImg
+      searchTerm,
+      activeFilter,
+      quickFilters,
+      khmerItems,
     }
   },
 })
 </script>
-
-<style scoped>
-/* Background Animation: Floating Lanterns */
-.lantern {
-  position: absolute;
-  bottom: -150px;
-  width: 60px;
-  height: auto;
-  opacity: 0.8;
-  animation: floatUp linear infinite;
-  background: transparent;
-}
-
-.lantern::before { display: none; }
-
-@keyframes floatUp {
-  0% {
-    transform: translateY(0) rotate(0deg);
-    opacity: 0;
-  }
-  15% {
-    opacity: 0.9;
-  }
-  85% {
-    opacity: 0.9;
-  }
-  100% {
-    transform: translateY(-110vh) rotate(10deg);
-    opacity: 0;
-  }
-}
-
-@keyframes bounce-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
-}
-.animate-bounce-slow {
-  animation: bounce-slow 4s ease-in-out infinite;
-}
-</style>

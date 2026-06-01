@@ -266,10 +266,10 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 // Images (Restored Original)
-import sloganImage from '@/assets/photos/texts.png'
-import birdhouseImage from '@/assets/photos/birdhouse.png'
-import pawsImage from '@/assets/photos/paws.png'
-import petsImage from '@/assets/photos/pets.png'
+import sloganImage from '@/assets/lunar_new_year_dog.jpg'
+import birdhouseImage from '@/assets/lucky_chews.png'
+import pawsImage from '@/assets/lantern.png'
+import petsImage from '@/assets/jade_collar.png'
 
 export default defineComponent({
   name: 'TheLogin',
@@ -302,29 +302,28 @@ export default defineComponent({
       isLoading.value = true
       try {
         // 1. Wait for login to complete
-        await authStore.login(email.value, password.value);
-        showNotification('Login Successful!', 'success');
+        await authStore.login(email.value, password.value)
+        showNotification('Login Successful!', 'success')
 
         // 2. Get User Role safely (Check Store OR LocalStorage)
         // This ensures we get the latest data immediately
-        let user = authStore.user;
+        let user = authStore.user
 
         if (!user) {
-           const stored = localStorage.getItem('userInfo');
-           if (stored) user = JSON.parse(stored);
+          const stored = localStorage.getItem('userInfo')
+          if (stored) user = JSON.parse(stored)
         }
 
-        console.log("LOGIN CHECK:", user); // Check Console F12 if issues persist
+        console.log('LOGIN CHECK:', user) // Check Console F12 if issues persist
 
         // 3. Redirect based on Role
         setTimeout(() => {
           if (user && user.role === 'admin') {
-            router.push('/admin/dashboard');
+            router.push('/admin/dashboard')
           } else {
-            router.push('/');
+            router.push('/')
           }
-        }, 500);
-
+        }, 500)
       } catch (error: any) {
         showNotification(error.response?.data?.message || 'Login failed.', 'error')
       } finally {

@@ -215,10 +215,10 @@ import { defineComponent, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-import sloganImage from '../../assets/photos/texts.png'
-import birdhouseImage from '../../assets/photos/birdhouse.png'
-import pawsImage from '../../assets/photos/paws.png'
-import petsImage from '../../assets/photos/pets.png'
+import sloganImage from '@/assets/lunar_new_year_dog.jpg'
+import birdhouseImage from '@/assets/lucky_chews.png'
+import pawsImage from '@/assets/lantern.png'
+import petsImage from '@/assets/jade_collar.png'
 
 export default defineComponent({
   name: 'ResetPassword',

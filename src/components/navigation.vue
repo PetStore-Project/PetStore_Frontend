@@ -9,7 +9,7 @@
         to="/"
         class="flex-shrink-0 transform hover:scale-105 transition-transform duration-300"
       >
-        <img src="@/assets/project_logo.svg" alt="PetStore" class="h-8 sm:h-9 md:h-10 w-auto" />
+        <img src="@/assets/project_logo.png" alt="Kean24" class="h-12 sm:h-14 md:h-16 w-auto" />
       </RouterLink>
 
       <!-- Desktop Menu -->
